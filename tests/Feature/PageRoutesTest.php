@@ -14,30 +14,30 @@ class PageRoutesTest extends TestCase
     {
         return [
             ['/'],
-            ['/contacts'],
-            ['/contacts/general'],
-            ['/contacts/general/city'],
-            ['/contacts/general/wilderness'],
-            ['/contacts/general/sea'],
-            ['/contacts/obstruction'],
-            ['/contacts/big-city'],
-            ['/contacts/outer-world'],
-            ['/contacts/outer-world/past'],
-            ['/contacts/outer-world/future'],
-            ['/contacts/defeated'],
-            ['/contacts/expedition'],
-            ['/contacts/expedition/expeditions'],
-            ['/contacts/add-map'],
-            ['/contacts/add-map/antarctica'],
-            ['/contacts/add-map/egypt'],
-            ['/contacts/add-map/dreamlands'],
-            ['/special'],
-            ['/special/disaster'],
-            ['/special/disaster/city'],
-            ['/special/disaster/weather'],
-            ['/special/disaster/location'],
-            ['/special/investigators'],
-            ['/special/ancient-ones'],
+            ['/encounters'],
+            ['/encounters/general'],
+            ['/encounters/general/city'],
+            ['/encounters/general/wilderness'],
+            ['/encounters/general/sea'],
+            ['/encounters/restriction'],
+            ['/encounters/named-cities'],
+            ['/encounters/other-world'],
+            ['/encounters/other-world/past'],
+            ['/encounters/other-world/future'],
+            ['/encounters/defeated'],
+            ['/encounters/quest'],
+            ['/encounters/quest/expedition'],
+            ['/encounters/side-boards'],
+            ['/encounters/side-boards/antarctica'],
+            ['/encounters/side-boards/egypt'],
+            ['/encounters/side-boards/dreamlands'],
+            ['/other'],
+            ['/other/disaster'],
+            ['/other/disaster/city'],
+            ['/other/disaster/weather'],
+            ['/other/disaster/location'],
+            ['/other/investigators'],
+            ['/other/ancient-ones'],
         ];
     }
 
@@ -57,9 +57,10 @@ class PageRoutesTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->from('/contacts')
-            ->post('/state/ancient-one', ['slug' => $ancient->slug])
-            ->assertRedirect('/contacts');
+            ->withSession(['_token' => 'test-token'])
+            ->from('/encounters')
+            ->post('/state/ancient-one', ['slug' => $ancient->slug, '_token' => 'test-token'])
+            ->assertRedirect('/encounters');
 
         $this->assertDatabaseHas('user_states', [
             'user_id' => $user->id,
@@ -75,9 +76,10 @@ class PageRoutesTest extends TestCase
         ];
 
         $this->actingAs($user)
-            ->from('/contacts')
-            ->post('/state/blobs', ['blobs' => $payload])
-            ->assertRedirect('/contacts');
+            ->withSession(['_token' => 'test-token'])
+            ->from('/encounters')
+            ->post('/state/blobs', ['blobs' => $payload, '_token' => 'test-token'])
+            ->assertRedirect('/encounters');
 
         $this->assertDatabaseHas('user_states', [
             'user_id' => $user->id,
@@ -85,9 +87,10 @@ class PageRoutesTest extends TestCase
         $this->assertCount(1, \App\Models\UserState::where('user_id', $user->id)->first()->blobs);
 
         $this->actingAs($user)
-            ->from('/contacts')
-            ->delete('/state/blobs')
-            ->assertRedirect('/contacts');
+            ->withSession(['_token' => 'test-token'])
+            ->from('/encounters')
+            ->delete('/state/blobs', ['_token' => 'test-token'])
+            ->assertRedirect('/encounters');
 
         $this->assertSame([], \App\Models\UserState::where('user_id', $user->id)->first()->blobs);
     }

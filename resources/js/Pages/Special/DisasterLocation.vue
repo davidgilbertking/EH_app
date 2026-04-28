@@ -22,6 +22,6 @@ const rows = [
 </script>
 
 <template>
-    <Breadcrumb title="Location" parent="Special › Disaster" />
+    <Breadcrumb title="Location" parent="Other › Disaster" />
     <ButtonGrid :rows="rows" :cols="2" />
 </template>

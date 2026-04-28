@@ -19,6 +19,6 @@ const hotspots = [
 </script>
 
 <template>
-    <Breadcrumb title="Egypt" parent="Contacts › Add. Map" />
+    <Breadcrumb title="Egypt" parent="Encounters › Side Boards" />
     <MapPage background-url="/maps/egypt.jpg" :hotspots="hotspots" />
 </template>

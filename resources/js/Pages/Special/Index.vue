@@ -21,7 +21,7 @@ const rows = [
         }),
         play('Victory',   'victory',   { variant: 'victory' }),
         play('Awakening', 'awakening', { variant: 'awakening' }),
-        nav('Disaster', '/special/disaster', { variant: 'disaster' }),
+        nav('Disaster', '/other/disaster', { variant: 'disaster' }),
     ],
     [
         play('Death (Sanity)',    'death-sanity',    { variant: 'deathSanity' }),
@@ -33,8 +33,8 @@ const rows = [
         }),
     ],
     [
-        nav('Investigators', '/special/investigators', { variant: 'investigators' }),
-        nav('Ancient Ones',  '/special/ancient-ones',  { variant: 'ancients' }),
+        nav('Investigators', '/other/investigators', { variant: 'investigators' }),
+        nav('Ancient Ones',  '/other/ancient-ones',  { variant: 'ancients' }),
     ],
     [
         play('Honey Pie', 'honey-pie', { variant: 'honey' }),
@@ -43,13 +43,13 @@ const rows = [
 </script>
 
 <template>
-    <Breadcrumb title="Special" />
+    <Breadcrumb title="Other" />
 
-    <div class="space-y-9">
+    <div class="space-y-9 pt-4">
         <div
             v-for="(row, idx) in rows"
             :key="idx"
-            class="flex justify-center gap-3"
+            class="flex justify-center gap-10"
         >
             <div v-for="(btn, i) in row" :key="i" class="w-56 shrink-0">
                 <NavLinkButton

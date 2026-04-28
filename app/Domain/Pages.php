@@ -20,7 +20,7 @@ use App\Models\SoundFolder;
  *
  * Page shape (returned by config()):
  *  title:        page heading shown below header
- *  parentTitle:  optional ancestor title shown as breadcrumb prefix (e.g. "Contacts - General")
+ *  parentTitle:  optional ancestor title shown as breadcrumb prefix (e.g. "Encounters - General")
  *  layout:       'grid' | 'map' | 'list'
  *  cols:         number of columns when layout=grid
  *  rows:         array of rows, each row = array of buttons (when layout=grid)
@@ -72,20 +72,20 @@ class Pages
             $folders[$slug] = ['name' => $label, 'mode' => self::MODE_RANDOM];
         }
 
-        // contacts/outer-world leaves
-        foreach (self::outerWorldLeaves() as [$slug, $label]) {
+        // contacts/other-world leaves
+        foreach (self::otherWorldLeaves() as [$slug, $label]) {
             $folders[$slug] = ['name' => $label, 'mode' => self::MODE_RANDOM];
         }
 
-        // contacts/outer-world/past + future (8 each, real phrases)
+        // contacts/other-world/past + future (8 each, real phrases)
         foreach (self::pastLabels() as $i => $label) {
-            $folders['contacts/outer-world/past/'.($i + 1)] = [
+            $folders['contacts/other-world/past/'.($i + 1)] = [
                 'name' => $label,
                 'mode' => self::MODE_RANDOM,
             ];
         }
         foreach (self::futureLabels() as $i => $label) {
-            $folders['contacts/outer-world/future/'.($i + 1)] = [
+            $folders['contacts/other-world/future/'.($i + 1)] = [
                 'name' => $label,
                 'mode' => self::MODE_RANDOM,
             ];
@@ -98,7 +98,7 @@ class Pages
         ], self::MODE_RANDOM);
 
         // contacts/expedition
-        $folders['contacts/expedition/ruins'] = ['name' => 'Ruins', 'mode' => self::MODE_RANDOM];
+        $folders['contacts/expedition/ruins'] = ['name' => 'Mystic Ruins', 'mode' => self::MODE_RANDOM];
         $folders += self::row([
             ['contacts/expedition/expeditions/hot', 'Hot'],
             ['contacts/expedition/expeditions/cold', 'Cold'],
@@ -108,7 +108,7 @@ class Pages
         // contacts/devastation
         $folders['contacts/devastation'] = ['name' => 'Devastation', 'mode' => self::MODE_RANDOM];
 
-        // contacts/antarctica, egypt, dreamlands (Add. Map)
+        // contacts/antarctica, egypt, dreamlands (Side Boards)
         foreach (self::antarcticaLocations() as [$slug, $label]) {
             $folders[$slug] = ['name' => $label, 'mode' => self::MODE_RANDOM];
         }
@@ -127,7 +127,6 @@ class Pages
             ['special/death-sanity', 'Death (Sanity)'],
             ['special/death-health', 'Death (Health)'],
             ['special/death-sacrifice', 'Death (Sacrifice)'],
-            ['special/devoured', 'Devoured'],
             ['special/honey-pie', 'Honey Pie'],
         ], self::MODE_FROM_START);
 
@@ -142,7 +141,7 @@ class Pages
         ], self::MODE_FROM_START);
 
         // special/disaster/city/* — disaster-specific tracks per big city.
-        // Reuses the main board for picking, but tracks are separate from Contacts › Big City.
+        // Reuses the main board for picking, but tracks are separate from Encounters › Named Cities.
         foreach (self::bigCityButtons() as [$slug, $label]) {
             $citySlug = str_replace('contacts/big-city/', '', $slug);
             $folders["special/disaster/city/$citySlug"] = [
@@ -162,7 +161,7 @@ class Pages
             ];
         }
 
-        // per-ancient-one folder (used by Contacts -> Elder)
+        // per-ancient-one folder (used by Encounters -> Ancient One)
         foreach (self::ancientOnes() as [$slug, $name]) {
             $folders["ancient/$slug"] = [
                 'name' => $name,
@@ -186,14 +185,14 @@ class Pages
     public static function pastLabels(): array
     {
         return [
-            'Through the slits in the closet door',
-            'According to the papers the year is 1771',
-            'Through the shifting sands of the desert',
-            'The police have surrounded what looks like a church',
-            'You appear on the continent of Mu',
-            'enormous primitive buildings made of green stone',
-            'You are shocked to see a younger version of yourself',
-            'The people of Arkham are prowling the streets hunting a witch',
+            'Сквозь щели в дверях чулана вы видите самого себя в детстве, сидящего в постели.',
+            'Вы стоите перед старинным научным оборудованием.',
+            'Среди барханов вы замечаете мужчину, похожего на безумца.',
+            'Вы оказываетесь в Провиденсе, штат Род-Айленд, более шестидесяти лет назад.',
+            'Вы оказались на континенте Му в его последний день.',
+            'По другую сторону портала вы оказываетесь в пустом городе с огромными примитивными зданиями из зеленого камня.',
+            'Вы не можете поверить, когда видите более молодого себя, участвующего в ритуале культа, открывшего этот портал.',
+            'Жители Аркхэма бродят по улицам, охотясь на ведьм.',
         ];
     }
 
@@ -201,14 +200,14 @@ class Pages
     public static function futureLabels(): array
     {
         return [
-            'You stand in Times Square, New York',
-            "You find yourself in a familiar city, but there's no electricity",
-            'Large beetle-like creatures',
-            'imprisoned in a compound with hundreds of plague victims',
-            'wading through the endless river of time',
-            'filled with wizards and the worship of blasphemous gods',
-            'You discover an era of technological marvels',
-            'A future version of you lies in a rancid hotel room',
+            'Вы стоите на Таймс-сквер в Нью-Йорке, но не узнаете площадь.',
+            'Вы оказываетесь в знакомом, но лишённом электричества городе.',
+            'Вокруг вас расстилается незнакомая местность со следами пожара.',
+            'Вы попали в недалёкое будущее, где вас держат в карантине вместе с сотнями жертв эпидемии.',
+            'Вы переходите вброд бесконечную реку времени.',
+            'Это далёкое будущее очень похоже на утраченные древние цивилизации, где обитали волшебники и идолопоклонники.',
+            'Вы оказываетесь в эпохе технологических чудес.',
+            'Будущий вы лежите в затхлом гостиничном номере, бессвязно бормоча и медленно умирая от жестоких ран.',
         ];
     }
 
@@ -272,18 +271,18 @@ class Pages
         ];
     }
 
-    public static function outerWorldLeaves(): array
+    public static function otherWorldLeaves(): array
     {
         return [
-            ['contacts/outer-world/carcosa', 'Carcosa'],
-            ['contacts/outer-world/great-race', 'Great Race'],
-            ['contacts/outer-world/yuggoth', 'Yuggoth'],
-            ['contacts/outer-world/celaeno', 'Celaeno'],
-            ['contacts/outer-world/leng', 'Leng'],
-            ['contacts/outer-world/dreamlands', 'Dreamlands'],
-            ['contacts/outer-world/kadath', 'Kadath'],
-            ['contacts/outer-world/underworld', 'Underworld'],
-            ['contacts/outer-world/abyss', 'Abyss'],
+            ['contacts/other-world/carcosa', 'Carcosa'],
+            ['contacts/other-world/great-race', 'Great Race'],
+            ['contacts/other-world/yuggoth', 'Yuggoth'],
+            ['contacts/other-world/celaeno', 'Celaeno'],
+            ['contacts/other-world/leng', 'Leng'],
+            ['contacts/other-world/dreamlands', 'Dreamlands'],
+            ['contacts/other-world/kadath', 'Kadath'],
+            ['contacts/other-world/underworld', 'Underworld'],
+            ['contacts/other-world/abyss', 'Abyss'],
         ];
     }
 

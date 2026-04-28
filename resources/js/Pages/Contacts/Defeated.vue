@@ -16,6 +16,6 @@ const rows = [
 </script>
 
 <template>
-    <Breadcrumb title="Defeated" parent="Contacts" />
+    <Breadcrumb title="Defeated" parent="Encounters" />
     <ButtonGrid :rows="rows" :cols="2" />
 </template>

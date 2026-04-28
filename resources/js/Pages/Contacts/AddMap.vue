@@ -7,17 +7,17 @@ defineOptions({ layout: AppLayout });
 
 const rows = [
     [
-        { type: 'nav', label: 'Antarctica', href: '/contacts/add-map/antarctica',
+        { type: 'nav', label: 'Antarctica', href: '/encounters/side-boards/antarctica',
           tone: 'bg-sky-400 hover:bg-sky-300 text-sky-950 border-sky-200' },
-        { type: 'nav', label: 'Egypt', href: '/contacts/add-map/egypt',
+        { type: 'nav', label: 'Egypt', href: '/encounters/side-boards/egypt',
           tone: 'bg-yellow-500 hover:bg-yellow-400 text-yellow-950 border-yellow-300' },
-        { type: 'nav', label: 'Dreamlands', href: '/contacts/add-map/dreamlands',
+        { type: 'nav', label: 'Dreamlands', href: '/encounters/side-boards/dreamlands',
           tone: 'bg-emerald-950 hover:bg-emerald-900 text-emerald-100 border-emerald-800' },
     ],
 ];
 </script>
 
 <template>
-    <Breadcrumb title="Additional Maps" parent="Contacts" />
+    <Breadcrumb title="Side Boards" parent="Encounters" />
     <ButtonGrid :rows="rows" :cols="3" />
 </template>

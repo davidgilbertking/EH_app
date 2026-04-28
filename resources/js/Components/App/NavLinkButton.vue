@@ -30,7 +30,7 @@ const variantClasses = {
     investigators:'bg-indigo-900/70 hover:bg-indigo-800 text-indigo-50 border-indigo-700',
     ancients:    'bg-fuchsia-900/70 hover:bg-fuchsia-800 text-fuchsia-50 border-fuchsia-700',
     bigCity:     'bg-emerald-800 hover:bg-emerald-700 text-emerald-50 border-emerald-600',
-    outerWorld:  'bg-purple-900/70 hover:bg-purple-800 text-purple-50 border-purple-700',
+    otherWorld:  'bg-purple-900/70 hover:bg-purple-800 text-purple-50 border-purple-700',
     weather:     'bg-cyan-900/70 hover:bg-cyan-800 text-cyan-50 border-cyan-700',
     location:    'bg-orange-900/70 hover:bg-orange-800 text-orange-50 border-orange-700',
     past:        'bg-stone-800 hover:bg-stone-700 text-stone-100 border-stone-600',
@@ -42,13 +42,18 @@ const variantClasses = {
 <template>
     <Link
         :href="href"
-        class="relative rounded-xl border px-3 text-center font-semibold tracking-wide block active:scale-[0.98] transition"
+        class="flex h-full items-center justify-center rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
         :class="[
             tone || variantClasses[variant] || variantClasses.default,
-            big ? 'py-5 text-lg' : 'py-2.5 text-sm',
+            big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
         ]"
     >
-        {{ label }}
-        <span aria-hidden="true" class="absolute right-2 top-1.5 text-xs opacity-50">›</span>
+        <span class="inline-flex items-center justify-center gap-1">
+            <span>{{ label }}</span>
+            <span
+                aria-hidden="true"
+                :class="big ? 'text-[1.15em] leading-none' : 'text-sm leading-none'"
+            >›</span>
+        </span>
     </Link>
 </template>

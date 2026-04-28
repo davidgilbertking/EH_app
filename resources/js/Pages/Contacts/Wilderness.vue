@@ -16,6 +16,6 @@ const hotspots = wildernessSpaces.map((w) => ({
 </script>
 
 <template>
-    <Breadcrumb title="Wilderness" parent="Contacts › General" />
+    <Breadcrumb title="Wilderness" parent="Encounters › General" />
     <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" />
 </template>

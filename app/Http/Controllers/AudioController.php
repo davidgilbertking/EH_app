@@ -15,18 +15,45 @@ class AudioController extends Controller
      */
     public function pick(string $slug): JsonResponse
     {
-        $folder = SoundFolder::where('slug', $slug)->firstOrFail();
+        $aliases = $this->worldSlugAliases($slug);
+        $folders = SoundFolder::whereIn('slug', $aliases)->get()->keyBy('slug');
 
-        $track = SoundTrack::where('sound_folder_id', $folder->id)
-            ->inRandomOrder()
-            ->first();
-
-        if (! $track) {
+        if ($folders->isEmpty()) {
             return response()->json([
-                'error' => 'No tracks indexed in folder',
-                'folderSlug' => $folder->slug,
+                'error' => 'Folder not found',
+                'folderSlug' => $slug,
             ], 404);
         }
+
+        $orderedSlugs = array_values(array_unique([$slug, ...$aliases]));
+        $folder = null;
+        $track = null;
+
+        foreach ($orderedSlugs as $candidateSlug) {
+            $candidateFolder = $folders->get($candidateSlug);
+            if (! $candidateFolder) {
+                continue;
+            }
+
+            $candidateTrack = SoundTrack::where('sound_folder_id', $candidateFolder->id)
+                ->inRandomOrder()
+                ->first();
+
+            if ($candidateTrack) {
+                $folder = $candidateFolder;
+                $track = $candidateTrack;
+                break;
+            }
+        }
+
+        if (! $track) {
+            $fallbackFolder = $folders->get($slug) ?? $folders->first();
+            return response()->json([
+                'error' => 'No tracks indexed in folder',
+                'folderSlug' => $fallbackFolder?->slug ?? $slug,
+            ], 404);
+        }
+
 
         return response()->json([
             'trackId' => $track->id,
@@ -58,7 +85,11 @@ class AudioController extends Controller
         $relative = config('eh.audio_root', 'audio').'/'.$track->file_path;
 
         if (! $disk->exists($relative)) {
-            return response('Audio file missing', 404);
+            $alternate = $this->alternateWorldPath($track->file_path);
+            if (! $alternate || ! $disk->exists(config('eh.audio_root', 'audio').'/'.$alternate)) {
+                return response('Audio file missing', 404);
+            }
+            $relative = config('eh.audio_root', 'audio').'/'.$alternate;
         }
 
         $path = $disk->path($relative);
@@ -111,5 +142,31 @@ class AudioController extends Controller
             'flac' => 'audio/flac',
             default => 'application/octet-stream',
         };
+    }
+
+    /** @return string[] */
+    private function worldSlugAliases(string $slug): array
+    {
+        $aliases = [$slug];
+
+        if (str_contains($slug, '/other-world/')) {
+            $aliases[] = str_replace('/other-world/', '/outer-world/', $slug);
+        }
+        if (str_contains($slug, '/outer-world/')) {
+            $aliases[] = str_replace('/outer-world/', '/other-world/', $slug);
+        }
+
+        return array_values(array_unique($aliases));
+    }
+
+    private function alternateWorldPath(string $path): ?string
+    {
+        if (str_contains($path, '/other-world/')) {
+            return str_replace('/other-world/', '/outer-world/', $path);
+        }
+        if (str_contains($path, '/outer-world/')) {
+            return str_replace('/outer-world/', '/other-world/', $path);
+        }
+        return null;
     }
 }

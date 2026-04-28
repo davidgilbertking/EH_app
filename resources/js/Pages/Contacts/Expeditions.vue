@@ -18,6 +18,6 @@ const rows = [
 </script>
 
 <template>
-    <Breadcrumb title="Expeditions" parent="Contacts › Expedition" />
+    <Breadcrumb title="Expedition" parent="Encounters › Quest" />
     <ButtonGrid :rows="rows" :cols="3" />
 </template>

@@ -33,6 +33,6 @@ const hotspots = cities.map((c) => ({
 </script>
 
 <template>
-    <Breadcrumb title="Big City" parent="Contacts" />
+    <Breadcrumb title="Named Cities" parent="Encounters" />
     <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" />
 </template>

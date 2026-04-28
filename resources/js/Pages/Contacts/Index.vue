@@ -15,33 +15,38 @@ const elderBtn = computed(() => {
         return {
             type: 'play',
             folderSlug: `ancient/${ancient.value.slug}`,
-            label: `Elder — ${ancient.value.name}`,
-            variant: 'elder',
+            label: ancient.value.name,
+            tone: 'bg-black hover:bg-neutral-900 text-red-500 border-neutral-700',
         };
     }
-    return { type: 'nav', label: 'Pick Ancient One', href: '/special/ancient-ones', variant: 'ancients' };
+    return {
+        type: 'nav',
+        label: 'Pick Ancient One',
+        href: '/other/ancient-ones',
+        tone: 'bg-zinc-300 hover:bg-zinc-200 text-zinc-900 border-zinc-100',
+    };
 });
 
 const rows = computed(() => [
     [
         elderBtn.value,
-        { type: 'nav', label: 'General',     href: '/contacts/general',     variant: 'wilderness' },
-        { type: 'nav', label: 'Obstruction', href: '/contacts/obstruction', variant: 'obstruction' },
+        { type: 'nav', label: 'General',     href: '/encounters/general',     variant: 'wilderness' },
+        { type: 'nav', label: 'Restriction', href: '/encounters/restriction', variant: 'obstruction' },
     ],
     [
-        { type: 'nav', label: 'Big City',    href: '/contacts/big-city',    variant: 'bigCity' },
-        { type: 'nav', label: 'Outer World', href: '/contacts/outer-world', variant: 'outerWorld' },
-        { type: 'nav', label: 'Defeated',    href: '/contacts/defeated',    variant: 'defeated' },
+        { type: 'nav', label: 'Named Cities', href: '/encounters/named-cities', variant: 'bigCity' },
+        { type: 'nav', label: 'Other World',  href: '/encounters/other-world',  variant: 'otherWorld' },
+        { type: 'nav', label: 'Defeated',     href: '/encounters/defeated',     variant: 'defeated' },
     ],
     [
-        { type: 'nav', label: 'Expedition',  href: '/contacts/expedition',  variant: 'expedition' },
-        { type: 'nav', label: 'Add. Map',    href: '/contacts/add-map',     variant: 'addmap' },
+        { type: 'nav', label: 'Quest',       href: '/encounters/quest',       variant: 'expedition' },
+        { type: 'nav', label: 'Side Boards', href: '/encounters/side-boards', variant: 'addmap' },
         { type: 'play', label: 'Devastation', folderSlug: 'contacts/devastation', variant: 'devastation' },
     ],
 ]);
 </script>
 
 <template>
-    <Breadcrumb title="Contacts" />
+    <Breadcrumb title="Encounters" />
     <ButtonGrid :rows="rows" :cols="3" />
 </template>

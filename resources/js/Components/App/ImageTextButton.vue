@@ -1,13 +1,14 @@
 <script setup>
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
-import { router, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
     folderSlug: { type: String, required: true },
     label: { type: String, required: true },
     imageUrl: { type: String, default: null },
+    href: { type: String, default: null },
     mode: { type: String, default: null },
     // tailwind-class string for the button background/border
     tone: { type: String, default: 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-neutral-100' },
@@ -15,6 +16,7 @@ const props = defineProps({
 
 const page = usePage();
 const isPlaying = computed(() => engine.state.playingFolder === props.folderSlug);
+const isNav = computed(() => Boolean(props.href));
 
 function tap() {
     if (isPlaying.value) {
@@ -48,9 +50,29 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
 </script>
 
 <template>
+    <Link
+        v-if="isNav"
+        :href="href"
+        class="flex h-20 w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
+        :class="tone"
+    >
+        <img
+            v-if="imageUrl"
+            :src="imageUrl"
+            :alt="label"
+            class="h-16 w-16 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+        />
+        <span
+            v-else
+            class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
+        >?</span>
+        <span class="flex-1 text-lg font-bold leading-tight tracking-wide">{{ label }}</span>
+    </Link>
+
     <button
+        v-else
         type="button"
-        class="flex w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
+        class="flex h-20 w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
         :class="[tone, isPlaying ? 'ring-2 ring-amber-400' : '']"
         v-bind="bindings"
     >
@@ -58,12 +80,12 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-if="imageUrl"
             :src="imageUrl"
             :alt="label"
-            class="h-16 w-16 flex-none rounded-lg object-cover"
+            class="h-16 w-16 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         />
-        <div
+        <span
             v-else
-            class="h-16 w-16 flex-none rounded-lg bg-black/30 grid place-items-center text-2xl opacity-60"
-        >?</div>
-        <span class="flex-1 text-lg font-bold tracking-wide">{{ label }}</span>
+            class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
+        >?</span>
+        <span class="flex-1 text-lg font-bold leading-tight tracking-wide">{{ label }}</span>
     </button>
 </template>

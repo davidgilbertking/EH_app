@@ -12,6 +12,7 @@ import { computed } from 'vue';
 const props = defineProps({
     folderSlug: { type: String, required: true },
     label: { type: String, required: true },
+    imageUrl: { type: String, default: null },
     mode: { type: String, default: null },
     variant: { type: String, default: 'default' }, // 'default'|'special'|'contacts'
     // Optional Tailwind class string that overrides `variant`. Used by pages
@@ -51,8 +52,8 @@ const variantClasses = {
     location:    'bg-orange-900/70 hover:bg-orange-800 text-orange-50 border-orange-700',
     // Contacts sub
     bigCity:     'bg-emerald-800 hover:bg-emerald-700 text-emerald-50 border-emerald-600',
-    outerWorld:  'bg-purple-900/70 hover:bg-purple-800 text-purple-50 border-purple-700',
-    // Outer-World per-location
+    otherWorld:  'bg-purple-900/70 hover:bg-purple-800 text-purple-50 border-purple-700',
+    // Other-World per-location
     carcosa:     'bg-yellow-900/70 hover:bg-yellow-800 text-yellow-50 border-yellow-700',
     greatRace:   'bg-lime-900/70 hover:bg-lime-800 text-lime-50 border-lime-700',
     yuggoth:     'bg-violet-950 hover:bg-violet-900 text-violet-100 border-violet-800',
@@ -95,6 +96,7 @@ function longPress() {
             mode: props.mode || null,
             // Snapshot the button's current colour so the blob inherits it.
             tone: cls.value,
+            imageUrl: props.imageUrl || null,
         },
     ];
     router.post(
@@ -114,10 +116,10 @@ const bindings = useLongPress({
 <template>
     <button
         type="button"
-        class="rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
+        class="h-full rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
         :class="[
             cls,
-            big ? 'py-5 text-lg' : 'py-2.5 text-sm',
+            big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
             isPlaying ? 'ring-2 ring-amber-400' : '',
         ]"
         v-bind="bindings"

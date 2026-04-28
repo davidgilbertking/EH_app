@@ -23,13 +23,16 @@ class StateController extends Controller
     public function setAncientOne(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'slug' => 'required|string|exists:ancient_ones,slug',
+            'slug' => 'nullable|string|exists:ancient_ones,slug',
         ]);
 
-        $ancient = AncientOne::where('slug', $data['slug'])->firstOrFail();
-
         $state = UserState::firstOrNew(['user_id' => $request->user()->id]);
-        $state->current_ancient_one_id = $ancient->id;
+        if (($data['slug'] ?? null) === null) {
+            $state->current_ancient_one_id = null;
+        } else {
+            $ancient = AncientOne::where('slug', $data['slug'])->firstOrFail();
+            $state->current_ancient_one_id = $ancient->id;
+        }
         $state->blobs ??= [];
         $state->save();
 

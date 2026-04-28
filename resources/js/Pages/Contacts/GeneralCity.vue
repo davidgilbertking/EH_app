@@ -16,6 +16,6 @@ const hotspots = citySpaces.map((c) => ({
 </script>
 
 <template>
-    <Breadcrumb title="City" parent="Contacts › General" />
+    <Breadcrumb title="City" parent="Encounters › General" />
     <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" />
 </template>

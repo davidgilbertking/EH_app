@@ -16,11 +16,11 @@ defineProps({
 </script>
 
 <template>
-    <div class="mx-auto max-w-3xl space-y-3">
+    <div class="mx-auto max-w-3xl space-y-9 pt-4">
         <div
             v-for="(row, rowIdx) in rows"
             :key="rowIdx"
-            class="grid gap-3"
+            class="grid gap-x-8"
             :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }"
         >
             <template v-for="(btn, colIdx) in row" :key="colIdx">

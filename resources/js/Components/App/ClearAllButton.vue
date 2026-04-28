@@ -1,12 +1,14 @@
 <script setup>
 import { engine } from '@/audio/engine';
 import { router, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     disabled: { type: Boolean, default: false },
 });
 
 const page = usePage();
+const broomMissing = ref(false);
 
 function clearAll() {
     if (props.disabled) return;
@@ -34,10 +36,38 @@ function clearAll() {
     <button
         type="button"
         aria-label="Clear all blobs"
-        class="fixed right-4 bottom-4 z-40 rounded-full bg-rose-900/90 px-6 py-5 text-base font-bold uppercase tracking-wider text-rose-50 shadow-2xl backdrop-blur active:scale-95 transition border border-rose-700 hover:bg-rose-800 disabled:opacity-30 disabled:pointer-events-none"
+        class="fixed right-4 bottom-4 z-40 grid h-20 w-20 place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur transition hover:bg-neutral-700 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
         :disabled="disabled"
         @click="clearAll"
     >
-        Clear all
+        <img
+            v-if="!broomMissing"
+            src="/icons/broom-clear.png"
+            alt=""
+            class="h-12 w-12 object-contain brightness-0 invert"
+            @error="broomMissing = true"
+        />
+        <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-12 w-12"
+            aria-hidden="true"
+        >
+            <circle cx="5" cy="8" r="1.5" />
+            <circle cx="8.5" cy="6.2" r="1" />
+            <circle cx="19.5" cy="18" r="1.5" />
+            <path d="M14.5 2.5l7 7" />
+            <path d="M13.2 3.8l7 7" />
+            <path d="M13.9 9.7c-1.9-.2-4 .8-5.6 2.4L3 17.4l4.2 4.2 5.4-5.4c1.7-1.7 2.8-3.8 2.5-5.8z" />
+            <path d="M5.7 20.1l2.2-2.2" />
+            <path d="M7.8 21.9l2.4-2.4" />
+            <path d="M10.2 22.6l2.4-2.4" />
+        </svg>
     </button>
 </template>

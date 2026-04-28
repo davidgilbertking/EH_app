@@ -14,7 +14,7 @@ class PageController extends Controller
         return Inertia::render('Home');
     }
 
-    // ---- Contacts tree ----
+    // ---- Encounters tree ----
     public function contacts(): Response
     {
         return Inertia::render('Contacts/Index');
@@ -50,9 +50,9 @@ class PageController extends Controller
         return Inertia::render('Contacts/BigCity');
     }
 
-    public function outerWorld(): Response
+    public function otherWorld(): Response
     {
-        return Inertia::render('Contacts/OuterWorld');
+        return Inertia::render('Contacts/OtherWorld');
     }
 
     public function past(): Response
@@ -100,7 +100,7 @@ class PageController extends Controller
         return Inertia::render('Contacts/Dreamlands');
     }
 
-    // ---- Special tree ----
+    // ---- Other tree ----
     public function special(): Response
     {
         return Inertia::render('Special/Index');

@@ -6,49 +6,73 @@ import { computed } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
-defineProps({
+const props = defineProps({
     items: { type: Array, required: true },
 });
 
 const page = usePage();
 const currentSlug = computed(() => page.props.gameState?.ancientOne?.slug ?? null);
+const ROWS = 5;
+const COLS = 4;
+const GRID_SLOTS = 20;
+const gridItems = computed(() => {
+    const items = props.items.slice(0, GRID_SLOTS);
+    const cols = Array.from({ length: COLS }, () => []);
+
+    // Fill top-to-bottom inside each column, then move to next column.
+    items.forEach((item, idx) => {
+        const col = Math.floor(idx / ROWS);
+        if (col < COLS) cols[col].push(item);
+    });
+
+    const ordered = [];
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+            ordered.push(cols[col][row] ?? null);
+        }
+    }
+
+    return ordered;
+});
 
 function pick(item) {
     router.post(
         '/state/ancient-one',
-        { slug: item.slug },
+        { slug: currentSlug.value === item.slug ? null : item.slug },
         { preserveState: true, preserveScroll: true, only: ['gameState'] }
     );
 }
 </script>
 
 <template>
-    <Breadcrumb title="Ancient Ones" parent="Special" />
+    <Breadcrumb title="Ancient Ones" parent="Other" />
 
-    <div class="mx-auto max-w-lg space-y-2">
+    <div class="mx-auto grid max-w-7xl grid-cols-4 gap-3">
         <button
-            v-for="item in items"
-            :key="item.slug"
+            v-for="(item, idx) in gridItems"
+            :key="item?.slug ?? `empty-${idx}`"
             type="button"
-            class="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left active:scale-[0.98] transition"
+            class="flex min-h-[4.7rem] items-center gap-2 rounded-xl border px-3 py-2 text-left active:scale-[0.98] transition"
             :class="
-                currentSlug === item.slug
+                !item
+                    ? 'invisible'
+                    : currentSlug === item.slug
                     ? 'border-amber-400 bg-amber-900/40'
                     : 'border-sky-900 bg-sky-950/60 hover:bg-sky-900/60'
             "
-            @click="pick(item)"
+            @click="item && pick(item)"
         >
             <img
-                v-if="item.imageUrl"
+                v-if="item?.imageUrl"
                 :src="item.imageUrl"
                 :alt="item.name"
-                class="h-16 w-16 flex-none rounded-lg object-cover"
+                class="h-12 w-12 flex-none rounded-lg object-cover"
             />
-            <div
-                v-else
-                class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-sky-900/50 text-base text-sky-300"
-            >?</div>
-            <span class="text-base font-bold tracking-wide text-sky-50">{{ item.name }}</span>
+            <span
+                v-else-if="item"
+                class="grid h-12 w-12 flex-none place-items-center rounded-lg bg-sky-900/50 text-sm text-sky-300"
+            >?</span>
+            <span v-if="item" class="text-lg font-bold leading-tight tracking-wide text-sky-50">{{ item.name }}</span>
         </button>
     </div>
 </template>

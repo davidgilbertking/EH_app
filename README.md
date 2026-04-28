@@ -63,15 +63,15 @@ php artisan tinker
 >>> \App\Models\SoundFolder::pluck('slug')->all();
 ```
 
-| Slug pattern | What plays it |
-|------|---------------|
-| `action`, `action-muted` | Header **Action** (tap / hold) |
-| `combat`, `combat-epic` | Header **Combat** (tap / hold) |
-| `mythos` | Header **Mythos** |
-| `contacts/*` | Pages under Contacts (Big City, Outer World, Wilderness, …) |
-| `special/*` | Pages under Special (Disaster, Death-*, Honey Pie, …) |
-| `ancient/<slug>` | Contacts → Elder, picked from current Ancient One |
-| `special/characters/<slug>` | Tap on an investigator on Special → Characters |
+| Slug pattern | What plays it                                                 |
+|------|---------------------------------------------------------------|
+| `action`, `action-muted` | Header **Action** (tap / hold)                                |
+| `combat`, `combat-epic` | Header **Combat** (tap / hold)                                |
+| `mythos` | Header **Mythos**                                             |
+| `contacts/*` | Pages under Encounters (Named Cities, Other World, Wilderness, …) |
+| `special/*` | Pages under Other (Disaster, Death-*, Honey Pie, …)                |
+| `ancient/<slug>` | Encounters → Ancient One, picked from current Ancient One         |
+| `special/characters/<slug>` | Tap on an investigator on Other → Characters                 |
 
 Run `php artisan audio:init` to (re)create empty folders for every slug.
 Inspect `app/Domain/Pages.php` for the full slug catalogue.
@@ -93,9 +93,9 @@ Supported extensions: `jpg`, `jpeg`, `png`, `webp`.
 
 ## Audio behaviour
 
-- **Default mode** (Contacts pages, Action/Combat/Mythos): fade-in 3 s,
+- **Default mode** (Encounters pages, Action/Combat/Mythos): fade-in 3 s,
   resumes from a random position in the first ~60 % of the track.
-- **Special mode** (Special pages, Disaster city overrides): plays from
+- **Special mode** (Other pages, Disaster city overrides): plays from
   position 0 with no fade-in.
 - Switching tracks while one is playing always cross-fades the previous out
   over 2 s.
@@ -106,7 +106,7 @@ Supported extensions: `jpg`, `jpeg`, `png`, `webp`.
 
 ## Maps (Antarctica / Egypt / Dreamlands)
 
-The three "Add. Map" sub-pages render absolutely-positioned hotspots over a
+The three "Side Boards" sub-pages render absolutely-positioned hotspots over a
 background image expected at `public/maps/<name>.jpg`. Drop these three files
 in `public/maps/`:
 - `antarctica.jpg`

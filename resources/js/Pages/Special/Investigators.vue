@@ -78,11 +78,11 @@ function makeBindings(item) {
 </script>
 
 <template>
-    <Breadcrumb title="Investigators" parent="Special" />
+    <Breadcrumb title="Investigators" parent="Other" />
 
     <div class="mx-auto max-w-6xl">
         <div
-            class="grid gap-2"
+            class="grid gap-x-5 gap-y-3"
             :style="{
                 gridTemplateColumns: `repeat(${COLS_PER_GROUP * 2}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
@@ -92,7 +92,7 @@ function makeBindings(item) {
                 v-for="item in allItems"
                 :key="item.slug"
                 type="button"
-                class="flex items-center gap-3 rounded-xl border px-3 py-2 text-left active:scale-[0.98] transition"
+                class="flex items-center gap-5 rounded-2xl border px-6 py-4 text-left active:scale-[0.98] transition"
                 :class="[
                     item.tone,
                     engine.state.playingFolder === item.folderSlug ? 'ring-2 ring-amber-400' : '',
@@ -104,13 +104,13 @@ function makeBindings(item) {
                     v-if="item.imageUrl"
                     :src="item.imageUrl"
                     :alt="item.name"
-                    class="h-12 w-12 flex-none rounded object-cover"
+                    class="h-24 w-24 flex-none rounded-lg object-cover"
                 />
-                <div
+                <span
                     v-else
-                    class="grid h-12 w-12 flex-none place-items-center rounded bg-neutral-800 text-xs text-neutral-500"
-                >?</div>
-                <span class="text-sm font-semibold text-neutral-100">{{ item.name }}</span>
+                    class="grid h-24 w-24 flex-none place-items-center rounded-lg bg-neutral-800 text-xl text-neutral-500"
+                >?</span>
+                <span class="text-xl font-semibold text-neutral-100">{{ item.name }}</span>
             </button>
         </div>
     </div>

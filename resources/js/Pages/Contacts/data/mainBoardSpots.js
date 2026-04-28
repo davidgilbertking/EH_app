@@ -45,14 +45,14 @@ export const wildernessSpaces = [
 
 // Blue "sea" circles — 7 numbered (2, 3, 8, 11, 12, 13, 18) + Antarctica.
 export const seaSpaces = [
-    { x: 4.3, y: 41, label: 'Space 2',   slug: 'space-2' },
+    { x: 4.8, y: 41.7, label: 'Space 2',   slug: 'space-2' },
     { x: 10.5, y: 78.3, label: 'Space 3',   slug: 'space-3' },
-    { x: 26.8, y: 42.8, label: 'Space 8',   slug: 'space-8' },
+    { x: 26.8, y: 42.9, label: 'Space 8',   slug: 'space-8' },
     { x: 43.8, y: 78.7, label: 'Space 11',  slug: 'space-11' },
     { x: 39.1, y: 88, label: 'Space 12',  slug: 'space-12' },
     { x: 57.6, y: 13, label: 'Space 13',  slug: 'space-13' },
     { x: 69, y: 84, label: 'Space 18',  slug: 'space-18' },
-    { x: 59.1, y: 96, label: 'Antarctica', slug: 'antarctica' },
+    { x: 59.1, y: 93.5, label: 'Antarctica', slug: 'antarctica' },
 ];
 
 // Kept for backward compat (old General/BigCity imports).

@@ -53,19 +53,19 @@ function makeBindings(h) {
 </script>
 
 <template>
-    <div class="mx-auto flex w-full items-center justify-center" style="max-height: calc(100vh - 9rem)">
-        <div class="relative inline-block max-h-[calc(100vh-9rem)]">
+    <div class="mx-auto flex w-full items-center justify-center" style="max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem)">
+        <div class="relative inline-block" style="max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem)">
             <img
                 v-if="backgroundUrl"
                 :src="backgroundUrl"
                 alt=""
-                class="block max-h-[calc(100vh-9rem)] w-auto rounded-2xl border border-neutral-800 shadow-inner"
-                style="object-fit: contain"
+                class="block w-auto rounded-2xl border border-neutral-800 shadow-inner"
+                style="max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem); object-fit: contain"
             />
             <div
                 v-else
                 class="grid h-[60vh] w-[80vw] place-items-center rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/50 text-xs text-neutral-500"
-                :style="{ aspectRatio: aspect }"
+                :style="{ aspectRatio: aspect, maxHeight: 'calc(100dvh - var(--header-h, 0px) - 2.75rem)' }"
             >
                 Map background not uploaded
             </div>

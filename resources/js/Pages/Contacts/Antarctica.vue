@@ -19,6 +19,6 @@ const hotspots = [
 </script>
 
 <template>
-    <Breadcrumb title="Antarctica" parent="Contacts › Add. Map" />
+    <Breadcrumb title="Antarctica" parent="Encounters › Side Boards" />
     <MapPage background-url="/maps/antarctica.jpg" :hotspots="hotspots" />
 </template>

@@ -16,6 +16,6 @@ const hotspots = seaSpaces.map((s) => ({
 </script>
 
 <template>
-    <Breadcrumb title="Sea" parent="Contacts › General" />
+    <Breadcrumb title="Sea" parent="Encounters › General" />
     <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" />
 </template>

@@ -2,13 +2,12 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import ImageTextButton from '@/Components/App/ImageTextButton.vue';
-import NavLinkButton from '@/Components/App/NavLinkButton.vue';
 
 defineOptions({ layout: AppLayout });
 
-// Image path: drop art into public/images/outer-worlds/<slug>.jpg.
+// Image path: drop art into public/images/other-worlds/<slug>.png.
 // Buttons render a "?" placeholder when the image is absent.
-const img = (slug) => `/images/outer-worlds/${slug}.jpg`;
+const img = (slug) => `/images/other-worlds/${slug}.png`;
 
 const worlds = [
     { slug: 'carcosa',    label: 'Carcosa',    tone: 'bg-yellow-900/70  hover:bg-yellow-800  border-yellow-700  text-yellow-50' },
@@ -24,23 +23,35 @@ const worlds = [
 </script>
 
 <template>
-    <Breadcrumb title="Outer World" parent="Contacts" />
+    <Breadcrumb title="Other World" parent="Encounters" />
 
     <div class="mx-auto max-w-4xl space-y-4">
-        <div class="grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <div class="grid gap-x-8 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+            <ImageTextButton
+                folder-slug="contacts/other-world/past/1"
+                label="Past"
+                href="/encounters/other-world/past"
+                :image-url="img('past')"
+                tone="bg-stone-800 hover:bg-stone-700 border-stone-600 text-stone-100"
+            />
+            <ImageTextButton
+                folder-slug="contacts/other-world/future/1"
+                label="Future"
+                href="/encounters/other-world/future"
+                :image-url="img('future')"
+                tone="bg-sky-900/80 hover:bg-sky-800 border-sky-700 text-sky-50"
+            />
+        </div>
+
+        <div class="grid gap-x-8 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 v-for="w in worlds"
                 :key="w.slug"
-                :folder-slug="`contacts/outer-world/${w.slug}`"
+                :folder-slug="`contacts/other-world/${w.slug}`"
                 :label="w.label"
                 :image-url="img(w.slug)"
                 :tone="w.tone"
             />
-        </div>
-
-        <div class="grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
-            <NavLinkButton href="/contacts/outer-world/past"   label="Past"   variant="past" />
-            <NavLinkButton href="/contacts/outer-world/future" label="Future" variant="future" />
         </div>
     </div>
 </template>
