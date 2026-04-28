@@ -7,8 +7,8 @@ defineOptions({ layout: AppLayout });
 
 const rows = [
     [
-        { type: 'nav', label: 'City', href: '/other/disaster/city',
-          tone: 'bg-red-700 hover:bg-red-600 text-red-50 border-red-500' },
+        { type: 'nav', label: 'Major Cities', href: '/other/disaster/city',
+          tone: 'border-neutral-300/40 bg-neutral-900/85 hover:bg-neutral-800 text-neutral-100' },
         { type: 'nav', label: 'Weather', href: '/other/disaster/weather',
           tone: 'bg-teal-500 hover:bg-teal-400 text-teal-950 border-teal-300' },
         { type: 'nav', label: 'Location', href: '/other/disaster/location',

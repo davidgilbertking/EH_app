@@ -2,7 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import MapPage from '@/Components/App/MapPage.vue';
-import { cities } from './data/mainBoardSpots.js';
+import { citiesContacts } from './data/mainBoardSpots.js';
 
 defineOptions({ layout: AppLayout });
 
@@ -23,7 +23,7 @@ const REGION_OF = {
     'shanghai':      'asia',
     'sydney':        'asia',
 };
-const hotspots = cities.map((c) => ({
+const hotspots = citiesContacts.map((c) => ({
     x: c.x,
     y: c.y,
     label: c.label,

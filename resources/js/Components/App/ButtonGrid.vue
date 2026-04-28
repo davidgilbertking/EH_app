@@ -12,11 +12,12 @@ import NavLinkButton from '@/Components/App/NavLinkButton.vue';
 defineProps({
     rows: { type: Array, required: true },
     cols: { type: Number, default: 3 },
+    maxWidth: { type: String, default: '48rem' },
 });
 </script>
 
 <template>
-    <div class="mx-auto max-w-3xl space-y-9 pt-4">
+    <div class="mx-auto space-y-9 pt-4" :style="{ maxWidth }">
         <div
             v-for="(row, rowIdx) in rows"
             :key="rowIdx"
@@ -31,6 +32,8 @@ defineProps({
                     :label="btn.label"
                     :variant="btn.variant"
                     :tone="btn.tone"
+                    :image-url="btn.imageUrl"
+                    :show-image="Boolean(btn.showImage)"
                 />
                 <PlayButton
                     v-else
@@ -39,6 +42,8 @@ defineProps({
                     :mode="btn.mode"
                     :variant="btn.variant"
                     :tone="btn.tone"
+                    :image-url="btn.imageUrl"
+                    :show-image="Boolean(btn.showImage)"
                 />
             </template>
         </div>

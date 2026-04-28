@@ -1,17 +1,20 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 /**
  * A navigation button that goes to another Inertia page. Renders an arrow.
  * No audio playback; long-press is ignored.
  */
-defineProps({
+const props = defineProps({
     href: { type: String, required: true },
     label: { type: String, required: true },
     variant: { type: String, default: 'contacts' }, // matches PlayButton variants
     // Optional Tailwind class string that overrides `variant`. Lets pages
     // hard-code per-button colours without polluting the variant map.
     tone: { type: String, default: null },
+    imageUrl: { type: String, default: null },
+    showImage: { type: Boolean, default: false },
     big: { type: Boolean, default: true },
 });
 
@@ -37,22 +40,33 @@ const variantClasses = {
     future:      'bg-sky-900/80 hover:bg-sky-800 text-sky-50 border-sky-700',
     elder:       'bg-amber-800 hover:bg-amber-700 text-amber-50 border-amber-600',
 };
+
+const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
 </script>
 
 <template>
     <Link
-        :href="href"
+        :href="props.href"
         class="flex h-full items-center justify-center rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
         :class="[
-            tone || variantClasses[variant] || variantClasses.default,
-            big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
+            props.tone || variantClasses[props.variant] || variantClasses.default,
+            props.big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
         ]"
     >
-        <span class="inline-flex items-center justify-center gap-1">
-            <span>{{ label }}</span>
+        <span
+            class="inline-flex w-full items-center"
+            :class="hasVisual ? 'justify-start gap-3 text-left' : 'justify-center gap-1 text-center'"
+        >
+            <img
+                v-if="hasVisual"
+                :src="props.imageUrl"
+                :alt="props.label"
+                class="h-14 w-14 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
+            />
+            <span>{{ props.label }}</span>
             <span
                 aria-hidden="true"
-                :class="big ? 'text-[1.15em] leading-none' : 'text-sm leading-none'"
+                :class="props.big ? 'text-[1.15em] leading-none' : 'text-sm leading-none'"
             >›</span>
         </span>
     </Link>

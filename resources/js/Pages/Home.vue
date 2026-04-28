@@ -35,6 +35,10 @@ function blobTextClass(blob) {
     return 'text-[1.6rem] leading-tight';
 }
 
+function blobLabelAlignClass(blob) {
+    return blobImageUrl(blob) ? 'text-left' : 'text-center';
+}
+
 function playBlob(b) {
     // Universal rule across the whole app: tapping a button whose folder is
     // already playing fades the track out (toggle-stop). Otherwise start a
@@ -82,8 +86,8 @@ function playBlob(b) {
                         : 'h-[4.4rem] w-[4.4rem] flex-none rounded-md object-cover ring-1 ring-black/40'"
                 />
                 <span
-                    class="flex-1 break-words text-left"
-                    :class="blobTextClass(blob)"
+                    class="flex-1 break-words"
+                    :class="[blobLabelAlignClass(blob), blobTextClass(blob)]"
                 >{{ blob.label }}</span>
             </button>
         </div>

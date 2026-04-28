@@ -25,8 +25,8 @@ const worlds = [
 <template>
     <Breadcrumb title="Other World" parent="Encounters" />
 
-    <div class="mx-auto max-w-4xl space-y-4">
-        <div class="grid gap-x-8 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+    <div class="mx-auto max-w-3xl space-y-4">
+        <div class="grid gap-x-6 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 folder-slug="contacts/other-world/past/1"
                 label="Past"
@@ -43,7 +43,7 @@ const worlds = [
             />
         </div>
 
-        <div class="grid gap-x-8 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <div class="grid gap-x-6 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 v-for="w in worlds"
                 :key="w.slug"

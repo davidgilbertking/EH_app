@@ -2,16 +2,30 @@
 // Refine in browser; left-top corner of the image is (0, 0).
 
 // 9 big-city cards drawn on the board (San Francisco … Sydney).
-export const cities = [
-    { x: 9.5,  y: 32, label: 'San Francisco', city: 'san-francisco' },
+// Contacts and Disaster now use separate arrays so coordinates can diverge.
+export const citiesContacts = [
+    { x: 9.5,  y: 32.5, label: 'San Francisco', city: 'san-francisco' },
     { x: 27, y: 33, label: 'Arkham',        city: 'arkham' },
-    { x: 44, y: 28, label: 'London',        city: 'london' },
+    { x: 44, y: 27.7, label: 'London',        city: 'london' },
     { x: 50, y: 40, label: 'Rome',          city: 'rome' },
     { x: 60.5, y: 35, label: 'Istanbul',      city: 'istanbul' },
     { x: 93.2, y: 41, label: 'Tokyo',         city: 'tokyo' },
     { x: 84.7, y: 50, label: 'Shanghai',      city: 'shanghai' },
     { x: 26.5, y: 75, label: 'Buenos Aires',  city: 'buenos-aires' },
     { x: 91.3, y: 83.5, label: 'Sydney',        city: 'sydney' },
+];
+
+// Start as exact copy of contacts; safe to tune independently.
+export const citiesDisaster = [
+    { x: 9.5,  y: 32, label: 'San Francisco', city: 'san-francisco' },
+    { x: 27, y: 33, label: 'Arkham',        city: 'arkham' },
+    { x: 44, y: 27, label: 'London',        city: 'london' },
+    { x: 50, y: 42, label: 'Rome',          city: 'rome' },
+    { x: 60.5, y: 33, label: 'Istanbul',      city: 'istanbul' },
+    { x: 93.2, y: 40, label: 'Tokyo',         city: 'tokyo' },
+    { x: 84.7, y: 49.5, label: 'Shanghai',      city: 'shanghai' },
+    { x: 26.5, y: 74.5, label: 'Buenos Aires',  city: 'buenos-aires' },
+    { x: 91.3, y: 82.5, label: 'Sydney',        city: 'sydney' },
 ];
 
 // Small black "city-space" circles = non-big-city contacts (spaces 1, 5, 7, 14,

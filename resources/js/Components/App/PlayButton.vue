@@ -13,6 +13,7 @@ const props = defineProps({
     folderSlug: { type: String, required: true },
     label: { type: String, required: true },
     imageUrl: { type: String, default: null },
+    showImage: { type: Boolean, default: false },
     mode: { type: String, default: null },
     variant: { type: String, default: 'default' }, // 'default'|'special'|'contacts'
     // Optional Tailwind class string that overrides `variant`. Used by pages
@@ -68,6 +69,7 @@ const variantClasses = {
 };
 
 const cls = computed(() => props.tone || variantClasses[props.variant] || variantClasses.default);
+const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
 
 const page = usePage();
 const playingFolder = computed(() => engine.state.playingFolder);
@@ -124,6 +126,17 @@ const bindings = useLongPress({
         ]"
         v-bind="bindings"
     >
-        {{ label }}
+        <span
+            class="inline-flex w-full items-center gap-3"
+            :class="hasVisual ? 'justify-start text-left' : 'justify-center text-center'"
+        >
+            <img
+                v-if="hasVisual"
+                :src="imageUrl"
+                :alt="label"
+                class="h-14 w-14 flex-none object-contain"
+            />
+            <span class="leading-tight">{{ label }}</span>
+        </span>
     </button>
 </template>

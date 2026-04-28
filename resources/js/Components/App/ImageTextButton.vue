@@ -66,7 +66,7 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-else
             class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="flex-1 text-lg font-bold leading-tight tracking-wide">{{ label }}</span>
+        <span class="flex-1 text-xl font-bold leading-tight tracking-wide">{{ label }}</span>
     </Link>
 
     <button
@@ -86,6 +86,6 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-else
             class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="flex-1 text-lg font-bold leading-tight tracking-wide">{{ label }}</span>
+        <span class="flex-1 text-xl font-bold leading-tight tracking-wide">{{ label }}</span>
     </button>
 </template>
