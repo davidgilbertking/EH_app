@@ -2,13 +2,24 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import ButtonGrid from '@/Components/App/ButtonGrid.vue';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import { computed, onMounted } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
 const page = usePage();
 const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
+
+// Inertia back/forward restores page from history snapshot.
+// Refresh gameState on page enter so "Pick Ancient One" button always shows
+// current selection after returning from /other/ancient-ones.
+onMounted(() => {
+    router.reload({
+        only: ['gameState'],
+        preserveState: true,
+        preserveScroll: true,
+    });
+});
 
 const elderBtn = computed(() => {
     if (ancient.value) {
