@@ -51,7 +51,13 @@ const allItems = computed(() => [...placedMen.value, ...placedWomen.value]);
 
 function makeBindings(item) {
     return useLongPress({
-        onTap: () => engine.play({ folderSlug: item.folderSlug, label: item.name }),
+        onTap: () => {
+            if (engine.state.playingFolder === item.folderSlug) {
+                engine.stop();
+                return;
+            }
+            engine.play({ folderSlug: item.folderSlug, label: item.name });
+        },
         onLongPress: () => {
             const current = page.props.gameState?.blobs ?? [];
             if (current.find((b) => b.folderSlug === item.folderSlug)) return;

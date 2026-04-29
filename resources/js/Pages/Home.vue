@@ -16,6 +16,11 @@ function isOtherWorldBlob(blob) {
     return slug.includes('/other-world/');
 }
 
+function isDisasterBlob(blob) {
+    const slug = blob?.folderSlug || '';
+    return slug.includes('/disaster/');
+}
+
 function blobImageUrl(blob) {
     if (blob?.imageUrl) return blob.imageUrl;
     const slug = blob?.folderSlug || '';
@@ -37,6 +42,16 @@ function blobTextClass(blob) {
 
 function blobLabelAlignClass(blob) {
     return blobImageUrl(blob) ? 'text-left' : 'text-center';
+}
+
+function blobImageClass(blob) {
+    if (isOtherWorldBlob(blob)) {
+        return 'h-[4.2rem] w-[4.2rem] flex-none object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]';
+    }
+    if (isDisasterBlob(blob)) {
+        return 'h-[4.2rem] w-[4.2rem] flex-none rounded-full object-cover';
+    }
+    return 'h-[4.4rem] w-[4.4rem] flex-none rounded-md object-cover ring-1 ring-black/40';
 }
 
 function playBlob(b) {
@@ -81,9 +96,7 @@ function playBlob(b) {
                     v-if="blobImageUrl(blob)"
                     :src="blobImageUrl(blob)"
                     :alt="blob.label"
-                    :class="isOtherWorldBlob(blob)
-                        ? 'h-[4.2rem] w-[4.2rem] flex-none object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]'
-                        : 'h-[4.4rem] w-[4.4rem] flex-none rounded-md object-cover ring-1 ring-black/40'"
+                    :class="blobImageClass(blob)"
                 />
                 <span
                     class="flex-1 break-words"

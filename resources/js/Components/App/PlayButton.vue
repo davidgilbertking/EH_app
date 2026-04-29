@@ -130,12 +130,16 @@ const bindings = useLongPress({
             class="inline-flex w-full items-center gap-3"
             :class="hasVisual ? 'justify-start text-left' : 'justify-center text-center'"
         >
-            <img
+            <span
                 v-if="hasVisual"
-                :src="imageUrl"
-                :alt="label"
-                class="h-14 w-14 flex-none object-contain"
-            />
+                class="h-14 w-14 flex-none overflow-hidden rounded-full border-0 bg-transparent ring-0 outline-none"
+            >
+                <img
+                    :src="imageUrl"
+                    :alt="label"
+                    class="h-full w-full scale-110 object-cover"
+                />
+            </span>
             <span class="leading-tight">{{ label }}</span>
         </span>
     </button>
