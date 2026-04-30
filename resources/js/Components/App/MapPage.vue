@@ -2,6 +2,7 @@
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { router, usePage } from '@inertiajs/vue3';
+import { reactive } from 'vue';
 
 /**
  * Renders a map background with absolutely-positioned hotspot buttons.
@@ -18,8 +19,17 @@ const props = defineProps({
 });
 
 const page = usePage();
+const pulseByKey = reactive({});
 
-function makeBindings(h) {
+function pulseBlobSaved(key) {
+    if (!key) return;
+    pulseByKey[key] = true;
+    setTimeout(() => {
+        pulseByKey[key] = false;
+    }, 360);
+}
+
+function makeBindings(h, pulseKey) {
     return useLongPress({
         onTap: () => {
             if (engine.state.playingFolder === h.folderSlug) {
@@ -46,7 +56,12 @@ function makeBindings(h) {
             router.post(
                 '/state/blobs',
                 { blobs: updated },
-                { preserveState: true, preserveScroll: true, only: ['gameState'] }
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['gameState'],
+                    onSuccess: () => pulseBlobSaved(pulseKey),
+                }
             );
         },
         threshold: 1000,
@@ -85,10 +100,14 @@ function hotspotSizing(h) {
                     'inline-flex items-center gap-2.5',
                     hotspotSizing(h),
                     h.tone || 'border-emerald-300/50 bg-emerald-900/85 text-emerald-50',
-                    engine.state.playingFolder === h.folderSlug ? 'ring-2 ring-amber-300' : '',
+                    engine.state.playingFolder === h.folderSlug ? 'ring-2 ring-amber-400' : '',
+                    engine.state.isPaused && engine.state.pausedFolder === h.folderSlug
+                        ? 'paused-amber-dash'
+                        : '',
+                    pulseByKey[h.folderSlug || i] ? 'ring-2 ring-amber-400' : '',
                 ]"
                 :style="{ left: h.x + '%', top: h.y + '%' }"
-                v-bind="makeBindings(h)"
+                v-bind="makeBindings(h, h.folderSlug || i)"
             >
                 <img
                     v-if="h.imageUrl"

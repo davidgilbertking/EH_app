@@ -1,0 +1,48 @@
+<script setup>
+import { engine } from '@/audio/engine';
+import { computed } from 'vue';
+
+const isVisible = computed(() => Boolean(engine.state.playingFolder || engine.state.canResume));
+const isPaused = computed(() => engine.state.isPaused);
+
+function togglePause() {
+    if (isPaused.value) {
+        engine.resume();
+    } else {
+        engine.pause();
+    }
+}
+</script>
+
+<template>
+    <button
+        v-if="isVisible"
+        type="button"
+        :aria-label="isPaused ? 'Resume' : 'Pause'"
+        class="fixed right-4 z-40 grid h-20 w-20 place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur hover:bg-neutral-700 active:scale-95 transition"
+        style="top: calc(var(--header-h, 0px) + 1rem);"
+        @click="togglePause"
+    >
+        <svg
+            v-if="!isPaused"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="h-10 w-10"
+            aria-hidden="true"
+        >
+            <rect x="6" y="4" width="4" height="16" rx="1.2" />
+            <rect x="14" y="4" width="4" height="16" rx="1.2" />
+        </svg>
+        <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="h-[2.9rem] w-[2.9rem]"
+            aria-hidden="true"
+        >
+            <path d="M8 5v14l11-7z" />
+        </svg>
+    </button>
+</template>

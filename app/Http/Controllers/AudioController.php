@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\SoundFolder;
 use App\Models\SoundTrack;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class AudioController extends Controller
 {
+    private const STREAM_CHUNK_BYTES = 2 * 1024 * 1024; // 2 MB per open-ended range
+
     /**
      * Pick a random track from the given folder slug. Returns track metadata
      * (id, stream URL, duration, default mode). Frontend then plays via Howler.
@@ -79,8 +82,18 @@ class AudioController extends Controller
      *   - Howler with html5: true relies on the browser audio element, which
      *     sends Range: bytes=0- on every load and expects 206 Partial Content.
      */
-    public function stream(SoundTrack $track, \Illuminate\Http\Request $request)
+    public function stream(SoundTrack $track, Request $request)
     {
+        // Release session file lock before long-running stream response.
+        // Without this, same-user page navigations can block until the stream
+        // request ends (especially visible on php artisan serve / file sessions).
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+        if (function_exists('session_write_close')) {
+            @session_write_close();
+        }
+
         $disk = Storage::disk('local');
         $relative = config('eh.audio_root', 'audio').'/'.$track->file_path;
 
@@ -109,7 +122,12 @@ class AudioController extends Controller
         if ($range = $request->header('Range')) {
             if (preg_match('/bytes=(\d+)-(\d*)/', $range, $m)) {
                 $start = (int) $m[1];
-                $end = $m[2] !== '' ? (int) $m[2] : $end;
+                // Open-ended Range (bytes=N-) can be huge and tie up local
+                // single-worker servers for seconds. Cap each response chunk so
+                // browser continues with follow-up ranges and UI stays responsive.
+                $end = $m[2] !== ''
+                    ? (int) $m[2]
+                    : min($start + self::STREAM_CHUNK_BYTES - 1, $size - 1);
                 $end = min($end, $size - 1);
                 $status = 206;
                 $headers['Content-Length'] = $end - $start + 1;

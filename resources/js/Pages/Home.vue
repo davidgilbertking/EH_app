@@ -79,16 +79,19 @@ function playBlob(b) {
         -->
         <div
             v-if="blobs.length"
-            class="mx-auto grid max-w-[1700px] grid-cols-4 gap-4 px-2 pt-3 pb-3"
+            class="mx-auto grid max-w-[1500px] grid-cols-4 gap-4 pl-16 pr-24 pt-3 pb-3"
         >
             <button
                 v-for="blob in blobs"
                 :key="blob.id"
                 type="button"
-                class="flex h-28 items-center justify-center gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-center font-semibold backdrop-blur ring-1 ring-white/25 shadow-lg shadow-black/50 transition active:scale-[0.97]"
+                class="flex h-28 w-[85%] justify-self-center items-center justify-center gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-center font-semibold backdrop-blur ring-1 ring-white/25 shadow-lg shadow-black/50 transition active:scale-[0.97]"
                 :class="[
                     blob.tone || 'border-neutral-700 bg-neutral-900/80 text-neutral-100',
-                    engine.state.playingFolder === blob.folderSlug ? 'ring-2 ring-amber-400' : '',
+                    engine.state.playingFolder === blob.folderSlug ? 'outline outline-2 outline-amber-400 outline-offset-2' : '',
+                    engine.state.isPaused && engine.state.pausedFolder === blob.folderSlug
+                        ? 'paused-amber-dash'
+                        : '',
                 ]"
                 @click="playBlob(blob)"
             >

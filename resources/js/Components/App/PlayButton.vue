@@ -2,7 +2,7 @@
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 
 /**
  * A button that plays audio on tap. Long-press adds the button as a "blob"
@@ -74,6 +74,24 @@ const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
 const page = usePage();
 const playingFolder = computed(() => engine.state.playingFolder);
 const isPlaying = computed(() => playingFolder.value === props.folderSlug);
+const isPausedForResume = computed(() =>
+    engine.state.isPaused && engine.state.pausedFolder === props.folderSlug
+);
+const blobSavedPulse = ref(false);
+let pulseTimer = null;
+
+function pulseBlobSaved() {
+    blobSavedPulse.value = true;
+    if (pulseTimer) clearTimeout(pulseTimer);
+    pulseTimer = setTimeout(() => {
+        blobSavedPulse.value = false;
+        pulseTimer = null;
+    }, 360);
+}
+
+onBeforeUnmount(() => {
+    if (pulseTimer) clearTimeout(pulseTimer);
+});
 
 function tap() {
     // If the same folder is already playing, treat a second tap as "stop" so
@@ -104,7 +122,12 @@ function longPress() {
     router.post(
         '/state/blobs',
         { blobs: updated },
-        { preserveState: true, preserveScroll: true, only: ['gameState'] }
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['gameState'],
+            onSuccess: pulseBlobSaved,
+        }
     );
 }
 
@@ -123,6 +146,8 @@ const bindings = useLongPress({
             cls,
             big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
             isPlaying ? 'ring-2 ring-amber-400' : '',
+            isPausedForResume ? 'paused-amber-dash' : '',
+            blobSavedPulse ? 'ring-2 ring-amber-400' : '',
         ]"
         v-bind="bindings"
     >

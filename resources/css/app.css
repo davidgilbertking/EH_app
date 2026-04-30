@@ -5,3 +5,18 @@
 :root {
     --header-h: 0px;
 }
+
+@layer components {
+    .paused-amber-dash {
+        position: relative;
+    }
+
+    .paused-amber-dash::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: 2px dashed rgb(251 191 36 / 1);
+        pointer-events: none;
+    }
+}

@@ -44,6 +44,10 @@ class AudioEngine {
             playingFolder: null, // folder slug currently active (or null)
             playingLabel: null,
             isLoading: false,
+            isPaused: false,
+            canResume: false,
+            pausedFolder: null, // folder slug paused via corner pause button
+            pausedLabel: null,
         });
     }
 
@@ -62,6 +66,17 @@ class AudioEngine {
      */
     async play({ folderSlug, mode, label, hardSwitch = false, crossfade = false }) {
         if (!folderSlug) return;
+
+        // If there is a paused track and user explicitly starts another folder,
+        // discard paused buffer and treat this as a brand new playback choice.
+        if (this.current && this.state.isPaused) {
+            try {
+                this.current.howl.stop();
+                this.current.howl.unload();
+            } catch (_) { /* ignore */ }
+            this.current = null;
+            this._clearActiveState();
+        }
 
         // Three modes for handling the previous track:
         //   - hardSwitch: fade out, await full silence, then load new (phase
@@ -83,8 +98,7 @@ class AudioEngine {
             } else {
                 const prev = this.current.howl;
                 this.current = null;
-                this.state.playingFolder = null;
-                this.state.playingLabel = null;
+                this._clearActiveState();
                 this._fadeOutAndUnload(prev);
                 if (hardSwitch) {
                     await new Promise((r) => setTimeout(r, FADE_OUT_MS + 80));
@@ -101,6 +115,7 @@ class AudioEngine {
             if (!res.ok) {
                 console.warn('[engine] pick failed', folderSlug, res.status);
                 this.state.isLoading = false;
+                this._clearActiveState();
                 // If we promised a crossfade and never started a new track,
                 // still kill the old one so we don't leak a Howl.
                 if (prevHowlForCrossfade) this._fadeOutAndUnload(prevHowlForCrossfade);
@@ -120,6 +135,7 @@ class AudioEngine {
             });
         } catch (e) {
             console.error('[engine] play error', e);
+            this._clearActiveState();
             if (prevHowlForCrossfade) this._fadeOutAndUnload(prevHowlForCrossfade);
         } finally {
             this.state.isLoading = false;
@@ -129,10 +145,50 @@ class AudioEngine {
     /** Stop the currently-playing track with fade-out. */
     stop() {
         if (!this.current) return;
-        this._fadeOutAndUnload(this.current.howl);
+        if (this.state.isPaused) {
+            try {
+                this.current.howl.stop();
+                this.current.howl.unload();
+            } catch (_) { /* ignore */ }
+        } else {
+            this._fadeOutAndUnload(this.current.howl);
+        }
         this.current = null;
-        this.state.playingFolder = null;
-        this.state.playingLabel = null;
+        this._clearActiveState();
+    }
+
+    pause() {
+        if (!this.current || this.state.isPaused) return false;
+        try {
+            this.current.howl.pause();
+            this.state.isPaused = true;
+            // Keep resume capability, but remove active-playing markers so page
+            // buttons don't look "currently playing" while paused.
+            this.state.playingFolder = null;
+            this.state.playingLabel = null;
+            this.state.canResume = true;
+            this.state.pausedFolder = this.current.folderSlug;
+            this.state.pausedLabel = this.current.label;
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    resume() {
+        if (!this.current || !this.state.isPaused) return false;
+        try {
+            this.current.howl.play();
+            this.state.isPaused = false;
+            this.state.playingFolder = this.current.folderSlug;
+            this.state.playingLabel = this.current.label;
+            this.state.canResume = true;
+            this.state.pausedFolder = null;
+            this.state.pausedLabel = null;
+            return true;
+        } catch (_) {
+            return false;
+        }
     }
 
     /** Internal: kick off a new Howl instance and crossfade with current if any. */
@@ -213,6 +269,10 @@ class AudioEngine {
         this.current = { howl, folderSlug, label };
         this.state.playingFolder = folderSlug;
         this.state.playingLabel = label;
+        this.state.isPaused = false;
+        this.state.canResume = true;
+        this.state.pausedFolder = null;
+        this.state.pausedLabel = null;
     }
 
     _fadeOutAndUnload(howl) {
@@ -228,6 +288,15 @@ class AudioEngine {
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }
+    }
+
+    _clearActiveState() {
+        this.state.playingFolder = null;
+        this.state.playingLabel = null;
+        this.state.isPaused = false;
+        this.state.canResume = false;
+        this.state.pausedFolder = null;
+        this.state.pausedLabel = null;
     }
 }
 

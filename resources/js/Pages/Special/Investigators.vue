@@ -4,7 +4,7 @@ import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -14,6 +14,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const pulseBySlug = reactive({});
 
 // Single 4-col grid: cols 1-2 = men (top-to-bottom, then left-to-right),
 // cols 3-4 = women (same flow). Row count = max of the two halves so the
@@ -49,6 +50,14 @@ const placedWomen = computed(() =>
 );
 const allItems = computed(() => [...placedMen.value, ...placedWomen.value]);
 
+function pulseBlobSaved(slug) {
+    if (!slug) return;
+    pulseBySlug[slug] = true;
+    setTimeout(() => {
+        pulseBySlug[slug] = false;
+    }, 360);
+}
+
 function makeBindings(item) {
     return useLongPress({
         onTap: () => {
@@ -75,7 +84,12 @@ function makeBindings(item) {
             router.post(
                 '/state/blobs',
                 { blobs: updated },
-                { preserveState: true, preserveScroll: true, only: ['gameState'] }
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['gameState'],
+                    onSuccess: () => pulseBlobSaved(item.slug),
+                }
             );
         },
         threshold: 1000,
@@ -102,6 +116,10 @@ function makeBindings(item) {
                 :class="[
                     item.tone,
                     engine.state.playingFolder === item.folderSlug ? 'ring-2 ring-amber-400' : '',
+                    engine.state.isPaused && engine.state.pausedFolder === item.folderSlug
+                        ? 'paused-amber-dash'
+                        : '',
+                    pulseBySlug[item.slug] ? 'ring-2 ring-amber-400' : '',
                 ]"
                 :style="{ gridColumn: item.col, gridRow: item.row }"
                 v-bind="makeBindings(item)"

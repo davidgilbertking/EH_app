@@ -2,7 +2,7 @@
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 
 const props = defineProps({
     folderSlug: { type: String, required: true },
@@ -16,7 +16,25 @@ const props = defineProps({
 
 const page = usePage();
 const isPlaying = computed(() => engine.state.playingFolder === props.folderSlug);
+const isPausedForResume = computed(() =>
+    engine.state.isPaused && engine.state.pausedFolder === props.folderSlug
+);
 const isNav = computed(() => Boolean(props.href));
+const blobSavedPulse = ref(false);
+let pulseTimer = null;
+
+function pulseBlobSaved() {
+    blobSavedPulse.value = true;
+    if (pulseTimer) clearTimeout(pulseTimer);
+    pulseTimer = setTimeout(() => {
+        blobSavedPulse.value = false;
+        pulseTimer = null;
+    }, 360);
+}
+
+onBeforeUnmount(() => {
+    if (pulseTimer) clearTimeout(pulseTimer);
+});
 
 function tap() {
     if (isPlaying.value) {
@@ -42,7 +60,12 @@ function longPress() {
     router.post(
         '/state/blobs',
         { blobs: updated },
-        { preserveState: true, preserveScroll: true, only: ['gameState'] }
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['gameState'],
+            onSuccess: pulseBlobSaved,
+        }
     );
 }
 
@@ -73,7 +96,12 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
         v-else
         type="button"
         class="flex h-20 w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
-        :class="[tone, isPlaying ? 'ring-2 ring-amber-400' : '']"
+        :class="[
+            tone,
+            isPlaying ? 'ring-2 ring-amber-400' : '',
+            isPausedForResume ? 'paused-amber-dash' : '',
+            blobSavedPulse ? 'ring-2 ring-amber-400' : '',
+        ]"
         v-bind="bindings"
     >
         <img

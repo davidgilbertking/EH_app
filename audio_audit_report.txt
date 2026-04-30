@@ -1,0 +1,167 @@
+TRACKS_INDEXED=475
+TRACKS_FOUND=475
+TRACKS_MISSING=0
+TOTAL_SIZE_BYTES=20586718607
+TOTAL_SIZE_HUMAN=19633.02 MB
+TOTAL_DURATION_SEC=1228188
+TOTAL_DURATION_HHMMSS=341:09:48
+
+BY_EXTENSION
+mp3	467	18.85 GB	134 kbps
+m4a	8	0.33 GB	130 kbps
+
+TOP_SIZE
+1	826.07 MB	10:01:31	action/Relaxing Vintage Music 10 Hours  1920s 1930s Music Ambience  ASMR Hotel Ambience.mp3
+2	550.43 MB	10:01:12	action/Vinyl ASMR - 1920s Jazz & Swing!.mp3
+3	275.22 MB	04:59:59	ancient/nephren-ka/AMENHOTEP lll - Ancient Pharaoh Music - Mystic & Calming Atmosphere - Dark Prayers & Mystic Chants.mp3
+4	245.71 MB	04:27:11	contacts/big-city/rome/4 Hours of Sacred Choir Music for Relaxing, Prayer, Meditation & Sleep.mp3
+5	245.67 MB	04:27:57	ancient/rise-of-the-elder-things/Arkham Horror LCG - The Mountains of Madness.mp3
+6	234.34 MB	04:14:57	ancient/cthulhu/4 Hours Call of Cthulhu Dark Mystery Orchestral Remix for Gaming, Arkham Horror LCG, Call of Cthulhu.mp3
+7	229.26 MB	04:09:43	action/Relaxing Vintage Music 4 Hours ｜ 1920s 1930s Ambience Music ｜ Gramophone in the Table.mp3
+8	220.24 MB	04:00:17	contacts/antarctica/lake-camp/2 LAKE CAMP --- ❄ Scary Cold Howling Snowstorm in a Frozen Arctic Environment for Relaxation, Sleeping and Fantasy.mp3
+9	197.31 MB	03:35:07	ancient/syzygy/Unholy Anthem to Idiocy： AZATHOTH (dark Lovecraftian space ambient).mp3
+10	186.14 MB	03:23:18	combat/The ULTIMATE Monster Hunter World Battle Themes.mp3
+11	170.31 MB	03:04:55	contacts/expedition/expeditions/city/UNIVERSAL --- DnD Calm Fantasy Music for Adventure and Exploration ｜ 3 Hour Mix for Dungeons & Dragons.mp3
+12	166.00 MB	03:00:06	ancient/ithaqua/Blizzard Storm Sounds ｜ Relaxing Winter Background Sounds ｜ Heavy Wind & Snow.mp3
+13	165.82 MB	03:00:10	contacts/expedition/expeditions/hot/HOT --- Indiana Jones ｜ Adventurous Ambient Soundscapes with Epic Music from the Film Series, 4 Scenes in 4k.mp3
+14	165.58 MB	03:00:00	contacts/devastation/Abandoned City ｜ Eerie Ambience ｜ 3 Hours.mp3
+15	165.54 MB	03:00:00	ancient/cthulhu/Cthulhu ｜ DARK AMBIENT LOVECRAFTIAN MUSIC - 3 hours.mp3
+16	165.32 MB	03:00:00	contacts/obstruction/detained/3 Hours of ＂Prison＂ Ambience  - Amnesia The Dark Descent (No Music).mp3
+17	164.80 MB	03:00:00	ancient/antediluvium/Cthulhu Dreams in R'lyeh ｜ Underwater Dark Ambience ｜ 3 Hours.mp3
+18	164.80 MB	03:00:00	action-muted/Sitting in an empty 1920's bar - Ambience 3 Hours focus.mp3
+19	164.80 MB	03:00:00	ancient/ithaqua/＂Yeti's Realm＂ Fantasy Ambience ⧸ Himalayan Encounter - Blowing Snow, Creature Sounds.mp3
+20	162.26 MB	02:55:20	contacts/dreamlands/underworld/3 UNDERWORLD --- D&D Ambience -  Dark, Dank Cave.m4a
+21	161.99 MB	02:56:55	action-muted/You're at a ball in The Gold Room (1921 Overlook Hotel ambience, oldies, people chatter 3 HOURS ASMR.mp3
+22	161.89 MB	02:55:20	contacts/general/sea/space-2/D&D Ambience -  Calm Sea Sailing.mp3
+23	161.87 MB	02:55:20	contacts/general/sea/space-13/D&D Ambience - Ship In Storm.mp3
+24	161.74 MB	02:55:20	contacts/other-world/underworld/D&D Ambience -  Dark, Dank Cave.mp3
+25	161.37 MB	02:55:20	contacts/general/sea/space-12/D&D Ambience - Ship Cabin.mp3
+26	146.95 MB	01:47:00	contacts/antarctica/city-of-elder-things/5 CITY OF THE ELDER --- Arkham Horror The Card Game - City of the Elder Things - Original Soundtrack from Edge of the Earth.mp3
+27	138.60 MB	02:31:23	contacts/dreamlands/celephais/6 SELEPHAIS --- Y2meta.app - Arabic Ambience _ Old Arabian City Ambience (128 kbps).mp3
+28	127.16 MB	02:18:52	contacts/big-city/london/Victorian Ambience： LONDON'S MYSTERY - The Dark Alley ｜ Mysterious Ambient Music with Thunderstorm (mp3cut.net).mp3
+29	119.68 MB	02:10:18	contacts/egypt/tel-el-amarna/Amarna -- Relaxing Ancient Egyptian Music & Night River Ambience ｜ Triangle Harp ｜ sleep, study, meditation.mp3
+30	113.05 MB	02:02:02	contacts/other-world/great-race/2h Dark Cinematic Ambience “The Shadow Out of Time”.mp3
+31	112.39 MB	02:01:07	contacts/big-city/istanbul/2 Saat Osmanlı Musiki (Hasret).mp3
+32	112.35 MB	02:01:30	contacts/dreamlands/enchanted-wood/1 ENCHANTED WOOD --- Enchanted Forest - Music & Ambience ✨🌲🧚🏻 (mp3cut.net).mp3
+33	112.29 MB	02:02:39	contacts/egypt/alexandria/Alexandria -- you're in the library of alexandria overflowing your mind with so much knowledge (playlist).mp3
+34	111.55 MB	02:01:50	ancient/cthulhu/Cthulhu's Temple - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3
+35	111.53 MB	02:00:13	mythos/2 Hours of Dark Mystery Horror Music： Beyond Arkham H.P. Lovecraft.mp3
+36	111.22 MB	01:59:59	contacts/obstruction/detained/Prison Cell ｜ Ambience ｜ 2 hours.mp3
+37	111.17 MB	01:59:57	contacts/egypt/tel-el-amarna/Amarna -- Mysterious Ancient Egyptian Tomb Ambience ASMR 🏺 Tomb Sounds, Sand Debris, Moaning Phantoms + Mor (mp3cut.net).mp3
+38	111.09 MB	02:00:00	ancient/yog-sothoth/DARK AMBIENT MUSIC ｜ H. P. Lovecraft - The Dunwich Horror.mp3
+39	110.87 MB	01:59:59	contacts/devastation/Post Apocalyptic City Ruins ｜ Ambience ｜ 2 hours.mp3
+40	110.53 MB	02:00:00	ancient/abhoth/Occult Meditation - Gregorian Chants - Dark Monastic Chantings - Occult Dark Ambient Music.mp3
+41	110.46 MB	01:59:59	ancient/nephren-ka/ANUBIS Meditation - Dark Mysterious Atmospheric Ambient Music.mp3
+42	110.38 MB	01:59:59	ancient/nephren-ka/OSIRIS Meditation - Egypt God Meditation - Dark Mysterious Atmospheric Ambient Music.mp3
+43	110.34 MB	01:59:46	action/20s Music and 20s Music Hits with 20s Music Instrumental Playlist.mp3
+44	110.31 MB	02:00:00	ancient/abhoth/Sancta Tenebrae -  Occult Dark Ambient Music - Dark Monastic Chantings - Dark Gregorian Chants.mp3
+45	110.26 MB	02:00:00	contacts/other-world/future/2/2 You find yourself in a familiar city, but there's no electricity.mp3
+46	109.92 MB	01:58:26	contacts/expedition/ruins/Discovery - 2 Hours of Ambient Sci Fi Music ｜ Tranquil Atmospheric Ambience.mp3
+47	109.78 MB	01:59:54	action/20s & 20s Music： Roaring 20s Music and Songs Playlist (Vintage 20s Jazz Music).mp3
+48	109.08 MB	01:58:26	contacts/expedition/ruins/Astray - A Deeply Mysterious Ambient Journey - Ethereal Ambient Forest Music [Sci Fi⧸Fantasy Vibes].mp3
+49	103.09 MB	01:52:35	ancient/abhoth/dark-ambient-east-(black25-teach me the magick of your sacred poems).mp3
+50	100.83 MB	01:49:41	special/characters/patrice-hathaway/Anne-Sophie Mutter und Münchner Orchester - Beethoven Violinkonzert - Beethoven 5 (mp3cut.net).mp3
+
+TOP_DURATION
+1	10:01:31	826.07 MB	action/Relaxing Vintage Music 10 Hours  1920s 1930s Music Ambience  ASMR Hotel Ambience.mp3
+2	10:01:12	550.43 MB	action/Vinyl ASMR - 1920s Jazz & Swing!.mp3
+3	04:59:59	275.22 MB	ancient/nephren-ka/AMENHOTEP lll - Ancient Pharaoh Music - Mystic & Calming Atmosphere - Dark Prayers & Mystic Chants.mp3
+4	04:27:57	245.67 MB	ancient/rise-of-the-elder-things/Arkham Horror LCG - The Mountains of Madness.mp3
+5	04:27:11	245.71 MB	contacts/big-city/rome/4 Hours of Sacred Choir Music for Relaxing, Prayer, Meditation & Sleep.mp3
+6	04:14:57	234.34 MB	ancient/cthulhu/4 Hours Call of Cthulhu Dark Mystery Orchestral Remix for Gaming, Arkham Horror LCG, Call of Cthulhu.mp3
+7	04:09:43	229.26 MB	action/Relaxing Vintage Music 4 Hours ｜ 1920s 1930s Ambience Music ｜ Gramophone in the Table.mp3
+8	04:00:17	220.24 MB	contacts/antarctica/lake-camp/2 LAKE CAMP --- ❄ Scary Cold Howling Snowstorm in a Frozen Arctic Environment for Relaxation, Sleeping and Fantasy.mp3
+9	03:35:07	197.31 MB	ancient/syzygy/Unholy Anthem to Idiocy： AZATHOTH (dark Lovecraftian space ambient).mp3
+10	03:23:18	186.14 MB	combat/The ULTIMATE Monster Hunter World Battle Themes.mp3
+11	03:04:55	170.31 MB	contacts/expedition/expeditions/city/UNIVERSAL --- DnD Calm Fantasy Music for Adventure and Exploration ｜ 3 Hour Mix for Dungeons & Dragons.mp3
+12	03:00:10	165.82 MB	contacts/expedition/expeditions/hot/HOT --- Indiana Jones ｜ Adventurous Ambient Soundscapes with Epic Music from the Film Series, 4 Scenes in 4k.mp3
+13	03:00:06	166.00 MB	ancient/ithaqua/Blizzard Storm Sounds ｜ Relaxing Winter Background Sounds ｜ Heavy Wind & Snow.mp3
+14	03:00:00	164.80 MB	action-muted/Sitting in an empty 1920's bar - Ambience 3 Hours focus.mp3
+15	03:00:00	164.80 MB	ancient/antediluvium/Cthulhu Dreams in R'lyeh ｜ Underwater Dark Ambience ｜ 3 Hours.mp3
+16	03:00:00	165.58 MB	contacts/devastation/Abandoned City ｜ Eerie Ambience ｜ 3 Hours.mp3
+17	03:00:00	165.32 MB	contacts/obstruction/detained/3 Hours of ＂Prison＂ Ambience  - Amnesia The Dark Descent (No Music).mp3
+18	03:00:00	165.54 MB	ancient/cthulhu/Cthulhu ｜ DARK AMBIENT LOVECRAFTIAN MUSIC - 3 hours.mp3
+19	03:00:00	164.80 MB	ancient/ithaqua/＂Yeti's Realm＂ Fantasy Ambience ⧸ Himalayan Encounter - Blowing Snow, Creature Sounds.mp3
+20	02:56:55	161.99 MB	action-muted/You're at a ball in The Gold Room (1921 Overlook Hotel ambience, oldies, people chatter 3 HOURS ASMR.mp3
+21	02:55:20	161.89 MB	contacts/general/sea/space-2/D&D Ambience -  Calm Sea Sailing.mp3
+22	02:55:20	161.74 MB	contacts/other-world/underworld/D&D Ambience -  Dark, Dank Cave.mp3
+23	02:55:20	162.26 MB	contacts/dreamlands/underworld/3 UNDERWORLD --- D&D Ambience -  Dark, Dank Cave.m4a
+24	02:55:20	161.37 MB	contacts/general/sea/space-12/D&D Ambience - Ship Cabin.mp3
+25	02:55:20	161.87 MB	contacts/general/sea/space-13/D&D Ambience - Ship In Storm.mp3
+26	02:31:23	138.60 MB	contacts/dreamlands/celephais/6 SELEPHAIS --- Y2meta.app - Arabic Ambience _ Old Arabian City Ambience (128 kbps).mp3
+27	02:18:52	127.16 MB	contacts/big-city/london/Victorian Ambience： LONDON'S MYSTERY - The Dark Alley ｜ Mysterious Ambient Music with Thunderstorm (mp3cut.net).mp3
+28	02:10:18	119.68 MB	contacts/egypt/tel-el-amarna/Amarna -- Relaxing Ancient Egyptian Music & Night River Ambience ｜ Triangle Harp ｜ sleep, study, meditation.mp3
+29	02:02:39	112.29 MB	contacts/egypt/alexandria/Alexandria -- you're in the library of alexandria overflowing your mind with so much knowledge (playlist).mp3
+30	02:02:02	113.05 MB	contacts/other-world/great-race/2h Dark Cinematic Ambience “The Shadow Out of Time”.mp3
+31	02:01:50	111.55 MB	ancient/cthulhu/Cthulhu's Temple - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3
+32	02:01:30	112.35 MB	contacts/dreamlands/enchanted-wood/1 ENCHANTED WOOD --- Enchanted Forest - Music & Ambience ✨🌲🧚🏻 (mp3cut.net).mp3
+33	02:01:07	112.39 MB	contacts/big-city/istanbul/2 Saat Osmanlı Musiki (Hasret).mp3
+34	02:00:13	111.53 MB	mythos/2 Hours of Dark Mystery Horror Music： Beyond Arkham H.P. Lovecraft.mp3
+35	02:00:00	110.26 MB	contacts/other-world/future/2/2 You find yourself in a familiar city, but there's no electricity.mp3
+36	02:00:00	110.53 MB	ancient/abhoth/Occult Meditation - Gregorian Chants - Dark Monastic Chantings - Occult Dark Ambient Music.mp3
+37	02:00:00	110.31 MB	ancient/abhoth/Sancta Tenebrae -  Occult Dark Ambient Music - Dark Monastic Chantings - Dark Gregorian Chants.mp3
+38	02:00:00	111.09 MB	ancient/yog-sothoth/DARK AMBIENT MUSIC ｜ H. P. Lovecraft - The Dunwich Horror.mp3
+39	01:59:59	110.87 MB	contacts/devastation/Post Apocalyptic City Ruins ｜ Ambience ｜ 2 hours.mp3
+40	01:59:59	110.46 MB	ancient/nephren-ka/ANUBIS Meditation - Dark Mysterious Atmospheric Ambient Music.mp3
+41	01:59:59	110.38 MB	ancient/nephren-ka/OSIRIS Meditation - Egypt God Meditation - Dark Mysterious Atmospheric Ambient Music.mp3
+42	01:59:59	111.22 MB	contacts/obstruction/detained/Prison Cell ｜ Ambience ｜ 2 hours.mp3
+43	01:59:57	111.17 MB	contacts/egypt/tel-el-amarna/Amarna -- Mysterious Ancient Egyptian Tomb Ambience ASMR 🏺 Tomb Sounds, Sand Debris, Moaning Phantoms + Mor (mp3cut.net).mp3
+44	01:59:54	109.78 MB	action/20s & 20s Music： Roaring 20s Music and Songs Playlist (Vintage 20s Jazz Music).mp3
+45	01:59:46	110.34 MB	action/20s Music and 20s Music Hits with 20s Music Instrumental Playlist.mp3
+46	01:58:26	109.08 MB	contacts/expedition/ruins/Astray - A Deeply Mysterious Ambient Journey - Ethereal Ambient Forest Music [Sci Fi⧸Fantasy Vibes].mp3
+47	01:58:26	109.92 MB	contacts/expedition/ruins/Discovery - 2 Hours of Ambient Sci Fi Music ｜ Tranquil Atmospheric Ambience.mp3
+48	01:52:35	103.09 MB	ancient/abhoth/dark-ambient-east-(black25-teach me the magick of your sacred poems).mp3
+49	01:49:41	100.83 MB	special/characters/patrice-hathaway/Anne-Sophie Mutter und Münchner Orchester - Beethoven Violinkonzert - Beethoven 5 (mp3cut.net).mp3
+50	01:47:00	146.95 MB	contacts/antarctica/city-of-elder-things/5 CITY OF THE ELDER --- Arkham Horror The Card Game - City of the Elder Things - Original Soundtrack from Edge of the Earth.mp3
+
+TOP_BITRATE
+1	260 kbps	00:01:30	2.81 MB	special/awakening/Most Epic Dark Choral Music： Death Mask.mp3
+2	237 kbps	00:03:18	5.63 MB	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_tyAi1pRRjDY_005_128k-[AudioTrimmer.com].mp3
+3	222 kbps	00:02:22	3.77 MB	special/awakening/Endless Storm ⧸ Epic Orchestral Battle Music (CC-BY).mp3
+4	212 kbps	00:02:41	4.09 MB	special/characters/marie-lambeau/Billie Holiday - The very thought of you.mp3
+5	211 kbps	00:03:00	4.54 MB	special/characters/sefina-rousseau/Beethoven： Symphony No. 5 ⧸ Karajan · Berliner Philharmoniker.mp3
+6	208 kbps	00:02:31	3.76 MB	contacts/big-city/sydney/Australia Ambient - Didgeridoo Improv 1 (Civilization 6 OST).mp3
+7	208 kbps	00:01:32	2.30 MB	special/awakening/The Boys Season 3 Episode 8 (FINALE) Ending Soundtrack - ＂I Can Do Anything ⧸ Finale＂.mp3
+8	206 kbps	00:02:06	3.10 MB	special/characters/joe-diamond/Peter Gunn.mp3
+9	202 kbps	00:01:59	2.89 MB	special/characters/zoey-samaras/Mozart： Requiem In D Minor, K.626 - 3. Sequentia： I. Dies irae.mp3
+10	196 kbps	00:02:19	3.26 MB	special/characters/father-mateo/Vivaldi Gloria - Gloria in excelsis Deo.mp3
+11	195 kbps	00:03:15	4.54 MB	special/characters/daisy-walker/Andrea Vanzo - Amélie - Comptine d’un autre été, l’après-midi (Reimagined) - (Official Video).mp3
+12	195 kbps	00:04:20	6.03 MB	contacts/other-world/yuggoth/Yuggoth： 1.mp3
+13	193 kbps	00:04:18	5.95 MB	special/disaster/location/meteor-showers/12 METEROR SHOWER (SERIO).mp3
+14	193 kbps	00:04:01	5.54 MB	special/characters/father-mateo/Händel Messiah - Hallelujah Chorus.mp3
+15	192 kbps	00:07:09	9.86 MB	special/characters/diana-stanley/Camille Saint-Saëns - Danse Macabre.mp3
+16	192 kbps	00:02:41	3.69 MB	special/honey-pie/Honey Pie (Remastered 2009).mp3
+17	192 kbps	00:03:37	4.97 MB	special/characters/jack-waters/One_Flew_Over_The_Cuckoo's_Nest_Closing_from_One_Flew_Over_The_Cuckoo's.mp3
+18	192 kbps	00:02:09	2.96 MB	special/characters/hank-samson/Black Betty- Leadbelly.mp3
+19	192 kbps	00:02:35	3.55 MB	special/characters/gloria-goldberg/Atonement - Briony ♪.mp3
+20	192 kbps	00:02:27	3.37 MB	special/characters/finn-edwards/Once Upon a Time in America Soundtrack Speakeasy.mp3
+21	192 kbps	00:02:49	3.88 MB	special/characters/darrell-simmons/Memento (Main Theme) - David Julyan.mp3
+22	192 kbps	00:03:18	4.54 MB	special/characters/daniela-reyes/Bessie Smith-Aggravatin Papa.mp3
+23	192 kbps	00:03:24	4.69 MB	special/characters/george-barnaby/Antonio Vivaldi ~ Winter (December) I ~ Allegro non molto.mp3
+24	192 kbps	00:05:07	7.03 MB	special/characters/dexter-drake/The Prestige Score - The Price Of A Good Trick.mp3
+25	192 kbps	01:00:09	82.61 MB	contacts/egypt/sahara-desert/Sahara -- Crossing the Desert Ambience and Music  sounds of a desert with ambient music #ambientmusic.mp3
+26	192 kbps	01:00:38	83.28 MB	combat/D&DRPG Combat Music Mix  1 Hour  Royalty Free  Travis Savoie.mp3
+27	192 kbps	00:57:30	78.98 MB	contacts/big-city/tokyo/Traditional Japanese Music  Shamisen, Koto & Taiko Music.mp3
+28	192 kbps	00:09:05	12.48 MB	contacts/antarctica/plateau-of-leng/6 PLATEAU OF LENG --- Psyclopean - The Men Of Leng (dark ambientatmosphericLovecraftmythosexperimentaldrone)2018.mp3
+29	192 kbps	00:22:52	31.42 MB	special/characters/harvey-walters/[Kocsis-Ránki] Mozart Sonata for Two Pianos in D, K448.mp3
+30	192 kbps	00:31:36	43.41 MB	special/characters/dexter-drake/Beethoven Sonata quasi una fantasia, No.14 in C# Minor, Moonlight (Lortie, Jando).mp3
+31	192 kbps	00:41:20	56.79 MB	special/disaster/location/otherworldly-rifts/14 GATES.mp3
+32	192 kbps	00:45:00	61.80 MB	contacts/big-city/arkham/DARK AMBIENT MUSIC  Lovecraft  Lost in Arkham.mp3
+33	192 kbps	01:00:09	82.61 MB	contacts/general/wilderness/space-10/10  .mp3
+34	192 kbps	01:00:27	83.02 MB	contacts/big-city/arkham/1 Hour of HP Lovecraft Music ¦ The Streets of Arkham and Other Places.mp3
+35	192 kbps	01:00:01	82.42 MB	contacts/general/sea/space-11/Sailing Ship  High Seas Ambience  1 Hour.mp3
+36	192 kbps	01:01:40	84.71 MB	ancient/hypnos/Hallucinations (Lovecraftian Dark Ambient Hour).mp3
+37	192 kbps	00:59:59	82.38 MB	contacts/dreamlands/underworld/3 UNDERWORLD --- Monster Infested Cave Ambience.mp3
+38	192 kbps	01:02:06	85.28 MB	contacts/devastation/Abandoned Town Ambience and Music  fantasy ambience of ruins of a town with music #ambientmusic.mp3
+39	192 kbps	01:00:15	82.76 MB	contacts/dreamlands/ulthar/2 ULTHAR Peaceful Village Ambience and Music  morning in a village ambience with fantasy music #ambientmusic.mp3
+40	192 kbps	01:47:00	146.95 MB	contacts/antarctica/city-of-elder-things/5 CITY OF THE ELDER --- Arkham Horror The Card Game - City of the Elder Things - Original Soundtrack from Edge of the Earth.mp3
+41	192 kbps	10:01:31	826.07 MB	action/Relaxing Vintage Music 10 Hours  1920s 1930s Music Ambience  ASMR Hotel Ambience.mp3
+42	191 kbps	00:04:50	6.60 MB	contacts/other-world/yuggoth/Yuggoth： 2.mp3
+43	187 kbps	00:03:26	4.62 MB	special/disaster/city/tokyo/8 TOKYO.mp3
+44	187 kbps	00:02:21	3.17 MB	special/disaster/city/rome/5 ROME.mp3
+45	185 kbps	00:05:55	7.84 MB	contacts/other-world/yuggoth/Yuggoth： 3.mp3
+46	185 kbps	00:02:41	3.55 MB	special/death-sacrifice/Most Emotional Music： ＂A Final Sacrifice＂ — Luke Richards.mp3
+47	185 kbps	00:01:57	2.58 MB	special/disaster/city/buenos-aires/3 BUENOS.mp3
+48	184 kbps	00:02:57	3.89 MB	special/disaster/location/destructive-cyclone/13 LEAD INVESTIGATOR.mp3
+49	181 kbps	00:02:14	2.90 MB	special/disaster/city/arkham/2 ARKHAM.mp3
+50	180 kbps	00:03:06	4.02 MB	special/awakening/Epic Dark Battle Music • ＂Where Is Your God Now＂ by @RokNardin.mp3

@@ -2,6 +2,7 @@
 import AppHeader from '@/Components/App/AppHeader.vue';
 import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
+import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 
@@ -118,6 +119,7 @@ onMounted(() => {
 
         <HomeButton v-if="!isHome" />
         <BackButton v-if="!isHome" />
+        <PauseToggleButton />
 
         <main :class="mainClass">
             <slot />
