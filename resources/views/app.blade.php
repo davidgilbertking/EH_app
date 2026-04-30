@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
+        @php
+            $iconVersion = (string) (@filemtime(public_path('icons/icon-512.png')) ?: time());
+        @endphp
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
@@ -12,16 +15,17 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="EH music">
-        <link rel="apple-touch-icon" href="/icons/icon-192.png">
+        <!-- Put custom styled icon here (recommended 180x180 PNG) -->
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icons/apple-touch-icon.png') }}?v={{ $iconVersion }}">
 
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-        <link rel="shortcut icon" href="/favicon.ico">
+        <!-- Browser tab icons -->
+        <link rel="icon" href="{{ asset('favicon.ico') }}?v={{ $iconVersion }}" sizes="any">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icons/favicon-32.png') }}?v={{ $iconVersion }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('icons/favicon-16.png') }}?v={{ $iconVersion }}">
+        <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ $iconVersion }}">
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}?v={{ $iconVersion }}">
 
-        <link rel="manifest" href="/manifest.webmanifest">
-
-        <title inertia>{{ config('app.name', 'EH music') }}</title>
+        <title data-inertia>{{ config('app.name', 'EH music') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
