@@ -66,21 +66,31 @@ body {
         --header-btn-min-w: 3rem;
         --header-btn-px: 0.28rem;
         --header-btn-py: 0.36rem;
-        --header-btn-font: 0.68rem;
-        --header-link-font: 0.72rem;
+        --header-btn-font: 0.86rem;
+        --header-link-font: 0.92rem;
+        --header-hint-font: 0.56rem;
 
         --main-btn-min-h: 2.15rem;
         --main-btn-pad-y: 0.24rem;
         --main-btn-pad-x: 0.34rem;
-        --main-btn-font: 0.58rem;
+        --main-btn-font: 0.88rem;
         --main-btn-icon: 1.1rem;
 
         --image-btn-h: 2.45rem;
         --image-btn-icon: 1.35rem;
-        --image-btn-label: 0.58rem;
+        --image-btn-label: 0.9rem;
 
         --blob-h: 2.2rem;
         --blob-icon-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) and (pointer: coarse) {
+    :root {
+        --header-btn-font: 0.95rem;
+        --header-link-font: 1rem;
+        --main-btn-font: 0.98rem;
+        --image-btn-label: 0.98rem;
     }
 }
 

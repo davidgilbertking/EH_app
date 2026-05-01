@@ -25,7 +25,7 @@ const worlds = [
 <template>
     <Breadcrumb title="Other World" parent="Encounters" />
 
-    <div class="mx-auto max-w-3xl space-y-3 pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]">
+    <div class="other-world-desktop mx-auto max-w-3xl space-y-3 pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]">
         <div class="grid gap-x-4 gap-y-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 folder-slug="contacts/other-world/past/1"
@@ -58,3 +58,13 @@ const worlds = [
         </div>
     </div>
 </template>
+
+<style scoped>
+@media (min-width: 1024px) {
+.other-world-desktop {
+    --image-btn-h: 5.8rem;
+    --image-btn-icon: 4.2rem;
+    --image-btn-label: 1.35rem;
+}
+}
+</style>
