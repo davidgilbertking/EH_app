@@ -17,11 +17,14 @@ defineProps({
 </script>
 
 <template>
-    <div class="mx-auto space-y-9 pt-4" :style="{ maxWidth }">
+    <div
+        class="mx-auto space-y-[clamp(0.65rem,calc(2.25rem*var(--ui-scale)),2.25rem)] pt-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)]"
+        :style="{ maxWidth }"
+    >
         <div
             v-for="(row, rowIdx) in rows"
             :key="rowIdx"
-            class="grid gap-x-8"
+            class="grid gap-x-[clamp(0.45rem,calc(2rem*var(--ui-scale)),2rem)]"
             :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }"
         >
             <template v-for="(btn, colIdx) in row" :key="colIdx">

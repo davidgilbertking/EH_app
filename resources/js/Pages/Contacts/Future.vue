@@ -52,7 +52,7 @@ for (let row = 0; row < ROWS; row++) {
             :label="i.label"
             :tone="i.tone"
             :image-url="i.imageUrl"
-            class="w-full !h-[10rem] !py-4 !text-lg !leading-tight"
+            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.48rem,calc(1.125rem*var(--ui-scale)),1.125rem)] !leading-tight"
             :big="false"
         />
     </div>

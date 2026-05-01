@@ -14,12 +14,14 @@ const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
+const BASE_WIDTH = 1512;
+const BASE_HEIGHT = 982;
 const mainClass = computed(() =>
     isInvestigatorsRoute.value
-        ? 'px-4 pt-3 pb-6 h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
+        ? 'px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
         : (isHome.value
-            ? 'px-4 pt-2 pb-4 h-[calc(100dvh-var(--header-h,0px))] overflow-hidden'
-            : 'px-4 pt-3 pb-6 h-[calc(100dvh-var(--header-h,0px))] overflow-hidden')
+            ? 'px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.1rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden'
+            : 'px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden')
 );
 
 // Track the live header height and expose it as CSS var --header-h on the
@@ -38,18 +40,32 @@ function syncHeaderHeight() {
     );
 }
 
+function syncUiScale() {
+    if (!rootEl.value) return;
+    const viewportRatio = Math.min(
+        window.innerWidth / BASE_WIDTH,
+        window.innerHeight / BASE_HEIGHT,
+        1
+    );
+    const uiScale = Math.max(0.55, Math.min(1, 0.4 + viewportRatio * 0.6));
+    rootEl.value.style.setProperty('--ui-scale', uiScale.toFixed(3));
+}
+
 onMounted(() => {
     syncHeaderHeight();
+    syncUiScale();
     if (typeof ResizeObserver !== 'undefined' && headerWrapEl.value) {
         resizeObserver = new ResizeObserver(syncHeaderHeight);
         resizeObserver.observe(headerWrapEl.value);
     }
     window.addEventListener('resize', syncHeaderHeight);
+    window.addEventListener('resize', syncUiScale);
 });
 
 onBeforeUnmount(() => {
     resizeObserver?.disconnect();
     window.removeEventListener('resize', syncHeaderHeight);
+    window.removeEventListener('resize', syncUiScale);
 });
 
 // Route-dependent overlay:
@@ -89,7 +105,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div ref="rootEl" class="min-h-screen text-neutral-100 select-none">
+    <div ref="rootEl" class="min-h-screen overflow-hidden text-neutral-100 select-none">
         <!--
             Ancient-One background + dim overlay.
             Both layers start BELOW the header (top: var(--header-h)) so the

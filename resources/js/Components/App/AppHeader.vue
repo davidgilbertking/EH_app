@@ -103,11 +103,11 @@ const mythosBindings = useLongPress({
 
 <template>
     <header
-        class="sticky top-0 z-30 flex flex-wrap gap-2 border-b border-neutral-800 bg-neutral-950/90 px-3 py-3 backdrop-blur"
+        class="sticky top-0 z-30 flex flex-wrap gap-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] border-b border-neutral-800 bg-neutral-950/90 px-[clamp(0.35rem,calc(0.75rem*var(--ui-scale)),0.75rem)] py-[clamp(0.25rem,calc(0.75rem*var(--ui-scale)),0.75rem)] backdrop-blur"
     >
         <button
             type="button"
-            class="group relative flex-1 min-w-[6rem] rounded-lg px-3 py-8 text-center text-[2.05rem] font-semibold tracking-wide active:scale-[0.98] transition"
+            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn"
             :class="[
                 actionClass,
                 isActionActive ? 'ring-2 ring-amber-400' : '',
@@ -118,7 +118,7 @@ const mythosBindings = useLongPress({
             {{ actionLabel }}
             <span
                 v-if="!isActionMuted"
-                class="pointer-events-none absolute inset-x-0 bottom-1 text-[10px] font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70"
+                class="pointer-events-none absolute inset-x-0 bottom-1 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
             >
                 hold for Muted
             </span>
@@ -126,7 +126,7 @@ const mythosBindings = useLongPress({
 
         <button
             type="button"
-            class="group relative flex-1 min-w-[6rem] rounded-lg px-3 py-8 text-center text-[2.05rem] font-semibold tracking-wide active:scale-[0.98] transition"
+            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn"
             :class="[
                 combatClass,
                 isCombatActive ? 'ring-2 ring-amber-400' : '',
@@ -137,7 +137,7 @@ const mythosBindings = useLongPress({
             {{ combatLabel }}
             <span
                 v-if="!isCombatEpic"
-                class="pointer-events-none absolute inset-x-0 bottom-1 text-[10px] font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70"
+                class="pointer-events-none absolute inset-x-0 bottom-1 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
             >
                 hold for Epic
             </span>
@@ -145,7 +145,7 @@ const mythosBindings = useLongPress({
 
         <Link
             href="/encounters"
-            class="flex flex-1 min-w-[6rem] items-center justify-center gap-1 rounded-lg px-3 py-8 text-3xl font-semibold tracking-wide active:scale-[0.98] transition"
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
             :class="isEncountersActive ? variantClasses.encountersActive : variantClasses.encounters"
         >
             Encounters
@@ -154,7 +154,7 @@ const mythosBindings = useLongPress({
 
         <button
             type="button"
-            class="flex-1 min-w-[6rem] rounded-lg px-3 py-8 text-3xl font-semibold tracking-wide active:scale-[0.98] transition"
+            class="flex-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
             :class="[
                 variantClasses.mythos,
                 isMythosActive ? 'ring-2 ring-amber-400' : '',
@@ -167,7 +167,7 @@ const mythosBindings = useLongPress({
 
         <Link
             href="/other"
-            class="flex flex-1 min-w-[6rem] items-center justify-center gap-1 rounded-lg px-3 py-8 text-3xl font-semibold tracking-wide active:scale-[0.98] transition"
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
             :class="isOtherActive ? variantClasses.otherActive : variantClasses.other"
         >
             Other

@@ -32,12 +32,16 @@ function blobImageUrl(blob) {
 }
 
 function blobTextClass(blob) {
+    return blobTextStyle(blob);
+}
+
+function blobTextStyle(blob) {
     const len = (blob?.label || '').length;
-    if (len >= 110) return 'text-[0.70rem] leading-[1.03]';
-    if (len >= 90) return 'text-[0.78rem] leading-[1.05]';
-    if (len >= 70) return 'text-[0.86rem] leading-[1.08]';
-    if (len >= 45) return 'text-[1.05rem] leading-[1.12]';
-    return 'text-[1.6rem] leading-tight';
+    if (len >= 110) return { fontSize: 'clamp(0.38rem, calc(0.70rem * var(--ui-scale)), 0.70rem)', lineHeight: '1.03' };
+    if (len >= 90) return { fontSize: 'clamp(0.42rem, calc(0.78rem * var(--ui-scale)), 0.78rem)', lineHeight: '1.05' };
+    if (len >= 70) return { fontSize: 'clamp(0.48rem, calc(0.86rem * var(--ui-scale)), 0.86rem)', lineHeight: '1.08' };
+    if (len >= 45) return { fontSize: 'clamp(0.58rem, calc(1.05rem * var(--ui-scale)), 1.05rem)', lineHeight: '1.12' };
+    return { fontSize: 'clamp(0.9rem, calc(1.6rem * var(--ui-scale)), 1.6rem)', lineHeight: '1.1' };
 }
 
 function blobLabelAlignClass(blob) {
@@ -46,12 +50,12 @@ function blobLabelAlignClass(blob) {
 
 function blobImageClass(blob) {
     if (isOtherWorldBlob(blob)) {
-        return 'h-[4.2rem] w-[4.2rem] flex-none object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]';
+        return 'ui-blob-icon flex-none object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]';
     }
     if (isDisasterBlob(blob)) {
-        return 'h-[4.2rem] w-[4.2rem] flex-none rounded-full object-cover';
+        return 'ui-blob-icon flex-none rounded-full object-cover';
     }
-    return 'h-[4.4rem] w-[4.4rem] flex-none rounded-md object-cover ring-1 ring-black/40';
+    return 'ui-blob-icon flex-none rounded-md object-contain';
 }
 
 function playBlob(b) {
@@ -79,13 +83,13 @@ function playBlob(b) {
         -->
         <div
             v-if="blobs.length"
-            class="mx-auto grid max-w-[1500px] grid-cols-4 gap-4 pl-16 pr-24 pt-3 pb-3"
+            class="ui-blob-grid mx-auto grid max-w-[1400px] grid-cols-4"
         >
             <button
                 v-for="blob in blobs"
                 :key="blob.id"
                 type="button"
-                class="flex h-28 w-[85%] justify-self-center items-center justify-center gap-3 overflow-hidden rounded-2xl border px-4 py-3 text-center font-semibold backdrop-blur ring-1 ring-white/25 shadow-lg shadow-black/50 transition active:scale-[0.97]"
+                class="ui-blob-btn flex w-[82%] justify-self-center items-center justify-center overflow-hidden rounded-2xl border text-center font-semibold backdrop-blur ring-1 ring-white/25 shadow-lg shadow-black/50 transition active:scale-[0.97]"
                 :class="[
                     blob.tone || 'border-neutral-700 bg-neutral-900/80 text-neutral-100',
                     engine.state.playingFolder === blob.folderSlug ? 'outline outline-2 outline-amber-400 outline-offset-2' : '',
@@ -103,7 +107,8 @@ function playBlob(b) {
                 />
                 <span
                     class="flex-1 break-words"
-                    :class="[blobLabelAlignClass(blob), blobTextClass(blob)]"
+                    :class="blobLabelAlignClass(blob)"
+                    :style="blobTextClass(blob)"
                 >{{ blob.label }}</span>
             </button>
         </div>

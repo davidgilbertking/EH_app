@@ -36,7 +36,7 @@ function clearAll() {
     <button
         type="button"
         aria-label="Clear all blobs"
-        class="fixed right-4 bottom-4 z-40 grid h-20 w-20 place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur transition hover:bg-neutral-700 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
+        class="ui-corner-btn fixed right-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] bottom-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur transition hover:bg-neutral-700 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
         :disabled="disabled"
         @click="clearAll"
     >
@@ -44,7 +44,7 @@ function clearAll() {
             v-if="!broomMissing"
             src="/icons/broom-clear.png"
             alt=""
-            class="h-12 w-12 object-contain brightness-0 invert"
+            class="ui-corner-icon object-contain brightness-0 invert"
             @error="broomMissing = true"
         />
         <svg
@@ -56,7 +56,7 @@ function clearAll() {
             stroke-width="1.9"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="h-12 w-12"
+            class="ui-corner-icon"
             aria-hidden="true"
         >
             <circle cx="5" cy="8" r="1.5" />

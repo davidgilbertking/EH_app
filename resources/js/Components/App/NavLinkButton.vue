@@ -50,7 +50,7 @@ const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
         class="flex h-full items-center justify-center rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
         :class="[
             props.tone || variantClasses[props.variant] || variantClasses.default,
-            props.big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
+            props.big ? 'ui-main-btn' : 'ui-main-btn-small',
         ]"
     >
         <span
@@ -61,7 +61,7 @@ const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
                 v-if="hasVisual"
                 :src="props.imageUrl"
                 :alt="props.label"
-                class="h-14 w-14 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
+                class="ui-main-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
             />
             <span>{{ props.label }}</span>
             <span

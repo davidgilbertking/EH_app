@@ -69,7 +69,9 @@ function makeBindings(h, pulseKey) {
 }
 
 function hotspotSizing(h) {
-    return h.hotspotClass || props.hotspotClass || 'px-5 py-3';
+    return h.hotspotClass
+        || props.hotspotClass
+        || 'px-[clamp(0.35rem,calc(1.25rem*var(--ui-scale)),1.25rem)] py-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)]';
 }
 </script>
 
@@ -95,7 +97,7 @@ function hotspotSizing(h) {
                 v-for="(h, i) in hotspots"
                 :key="h.folderSlug || i"
                 type="button"
-                class="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border-2 text-base font-semibold shadow-lg backdrop-blur active:scale-[0.95] transition"
+                class="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border-2 text-[clamp(0.58rem,calc(1rem*var(--ui-scale)),1rem)] font-semibold shadow-lg backdrop-blur active:scale-[0.95] transition"
                 :class="[
                     'inline-flex items-center gap-2.5',
                     hotspotSizing(h),
@@ -113,7 +115,7 @@ function hotspotSizing(h) {
                     v-if="h.imageUrl"
                     :src="h.imageUrl"
                     :alt="h.label"
-                    class="h-8 w-8 flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
                 />
                 <span class="leading-tight">{{ h.label }}</span>
             </button>

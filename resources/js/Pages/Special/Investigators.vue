@@ -102,7 +102,7 @@ function makeBindings(item) {
 
     <div class="mx-auto max-w-6xl">
         <div
-            class="grid gap-x-5 gap-y-3"
+            class="grid gap-x-[clamp(0.35rem,calc(1.25rem*var(--ui-scale)),1.25rem)] gap-y-[clamp(0.25rem,calc(0.75rem*var(--ui-scale)),0.75rem)]"
             :style="{
                 gridTemplateColumns: `repeat(${COLS_PER_GROUP * 2}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
@@ -112,7 +112,7 @@ function makeBindings(item) {
                 v-for="item in allItems"
                 :key="item.slug"
                 type="button"
-                class="flex items-center gap-5 rounded-2xl border px-6 py-4 text-left active:scale-[0.98] transition"
+                class="flex items-center gap-[clamp(0.3rem,calc(1.25rem*var(--ui-scale)),1.25rem)] rounded-2xl border px-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] py-[clamp(0.3rem,calc(1rem*var(--ui-scale)),1rem)] text-left active:scale-[0.98] transition"
                 :class="[
                     item.tone,
                     engine.state.playingFolder === item.folderSlug ? 'ring-2 ring-amber-400' : '',
@@ -128,13 +128,13 @@ function makeBindings(item) {
                     v-if="item.imageUrl"
                     :src="item.imageUrl"
                     :alt="item.name"
-                    class="h-24 w-24 flex-none rounded-lg object-cover"
+                    class="h-[clamp(2rem,calc(6rem*var(--ui-scale)),6rem)] w-[clamp(2rem,calc(6rem*var(--ui-scale)),6rem)] flex-none rounded-lg object-cover"
                 />
                 <span
                     v-else
-                    class="grid h-24 w-24 flex-none place-items-center rounded-lg bg-neutral-800 text-xl text-neutral-500"
+                    class="grid h-[clamp(2rem,calc(6rem*var(--ui-scale)),6rem)] w-[clamp(2rem,calc(6rem*var(--ui-scale)),6rem)] flex-none place-items-center rounded-lg bg-neutral-800 text-[clamp(0.7rem,calc(1.25rem*var(--ui-scale)),1.25rem)] text-neutral-500"
                 >?</span>
-                <span class="text-xl font-semibold text-neutral-100">{{ item.name }}</span>
+                <span class="text-[clamp(0.7rem,calc(1.25rem*var(--ui-scale)),1.25rem)] font-semibold text-neutral-100">{{ item.name }}</span>
             </button>
         </div>
     </div>

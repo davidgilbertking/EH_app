@@ -45,13 +45,17 @@ const rows = [
 <template>
     <Breadcrumb title="Other" />
 
-    <div class="space-y-9 pt-4">
+    <div class="space-y-[clamp(0.65rem,calc(2.25rem*var(--ui-scale)),2.25rem)] pt-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)]">
         <div
             v-for="(row, idx) in rows"
             :key="idx"
-            class="flex justify-center gap-10"
+            class="flex justify-center gap-[clamp(0.45rem,calc(2rem*var(--ui-scale)),2rem)]"
         >
-            <div v-for="(btn, i) in row" :key="i" class="w-56 shrink-0">
+            <div
+                v-for="(btn, i) in row"
+                :key="i"
+                class="w-[clamp(7.2rem,calc(14rem*var(--ui-scale)),14rem)] shrink-0"
+            >
                 <NavLinkButton
                     v-if="btn.type === 'nav'"
                     :href="btn.href"

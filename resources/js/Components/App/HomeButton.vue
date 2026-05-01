@@ -6,7 +6,7 @@ import { Link } from '@inertiajs/vue3';
     <Link
         href="/"
         aria-label="Home"
-        class="fixed left-4 bottom-4 z-40 grid h-20 w-20 place-items-center rounded-full bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition border border-neutral-700 hover:bg-neutral-700"
+        class="ui-corner-btn fixed left-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] bottom-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition hover:bg-neutral-700"
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -16,7 +16,7 @@ import { Link } from '@inertiajs/vue3';
             stroke-width="2.2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="h-10 w-10"
+            class="ui-corner-icon"
         >
             <path d="M3 11l9-8 9 8" />
             <path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />

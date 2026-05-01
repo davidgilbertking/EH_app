@@ -76,26 +76,26 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
     <Link
         v-if="isNav"
         :href="href"
-        class="flex h-20 w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
+        class="ui-image-btn flex w-full items-center rounded-xl border text-left active:scale-[0.98] transition"
         :class="tone"
     >
         <img
             v-if="imageUrl"
             :src="imageUrl"
             :alt="label"
-            class="h-16 w-16 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+            class="ui-image-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         />
         <span
             v-else
-            class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
+            class="ui-image-btn-icon grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="flex-1 text-xl font-bold leading-tight tracking-wide">{{ label }}</span>
+        <span class="ui-image-btn-label flex-1 font-bold tracking-wide">{{ label }}</span>
     </Link>
 
     <button
         v-else
         type="button"
-        class="flex h-20 w-full items-center gap-3 rounded-xl border p-2 text-left active:scale-[0.98] transition"
+        class="ui-image-btn flex w-full items-center rounded-xl border text-left active:scale-[0.98] transition"
         :class="[
             tone,
             isPlaying ? 'ring-2 ring-amber-400' : '',
@@ -108,12 +108,12 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-if="imageUrl"
             :src="imageUrl"
             :alt="label"
-            class="h-16 w-16 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+            class="ui-image-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         />
         <span
             v-else
-            class="grid h-16 w-16 flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
+            class="ui-image-btn-icon grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="flex-1 text-xl font-bold leading-tight tracking-wide">{{ label }}</span>
+        <span class="ui-image-btn-label flex-1 font-bold tracking-wide">{{ label }}</span>
     </button>
 </template>

@@ -144,7 +144,7 @@ const bindings = useLongPress({
         class="h-full rounded-xl border px-3 text-center font-semibold tracking-wide active:scale-[0.98] transition"
         :class="[
             cls,
-            big ? 'min-h-[7rem] px-4 py-4 text-2xl leading-tight' : 'py-2.5 text-sm',
+            big ? 'ui-main-btn' : 'ui-main-btn-small',
             isPlaying ? 'ring-2 ring-amber-400' : '',
             isPausedForResume ? 'paused-amber-dash' : '',
             blobSavedPulse ? 'ring-2 ring-amber-400' : '',
@@ -157,7 +157,7 @@ const bindings = useLongPress({
         >
             <span
                 v-if="hasVisual"
-                class="h-14 w-14 flex-none overflow-hidden rounded-full border-0 bg-transparent ring-0 outline-none"
+                class="ui-main-btn-icon flex-none overflow-hidden rounded-full border-0 bg-transparent ring-0 outline-none"
             >
                 <img
                     :src="imageUrl"
