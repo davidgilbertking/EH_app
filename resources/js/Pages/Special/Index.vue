@@ -49,12 +49,12 @@ const rows = [
         <div
             v-for="(row, idx) in rows"
             :key="idx"
-            class="flex justify-center gap-[clamp(0.45rem,calc(2rem*var(--ui-scale)),2rem)]"
+            class="mx-auto flex w-full max-w-[72rem] justify-center gap-[clamp(0.25rem,calc(2rem*var(--ui-scale)),2rem)]"
         >
             <div
                 v-for="(btn, i) in row"
                 :key="i"
-                class="w-[clamp(7.2rem,calc(14rem*var(--ui-scale)),14rem)] shrink-0"
+                class="min-w-0 max-w-[14rem] flex-1"
             >
                 <NavLinkButton
                     v-if="btn.type === 'nav'"

@@ -6,39 +6,55 @@
     --header-h: 0px;
     --ui-scale: 1;
 
-    --corner-size: clamp(2.9rem, calc(5rem * var(--ui-scale)), 5rem);
-    --corner-icon-size: clamp(1.45rem, calc(2.5rem * var(--ui-scale)), 2.5rem);
-    --corner-play-icon-size: clamp(1.7rem, calc(2.9rem * var(--ui-scale)), 2.9rem);
+    --corner-size: clamp(2.35rem, calc(5rem * var(--ui-scale)), 5rem);
+    --corner-icon-size: clamp(1.2rem, calc(2.5rem * var(--ui-scale)), 2.5rem);
+    --corner-play-icon-size: clamp(1.45rem, calc(2.9rem * var(--ui-scale)), 2.9rem);
 
-    --header-btn-min-w: clamp(4.1rem, calc(6rem * var(--ui-scale)), 6rem);
+    --header-btn-min-w: clamp(3.2rem, calc(6rem * var(--ui-scale)), 6rem);
     --header-btn-px: clamp(0.35rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
-    --header-btn-py: clamp(0.55rem, calc(2rem * var(--ui-scale)), 2rem);
-    --header-btn-font: clamp(0.92rem, calc(2.05rem * var(--ui-scale)), 2.05rem);
-    --header-link-font: clamp(0.96rem, calc(1.875rem * var(--ui-scale)), 1.875rem);
-    --header-hint-font: clamp(0.5rem, calc(0.625rem * var(--ui-scale)), 0.625rem);
+    --header-btn-py: clamp(0.4rem, calc(2rem * var(--ui-scale)), 2rem);
+    --header-btn-font: clamp(0.72rem, calc(2.05rem * var(--ui-scale)), 2.05rem);
+    --header-link-font: clamp(0.75rem, calc(1.875rem * var(--ui-scale)), 1.875rem);
+    --header-hint-font: clamp(0.45rem, calc(0.625rem * var(--ui-scale)), 0.625rem);
 
-    --main-btn-min-h: clamp(3.1rem, calc(7rem * var(--ui-scale)), 7rem);
-    --main-btn-pad-y: clamp(0.45rem, calc(1rem * var(--ui-scale)), 1rem);
+    --main-btn-min-h: clamp(2.4rem, calc(7rem * var(--ui-scale)), 7rem);
+    --main-btn-pad-y: clamp(0.3rem, calc(1rem * var(--ui-scale)), 1rem);
     --main-btn-pad-x: clamp(0.45rem, calc(1rem * var(--ui-scale)), 1rem);
-    --main-btn-font: clamp(0.82rem, calc(1.5rem * var(--ui-scale)), 1.5rem);
-    --main-btn-icon: clamp(1.6rem, calc(3.5rem * var(--ui-scale)), 3.5rem);
+    --main-btn-font: clamp(0.62rem, calc(1.5rem * var(--ui-scale)), 1.5rem);
+    --main-btn-icon: clamp(1.25rem, calc(3.5rem * var(--ui-scale)), 3.5rem);
 
-    --image-btn-h: clamp(3.2rem, calc(5rem * var(--ui-scale)), 5rem);
+    --image-btn-h: clamp(2.7rem, calc(5rem * var(--ui-scale)), 5rem);
     --image-btn-gap: clamp(0.35rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
     --image-btn-pad: clamp(0.2rem, calc(0.5rem * var(--ui-scale)), 0.5rem);
-    --image-btn-icon: clamp(2rem, calc(4rem * var(--ui-scale)), 4rem);
-    --image-btn-label: clamp(0.82rem, calc(1.25rem * var(--ui-scale)), 1.25rem);
+    --image-btn-icon: clamp(1.5rem, calc(4rem * var(--ui-scale)), 4rem);
+    --image-btn-label: clamp(0.62rem, calc(1.25rem * var(--ui-scale)), 1.25rem);
 
-    --blob-h: clamp(2.8rem, calc(7rem * var(--ui-scale)), 7rem);
+    --blob-h: clamp(2.35rem, calc(7rem * var(--ui-scale)), 7rem);
     --blob-pad-x: clamp(0.45rem, calc(1rem * var(--ui-scale)), 1rem);
-    --blob-pad-y: clamp(0.35rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
+    --blob-pad-y: clamp(0.25rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
     --blob-gap: clamp(0.4rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
-    --blob-grid-gap: clamp(0.35rem, calc(1rem * var(--ui-scale)), 1rem);
-    --blob-grid-pl: clamp(1.2rem, calc(4rem * var(--ui-scale)), 4rem);
+    --blob-grid-gap: clamp(0.2rem, calc(1rem * var(--ui-scale)), 1rem);
+    --blob-grid-pl: clamp(0.85rem, calc(4rem * var(--ui-scale)), 4rem);
     --blob-grid-pr: clamp(3.8rem, calc(7rem * var(--ui-scale)), 7rem);
     --blob-grid-pt: clamp(0.2rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
     --blob-grid-pb: clamp(0.2rem, calc(0.75rem * var(--ui-scale)), 0.75rem);
-    --blob-icon-size: clamp(1.55rem, calc(4.4rem * var(--ui-scale)), 4.4rem);
+    --blob-icon-size: clamp(1.25rem, calc(4.4rem * var(--ui-scale)), 4.4rem);
+}
+
+html,
+body,
+#app {
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+}
+
+html,
+body {
+    overflow-x: clip;
+    overflow-y: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 @layer components {
