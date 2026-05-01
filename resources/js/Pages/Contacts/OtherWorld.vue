@@ -62,9 +62,9 @@ const worlds = [
 <style scoped>
 @media (min-width: 1024px) {
 .other-world-desktop {
-    --image-btn-h: 5.8rem;
+    --image-btn-h: 6.35rem;
     --image-btn-icon: 4.2rem;
-    --image-btn-label: 1.35rem;
+    --image-btn-label: 1.18rem;
 }
 }
 </style>
