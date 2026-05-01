@@ -47,8 +47,10 @@ function syncUiScale() {
         window.innerHeight / BASE_HEIGHT,
         1
     );
-    const uiScale = Math.max(0.42, Math.min(1, viewportRatio));
-    rootEl.value.style.setProperty('--ui-scale', uiScale.toFixed(3));
+    const uiScale = Math.max(0.34, Math.min(1, viewportRatio));
+    const value = uiScale.toFixed(3);
+    rootEl.value.style.setProperty('--ui-scale', value);
+    document.documentElement.style.setProperty('--ui-scale', value);
 }
 
 onMounted(() => {

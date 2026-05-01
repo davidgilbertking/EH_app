@@ -25,14 +25,15 @@ const worlds = [
 <template>
     <Breadcrumb title="Other World" parent="Encounters" />
 
-    <div class="mx-auto max-w-3xl space-y-4">
-        <div class="grid gap-x-6 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+    <div class="mx-auto max-w-3xl space-y-3 pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]">
+        <div class="grid gap-x-4 gap-y-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 folder-slug="contacts/other-world/past/1"
                 label="Past"
                 href="/encounters/other-world/past"
                 :image-url="img('past')"
                 tone="bg-stone-800 hover:bg-stone-700 border-stone-600 text-stone-100"
+                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
             />
             <ImageTextButton
                 folder-slug="contacts/other-world/future/1"
@@ -40,10 +41,11 @@ const worlds = [
                 href="/encounters/other-world/future"
                 :image-url="img('future')"
                 tone="bg-sky-900/80 hover:bg-sky-800 border-sky-700 text-sky-50"
+                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
             />
         </div>
 
-        <div class="grid gap-x-6 gap-y-5" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <div class="grid gap-x-4 gap-y-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <ImageTextButton
                 v-for="w in worlds"
                 :key="w.slug"
@@ -51,6 +53,7 @@ const worlds = [
                 :label="w.label"
                 :image-url="img(w.slug)"
                 :tone="w.tone"
+                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
             />
         </div>
     </div>

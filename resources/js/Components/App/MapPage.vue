@@ -1,6 +1,7 @@
 <script setup>
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
+import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
 import { reactive } from 'vue';
 
@@ -46,7 +47,7 @@ function makeBindings(h, pulseKey) {
             const current = page.props.gameState?.blobs ?? [];
             if (current.find((b) => b.folderSlug === h.folderSlug)) return;
             const updated = [...current, {
-                id: 'blob-' + crypto.randomUUID(),
+                id: makeBlobId(),
                 label: h.label,
                 folderSlug: h.folderSlug,
                 mode: h.mode || null,

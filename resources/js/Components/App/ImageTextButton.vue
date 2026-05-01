@@ -1,6 +1,7 @@
 <script setup>
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
+import { makeBlobId } from '@/utils/blobId';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, ref } from 'vue';
 
@@ -50,7 +51,7 @@ function longPress() {
     const updated = [
         ...current,
         {
-            id: 'blob-' + crypto.randomUUID(),
+            id: makeBlobId(),
             label: props.label,
             folderSlug: props.folderSlug,
             mode: props.mode || null,

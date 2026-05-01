@@ -51,10 +51,37 @@ body,
 
 html,
 body {
-    overflow-x: clip;
+    overflow-x: hidden;
     overflow-y: hidden;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+    :root {
+        --corner-size: 2.8rem;
+        --corner-icon-size: 1.4rem;
+        --corner-play-icon-size: 1.6rem;
+
+        --header-btn-min-w: 3rem;
+        --header-btn-px: 0.28rem;
+        --header-btn-py: 0.36rem;
+        --header-btn-font: 0.68rem;
+        --header-link-font: 0.72rem;
+
+        --main-btn-min-h: 2.15rem;
+        --main-btn-pad-y: 0.24rem;
+        --main-btn-pad-x: 0.34rem;
+        --main-btn-font: 0.58rem;
+        --main-btn-icon: 1.1rem;
+
+        --image-btn-h: 2.45rem;
+        --image-btn-icon: 1.35rem;
+        --image-btn-label: 0.58rem;
+
+        --blob-h: 2.2rem;
+        --blob-icon-size: 1.1rem;
+    }
 }
 
 @layer components {

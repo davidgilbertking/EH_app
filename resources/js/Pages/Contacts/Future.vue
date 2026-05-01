@@ -44,7 +44,7 @@ for (let row = 0; row < ROWS; row++) {
 
 <template>
     <Breadcrumb title="Future" parent="Encounters › Other World" />
-    <div class="mx-auto grid max-w-6xl grid-cols-4 gap-3">
+    <div class="mx-auto grid max-w-6xl grid-cols-4 gap-2 pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]">
         <PlayButton
             v-for="i in gridItems"
             :key="i.slug"

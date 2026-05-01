@@ -45,7 +45,9 @@ const rows = [
 <template>
     <Breadcrumb title="Other" />
 
-    <div class="space-y-[clamp(0.65rem,calc(2.25rem*var(--ui-scale)),2.25rem)] pt-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)]">
+    <div
+        class="space-y-[clamp(0.35rem,calc(2.25rem*var(--ui-scale)),2.25rem)] pt-[clamp(0.1rem,calc(1rem*var(--ui-scale)),1rem)] pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]"
+    >
         <div
             v-for="(row, idx) in rows"
             :key="idx"
@@ -62,7 +64,7 @@ const rows = [
                     :label="btn.label"
                     :variant="btn.variant"
                     :tone="btn.tone"
-                    class="w-full"
+                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.58rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
                 />
                 <PlayButton
                     v-else
@@ -70,7 +72,7 @@ const rows = [
                     :label="btn.label"
                     :variant="btn.variant"
                     :tone="btn.tone"
-                    class="w-full"
+                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.58rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
                 />
             </div>
         </div>

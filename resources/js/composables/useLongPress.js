@@ -11,7 +11,7 @@
  *   <button v-bind="bindings" />
  * with `bindings = useLongPress({ onTap, onLongPress })`.
  */
-export function useLongPress({ onTap, onLongPress, threshold = 600, moveTolerance = 12 }) {
+export function useLongPress({ onTap, onLongPress, threshold = 600, moveTolerance = 28 }) {
     let timer = null;
     let firedLong = false;
     let startX = 0;
@@ -71,6 +71,6 @@ export function useLongPress({ onTap, onLongPress, threshold = 600, moveToleranc
         onPointerleave: onPointerLeave,
         onContextmenu: onContextMenu,
         // Disable iOS callout on touch & long-press
-        style: { WebkitTouchCallout: 'none', userSelect: 'none' },
+        style: { WebkitTouchCallout: 'none', userSelect: 'none', touchAction: 'manipulation' },
     };
 }

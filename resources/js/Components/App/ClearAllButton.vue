@@ -36,7 +36,7 @@ function clearAll() {
     <button
         type="button"
         aria-label="Clear all blobs"
-        class="ui-corner-btn fixed right-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] bottom-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur transition hover:bg-neutral-700 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
+        class="ui-corner-btn fixed right-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] bottom-[clamp(0.15rem,calc(0.35rem*var(--ui-scale)),0.35rem)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur transition hover:bg-neutral-700 active:scale-95 disabled:pointer-events-none disabled:opacity-30"
         :disabled="disabled"
         @click="clearAll"
     >

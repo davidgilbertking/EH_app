@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
+import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 
@@ -73,7 +74,7 @@ function makeBindings(item) {
             const updated = [
                 ...current,
                 {
-                    id: 'blob-' + crypto.randomUUID(),
+                    id: makeBlobId(),
                     label: item.name,
                     folderSlug: item.folderSlug,
                     mode: null,
