@@ -7,7 +7,8 @@ import { citiesDisaster } from '@/Pages/Contacts/data/mainBoardSpots.js';
 defineOptions({ layout: AppLayout });
 
 const tone = 'border-neutral-300/40 bg-neutral-900/85 text-neutral-100';
-const icon = (slug) => `/images/disaster/${slug}.png`;
+const iconVersion = '2026-05-01-1';
+const icon = (slug) => `/images/disaster/${slug}.png?v=${iconVersion}`;
 const hotspots = citiesDisaster.map((c) => ({
     x: c.x,
     y: c.y,

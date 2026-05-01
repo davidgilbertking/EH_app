@@ -102,6 +102,7 @@ function hotspotSizing(h) {
                 :class="[
                     'inline-flex items-center gap-2.5',
                     hotspotSizing(h),
+                    h.hideLabelOnPhone ? 'map-hotspot-icon-only-phone' : '',
                     h.tone || 'border-emerald-300/50 bg-emerald-900/85 text-emerald-50',
                     engine.state.playingFolder === h.folderSlug ? 'ring-2 ring-amber-400' : '',
                     engine.state.isPaused && engine.state.pausedFolder === h.folderSlug
@@ -117,6 +118,7 @@ function hotspotSizing(h) {
                     :src="h.imageUrl"
                     :alt="h.label"
                     class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    :class="h.hideLabelOnPhone ? 'map-hotspot-icon-only-phone-img' : ''"
                 />
                 <span
                     class="min-w-0 flex-1 truncate leading-tight"
@@ -132,6 +134,23 @@ function hotspotSizing(h) {
        (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
     .map-hotspot-hide-label-phone {
         display: none;
+    }
+
+    /* Keep all icon-only map chips identical size on phone */
+    .map-hotspot-icon-only-phone {
+        width: clamp(1.6rem, 4.625vw, 1.9rem);
+        min-width: clamp(1.6rem, 4.625vw, 1.9rem);
+        max-width: none !important;
+        padding: clamp(0.16rem, 0.45vw, 0.21rem);
+        justify-content: center;
+        gap: 0;
+    }
+
+    .map-hotspot-icon-only-phone-img {
+        width: clamp(1rem, 2.9vw, 1.175rem);
+        height: clamp(1rem, 2.9vw, 1.175rem);
+        border-radius: 9999px;
+        object-fit: cover;
     }
 }
 </style>
