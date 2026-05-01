@@ -39,7 +39,7 @@ const worlds = [
                 href="/encounters/other-world/past"
                 :image-url="img('past')"
                 tone="bg-stone-800 hover:bg-stone-700 border-stone-600 text-stone-100"
-                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
+                class="other-world-btn"
             />
             <ImageTextButton
                 folder-slug="contacts/other-world/future/1"
@@ -47,7 +47,7 @@ const worlds = [
                 href="/encounters/other-world/future"
                 :image-url="img('future')"
                 tone="bg-sky-900/80 hover:bg-sky-800 border-sky-700 text-sky-50"
-                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
+                class="other-world-btn"
             />
         </div>
 
@@ -62,18 +62,26 @@ const worlds = [
                 :label="w.label"
                 :image-url="img(w.slug)"
                 :tone="w.tone"
-                class="!h-[clamp(2.35rem,calc(4.4rem*var(--ui-scale)),4.4rem)]"
+                class="other-world-btn"
             />
         </div>
     </div>
 </template>
 
 <style scoped>
+.other-world-btn {
+    height: clamp(2.35rem, calc(4.4rem * var(--ui-scale)), 4.4rem) !important;
+}
+
 @media (min-width: 1024px) {
 .other-world-desktop {
     --image-btn-h: 6.35rem;
     --image-btn-icon: 3.2rem;
     --image-btn-label: 1.06rem;
+}
+
+.other-world-btn {
+    height: clamp(2.7rem, calc(5rem * var(--ui-scale)), 5rem) !important;
 }
 }
 
