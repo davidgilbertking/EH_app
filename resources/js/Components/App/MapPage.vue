@@ -118,8 +118,20 @@ function hotspotSizing(h) {
                     :alt="h.label"
                     class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
                 />
-                <span class="min-w-0 flex-1 truncate leading-tight">{{ h.label }}</span>
+                <span
+                    class="min-w-0 flex-1 truncate leading-tight"
+                    :class="h.hideLabelOnPhone ? 'map-hotspot-hide-label-phone' : ''"
+                >{{ h.label }}</span>
             </button>
         </div>
     </div>
 </template>
+
+<style scoped>
+@media (max-width: 640px) and (pointer: coarse),
+       (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+    .map-hotspot-hide-label-phone {
+        display: none;
+    }
+}
+</style>

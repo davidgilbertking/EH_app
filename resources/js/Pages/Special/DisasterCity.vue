@@ -15,6 +15,7 @@ const hotspots = citiesDisaster.map((c) => ({
     folderSlug: `special/disaster/city/${c.city}`,
     tone,
     imageUrl: icon(c.city),
+    hideLabelOnPhone: true,
 }));
 </script>
 
