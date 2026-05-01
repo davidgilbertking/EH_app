@@ -25,8 +25,14 @@ const worlds = [
 <template>
     <Breadcrumb title="Other World" parent="Encounters" />
 
-    <div class="other-world-desktop mx-auto max-w-3xl space-y-3 pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]">
-        <div class="grid gap-x-4 gap-y-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+    <div
+        class="other-world-desktop other-world-fit mx-auto flex max-w-3xl flex-col pr-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[calc(var(--corner-size)+0.35rem)] [padding-left:calc(var(--corner-size)+0.45rem)]"
+        style="gap: var(--ow-space-y, 0.75rem)"
+    >
+        <div
+            class="other-world-grid grid"
+            style="grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--ow-gap-x, 1rem); row-gap: var(--ow-gap-y, 0.75rem)"
+        >
             <ImageTextButton
                 folder-slug="contacts/other-world/past/1"
                 label="Past"
@@ -45,7 +51,10 @@ const worlds = [
             />
         </div>
 
-        <div class="grid gap-x-4 gap-y-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <div
+            class="other-world-grid grid"
+            style="grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--ow-gap-x, 1rem); row-gap: var(--ow-gap-y, 0.75rem)"
+        >
             <ImageTextButton
                 v-for="w in worlds"
                 :key="w.slug"
@@ -65,6 +74,19 @@ const worlds = [
     --image-btn-h: 6.35rem;
     --image-btn-icon: 3.2rem;
     --image-btn-label: 1.06rem;
+}
+}
+
+@media (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+.other-world-fit {
+    --ow-space-y: 0.24rem;
+    --ow-gap-x: 0.45rem;
+    --ow-gap-y: 0.24rem;
+    --image-btn-h: 2.16rem;
+    --image-btn-icon: 1.18rem;
+    --image-btn-label: 1.22rem;
+    padding-bottom: 0.2rem !important;
+    padding-left: calc(var(--corner-size) + 0.2rem) !important;
 }
 }
 </style>
