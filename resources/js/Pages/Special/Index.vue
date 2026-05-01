@@ -64,7 +64,7 @@ const rows = [
                     :label="btn.label"
                     :variant="btn.variant"
                     :tone="btn.tone"
-                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.58rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
+                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.92rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
                 />
                 <PlayButton
                     v-else
@@ -72,7 +72,7 @@ const rows = [
                     :label="btn.label"
                     :variant="btn.variant"
                     :tone="btn.tone"
-                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.58rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
+                    class="w-full !min-h-[clamp(2.15rem,calc(6rem*var(--ui-scale)),6rem)] !py-[clamp(0.2rem,calc(0.8rem*var(--ui-scale)),0.8rem)] !text-[clamp(0.92rem,calc(1.35rem*var(--ui-scale)),1.35rem)]"
                 />
             </div>
         </div>
