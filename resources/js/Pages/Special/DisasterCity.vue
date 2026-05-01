@@ -20,5 +20,5 @@ const hotspots = citiesDisaster.map((c) => ({
 
 <template>
     <Breadcrumb title="Major Cities" parent="Other › Disaster" />
-    <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" hotspot-class="px-6 py-3" />
+    <MapPage background-url="/maps/main.jpg" :hotspots="hotspots" />
 </template>

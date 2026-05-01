@@ -37,7 +37,7 @@ const rows = [
         nav('Ancient Ones',  '/other/ancient-ones',  { variant: 'ancients' }),
     ],
     [
-        play('Honey Pie', 'honey-pie', { variant: 'honey' }),
+        play('Intro', 'honey-pie', { variant: 'honey' }),
     ],
 ];
 </script>
