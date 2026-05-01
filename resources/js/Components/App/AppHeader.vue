@@ -118,7 +118,7 @@ const mythosBindings = useLongPress({
             {{ actionLabel }}
             <span
                 v-if="!isActionMuted"
-                class="pointer-events-none absolute inset-x-0 bottom-1 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
+                class="pointer-events-none absolute inset-x-0 bottom-2 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
             >
                 hold for Muted
             </span>
@@ -137,7 +137,7 @@ const mythosBindings = useLongPress({
             {{ combatLabel }}
             <span
                 v-if="!isCombatEpic"
-                class="pointer-events-none absolute inset-x-0 bottom-1 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
+                class="pointer-events-none absolute inset-x-0 bottom-2 font-normal opacity-0 transition-opacity duration-150 group-hover:opacity-70 ui-header-hint"
             >
                 hold for Epic
             </span>
