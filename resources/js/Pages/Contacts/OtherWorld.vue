@@ -63,8 +63,8 @@ const worlds = [
 @media (min-width: 1024px) {
 .other-world-desktop {
     --image-btn-h: 6.35rem;
-    --image-btn-icon: 4.2rem;
-    --image-btn-label: 1.18rem;
+    --image-btn-icon: 3.2rem;
+    --image-btn-label: 1.06rem;
 }
 }
 </style>
