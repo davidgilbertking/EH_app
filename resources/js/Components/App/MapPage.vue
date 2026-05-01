@@ -98,7 +98,7 @@ function hotspotSizing(h) {
                 v-for="(h, i) in hotspots"
                 :key="h.folderSlug || i"
                 type="button"
-                class="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border-2 text-[clamp(0.58rem,calc(1rem*var(--ui-scale)),1rem)] font-semibold shadow-lg backdrop-blur active:scale-[0.95] transition"
+                class="absolute min-w-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border-2 text-[clamp(0.58rem,calc(1rem*var(--ui-scale)),1rem)] font-semibold shadow-lg backdrop-blur active:scale-[0.95] transition"
                 :class="[
                     'inline-flex items-center gap-2.5',
                     hotspotSizing(h),
@@ -109,7 +109,7 @@ function hotspotSizing(h) {
                         : '',
                     pulseByKey[h.folderSlug || i] ? 'ring-2 ring-amber-400' : '',
                 ]"
-                :style="{ left: h.x + '%', top: h.y + '%' }"
+                :style="{ left: h.x + '%', top: h.y + '%', maxWidth: h.maxWidth || 'min(45vw, 14rem)' }"
                 v-bind="makeBindings(h, h.folderSlug || i)"
             >
                 <img
@@ -118,7 +118,7 @@ function hotspotSizing(h) {
                     :alt="h.label"
                     class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
                 />
-                <span class="leading-tight">{{ h.label }}</span>
+                <span class="min-w-0 flex-1 truncate leading-tight">{{ h.label }}</span>
             </button>
         </div>
     </div>
