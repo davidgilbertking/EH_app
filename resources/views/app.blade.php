@@ -2,11 +2,17 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @php
+            $session = session();
             $iconVersion = (string) (@filemtime(public_path('icons/icon-512.png')) ?: time());
-            $yellowSignSeed = (string) session('yellow_sign_seed', 'the-yellow-sign');
-            $yellowSignIcon16 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 16]);
-            $yellowSignIcon32 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 32]);
-            $yellowSignIcon64 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 64]);
+            $yellowSignSeed = $session->get('yellow_sign_seed');
+            if (!is_string($yellowSignSeed) || $yellowSignSeed === '') {
+                $yellowSignSeed = (string) \Illuminate\Support\Str::uuid();
+                $session->put('yellow_sign_seed', $yellowSignSeed);
+            }
+            $yellowSignRevision = substr(hash('sha256', $yellowSignSeed), 0, 12);
+            $yellowSignIcon16 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 16, 'v' => $yellowSignRevision]);
+            $yellowSignIcon32 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 32, 'v' => $yellowSignRevision]);
+            $yellowSignIcon64 = route('ui.yellowSignIcon', ['seed' => $yellowSignSeed, 'size' => 64, 'v' => $yellowSignRevision]);
         @endphp
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -26,7 +32,6 @@
         <link rel="icon" type="image/png" sizes="32x32" href="{{ $yellowSignIcon32 }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ $yellowSignIcon16 }}">
         <link rel="shortcut icon" type="image/png" href="{{ $yellowSignIcon64 }}">
-        <link rel="alternate icon" href="{{ asset('favicon.ico') }}?v={{ $iconVersion }}">
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}?v={{ $iconVersion }}">
 
         <title data-inertia>{{ config('app.name', 'The Yellow Sign') }}</title>
