@@ -1,5 +1,4 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -15,7 +14,6 @@ defineProps({
 const form = useForm({
     email: '',
     password: '',
-    remember: false,
 });
 
 const submit = () => {
@@ -67,19 +65,6 @@ const submit = () => {
                 </div>
 
                 <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="block">
-                <label class="flex items-center">
-                    <Checkbox
-                        name="remember"
-                        v-model:checked="form.remember"
-                        class="rounded border-[#4c5e79] bg-[#07152c] text-[#c8b17c] focus:ring-[#c8b17c]"
-                    />
-                    <span class="ms-2 text-sm text-[#b5af9e] dark:text-[#b5af9e]"
-                        >Remember me</span
-                    >
-                </label>
             </div>
 
             <div class="mt-2 flex items-center justify-end pe-4">
