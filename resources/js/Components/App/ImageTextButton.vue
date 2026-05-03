@@ -1,4 +1,5 @@
 <script setup>
+import { getActiveFolder, isFolderInBranches } from '@/audio/folderBranch';
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
@@ -11,6 +12,7 @@ const props = defineProps({
     imageUrl: { type: String, default: null },
     href: { type: String, default: null },
     mode: { type: String, default: null },
+    activeFolderPrefix: { type: String, default: null },
     // tailwind-class string for the button background/border
     tone: { type: String, default: 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-neutral-100' },
 });
@@ -21,6 +23,11 @@ const isPausedForResume = computed(() =>
     engine.state.isPaused && engine.state.pausedFolder === props.folderSlug
 );
 const isNav = computed(() => Boolean(props.href));
+const activeFolder = computed(() => getActiveFolder(engine.state));
+const isNavBranchPlaying = computed(() => {
+    if (!isNav.value || !props.activeFolderPrefix) return false;
+    return isFolderInBranches(activeFolder.value, [props.activeFolderPrefix]);
+});
 const blobSavedPulse = ref(false);
 let pulseTimer = null;
 
@@ -78,7 +85,7 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
         v-if="isNav"
         :href="href"
         class="ui-image-btn flex w-full items-center rounded-xl border text-left active:scale-[0.98] transition"
-        :class="tone"
+        :class="[tone, isNavBranchPlaying ? 'ring-2 ring-amber-400' : '']"
     >
         <img
             v-if="imageUrl"

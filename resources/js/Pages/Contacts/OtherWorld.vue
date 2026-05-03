@@ -35,6 +35,7 @@ const worlds = [
         >
             <ImageTextButton
                 folder-slug="contacts/other-world/past/1"
+                active-folder-prefix="contacts/other-world/past"
                 label="Past"
                 href="/encounters/other-world/past"
                 :image-url="img('past')"
@@ -43,6 +44,7 @@ const worlds = [
             />
             <ImageTextButton
                 folder-slug="contacts/other-world/future/1"
+                active-folder-prefix="contacts/other-world/future"
                 label="Future"
                 href="/encounters/other-world/future"
                 :image-url="img('future')"

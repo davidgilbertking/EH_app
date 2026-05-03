@@ -1,4 +1,5 @@
 <script setup>
+import { getActiveFolder, isHrefBranchActive } from '@/audio/folderBranch';
 import { engine } from '@/audio/engine';
 import { useLongPress } from '@/composables/useLongPress';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -10,6 +11,7 @@ const playingFolder = computed(() => engine.state.playingFolder);
 const phaseFolder = computed(() =>
     playingFolder.value || (engine.state.isPaused ? engine.state.pausedFolder : null)
 );
+const activeAudioFolder = computed(() => getActiveFolder(engine.state));
 
 // Variant -> Tailwind class lookup. Header variants used to colour-code buttons.
 const variantClasses = {
@@ -26,6 +28,12 @@ const variantClasses = {
 
 const isEncountersActive = computed(() => url.value.startsWith('/encounters'));
 const isOtherActive = computed(() => url.value.startsWith('/other'));
+const isEncountersBranchActive = computed(() =>
+    isHrefBranchActive('/encounters', activeAudioFolder.value)
+);
+const isOtherBranchActive = computed(() =>
+    isHrefBranchActive('/other', activeAudioFolder.value)
+);
 const isActionMuted = computed(() => phaseFolder.value === 'action-muted');
 const isCombatEpic = computed(() => phaseFolder.value === 'combat-epic');
 const actionLabel = computed(() => (isActionMuted.value ? 'Muted Action' : 'Action'));
@@ -146,7 +154,10 @@ const mythosBindings = useLongPress({
         <Link
             href="/encounters"
             class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
-            :class="isEncountersActive ? variantClasses.encountersActive : variantClasses.encounters"
+            :class="[
+                isEncountersActive ? variantClasses.encountersActive : variantClasses.encounters,
+                isEncountersBranchActive ? 'ring-2 ring-amber-400' : '',
+            ]"
         >
             Encounters
             <span aria-hidden="true">›</span>
@@ -168,7 +179,10 @@ const mythosBindings = useLongPress({
         <Link
             href="/other"
             class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
-            :class="isOtherActive ? variantClasses.otherActive : variantClasses.other"
+            :class="[
+                isOtherActive ? variantClasses.otherActive : variantClasses.other,
+                isOtherBranchActive ? 'ring-2 ring-amber-400' : '',
+            ]"
         >
             Other
             <span aria-hidden="true">›</span>

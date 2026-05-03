@@ -1,4 +1,6 @@
 <script setup>
+import { getActiveFolder, isHrefBranchActive } from '@/audio/folderBranch';
+import { engine } from '@/audio/engine';
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -42,6 +44,8 @@ const variantClasses = {
 };
 
 const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
+const activeFolder = computed(() => getActiveFolder(engine.state));
+const isBranchPlaying = computed(() => isHrefBranchActive(props.href, activeFolder.value));
 </script>
 
 <template>
@@ -51,6 +55,7 @@ const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
         :class="[
             props.tone || variantClasses[props.variant] || variantClasses.default,
             props.big ? 'ui-main-btn' : 'ui-main-btn-small',
+            isBranchPlaying ? 'ring-2 ring-amber-400' : '',
         ]"
     >
         <span

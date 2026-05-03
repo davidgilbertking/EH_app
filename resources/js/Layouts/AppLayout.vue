@@ -3,8 +3,9 @@ import AppHeader from '@/Components/App/AppHeader.vue';
 import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
+import { warmImageCache } from '@/composables/useImageCacheWarmup';
 import { usePage } from '@inertiajs/vue3';
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const page = usePage();
 const url = computed(() => page.url || '/');
@@ -13,6 +14,7 @@ const isHome = computed(() => url.value === '/');
 const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
+const preloadImageUrls = computed(() => page.props.assetPreload?.imageUrls ?? []);
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
@@ -56,6 +58,7 @@ function syncUiScale() {
 onMounted(() => {
     syncHeaderHeight();
     syncUiScale();
+    warmImageCache(preloadImageUrls.value);
     if (typeof ResizeObserver !== 'undefined' && headerWrapEl.value) {
         resizeObserver = new ResizeObserver(syncHeaderHeight);
         resizeObserver.observe(headerWrapEl.value);
@@ -103,6 +106,10 @@ onMounted(() => {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && !wakeLock) acquireWakeLock();
     });
+});
+
+watch(preloadImageUrls, (urls) => {
+    warmImageCache(urls);
 });
 </script>
 

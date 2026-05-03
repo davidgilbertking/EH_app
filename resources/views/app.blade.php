@@ -14,7 +14,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="EH music">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'The Yellow Sign') }}">
         <!-- Put custom styled icon here (recommended 180x180 PNG) -->
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icons/apple-touch-icon.png') }}?v={{ $iconVersion }}">
 
@@ -25,7 +25,7 @@
         <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ $iconVersion }}">
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}?v={{ $iconVersion }}">
 
-        <title data-inertia>{{ config('app.name', 'EH music') }}</title>
+        <title data-inertia>{{ config('app.name', 'The Yellow Sign') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

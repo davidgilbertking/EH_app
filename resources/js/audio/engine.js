@@ -42,6 +42,7 @@ class AudioEngine {
         this.current = null; // { howl, soundId, folderSlug, label, mode }
         this._pauseFadeTimer = null;
         this._pauseOpToken = 0;
+        this._playRequestToken = 0;
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -69,6 +70,7 @@ class AudioEngine {
      */
     async play({ folderSlug, mode, label, hardSwitch = false, crossfade = false }) {
         if (!folderSlug) return;
+        const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
 
         // If there is a paused track and user explicitly starts another folder,
@@ -102,10 +104,6 @@ class AudioEngine {
                     howl: this.current.howl,
                     soundId: this.current.soundId ?? null,
                 };
-                // Detach so a second re-entrant play() during the network
-                // fetch doesn't think there's still a "current" to handle.
-                // The Howl itself keeps playing until we fade it out below.
-                this.current = null;
             } else {
                 const prev = this.current;
                 this.current = null;
@@ -123,6 +121,8 @@ class AudioEngine {
                 `/audio/folder/${encodeURIComponent(folderSlug)}/random`,
                 { headers: { Accept: 'application/json' } }
             );
+            if (requestToken !== this._playRequestToken) return;
+
             if (!res.ok) {
                 console.warn('[engine] pick failed', folderSlug, res.status);
                 this.state.isLoading = false;
@@ -138,6 +138,7 @@ class AudioEngine {
                 return;
             }
             const pick = await res.json();
+            if (requestToken !== this._playRequestToken) return;
             const effectiveMode = mode || pick.mode || MODE_RANDOM_POS_FADE;
 
             this._startTrack({
@@ -148,8 +149,10 @@ class AudioEngine {
                 label: label || pick.folderName || folderSlug,
                 format: pick.format || null,
                 prevHowlForCrossfade,
+                requestToken,
             });
         } catch (e) {
+            if (requestToken !== this._playRequestToken) return;
             console.error('[engine] play error', e);
             this._clearActiveState();
             if (prevHowlForCrossfade) {
@@ -159,7 +162,9 @@ class AudioEngine {
                 );
             }
         } finally {
-            this.state.isLoading = false;
+            if (requestToken === this._playRequestToken) {
+                this.state.isLoading = false;
+            }
         }
     }
 
@@ -318,7 +323,16 @@ class AudioEngine {
     }
 
     /** Internal: kick off a new Howl instance and crossfade with current if any. */
-    _startTrack({ streamUrl, durationSec, mode, folderSlug, label, format, prevHowlForCrossfade = null }) {
+    _startTrack({
+        streamUrl,
+        durationSec,
+        mode,
+        folderSlug,
+        label,
+        format,
+        prevHowlForCrossfade = null,
+        requestToken,
+    }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
 
@@ -334,6 +348,13 @@ class AudioEngine {
             html5: true, // stream from URL; required for files > a few MB
             volume: useFadeIn ? 0 : 1,
             onload: () => {
+                if (
+                    requestToken !== this._playRequestToken
+                    || this.current?.howl !== howl
+                ) {
+                    this._safeUnload(howl);
+                    return;
+                }
                 // Kick off playback as soon as metadata loads. Seeking and fading
                 // are deferred to `onplay` because, with html5:true, calling
                 // seek() before the audio element has actually started playing
@@ -344,6 +365,14 @@ class AudioEngine {
                 }
             },
             onplay: (id) => {
+                if (
+                    requestToken !== this._playRequestToken
+                    || this.current?.howl !== howl
+                ) {
+                    try { howl.stop(id); } catch (_) { /* ignore */ }
+                    this._safeUnload(howl);
+                    return;
+                }
                 if (this.current?.howl === howl && typeof id === 'number') {
                     this.current.soundId = id;
                 }
@@ -398,9 +427,21 @@ class AudioEngine {
             },
             onplayerror: (id, err) => {
                 console.warn('[engine] play error', err);
+                if (
+                    requestToken !== this._playRequestToken
+                    || this.current?.howl !== howl
+                ) {
+                    return;
+                }
                 // Happens when the browser blocks autoplay. Retry once the user
                 // interacts again (Howler's built-in 'unlock' event).
                 howl.once('unlock', () => {
+                    if (
+                        requestToken !== this._playRequestToken
+                        || this.current?.howl !== howl
+                    ) {
+                        return;
+                    }
                     const resumedId = howl.play(id);
                     if (this.current?.howl === howl && typeof resumedId === 'number') {
                         this.current.soundId = resumedId;
@@ -409,6 +450,11 @@ class AudioEngine {
             },
             onloaderror: (id, err) => {
                 console.warn('[engine] load error', err);
+                if (this.current?.howl === howl) {
+                    this.current = null;
+                    this._clearActiveState();
+                }
+                this._safeUnload(howl);
             },
         });
 
@@ -421,6 +467,10 @@ class AudioEngine {
         this.state.canResume = true;
         this.state.pausedFolder = null;
         this.state.pausedLabel = null;
+    }
+
+    _safeUnload(howl) {
+        try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
     _fadeOutAndUnload(howl, soundId = null) {
