@@ -28,7 +28,7 @@ function onCardError() {
             </Link>
         </div>
 
-        <div class="relative mt-6 w-full max-w-[600px] overflow-hidden rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
+        <div class="relative mt-6 w-full max-w-[400px] overflow-hidden rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
             <img
                 :src="cardSrc"
                 alt=""

@@ -67,17 +67,13 @@ const submit = () => {
             <div class="mt-1 flex items-center justify-center">
                 <button
                     type="submit"
-                    class="inline-flex h-11 w-14 -translate-y-1 items-center justify-center rounded-xl border border-[#8a7a56] bg-[#ded7c8] text-[#2a2a2a] transition hover:bg-[#f0eadf]"
+                    class="inline-flex h-11 w-24 -translate-y-1 items-center justify-center rounded-xl border border-[#f2c94c] bg-[#f2c94c] text-[#2a2a2a] transition hover:bg-[#f6d66c]"
                     :class="[
                         form.processing ? 'opacity-25' : '',
                     ]"
                     :disabled="form.processing"
                 >
                     <span class="sr-only">submit</span>
-                    <span
-                        aria-hidden="true"
-                        class="block h-0 w-0 border-y-[6px] border-y-transparent border-l-[11px] border-l-[#2a2a2a]"
-                    ></span>
                 </button>
             </div>
         </form>
