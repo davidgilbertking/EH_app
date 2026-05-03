@@ -44,6 +44,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'ui' => [
                 'yellowSignSeed' => $yellowSignSeed,
+                'yellowSignImageUrl' => route('ui.yellowSignIcon', [
+                    'seed' => $yellowSignSeed,
+                    'size' => 256,
+                ]),
             ],
             'assetPreload' => fn () => $user ? [
                 'imageUrls' => $this->imagePreloadUrls(),
