@@ -1,7 +1,6 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
@@ -25,22 +24,21 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="" />
 
         <div v-if="status" class="mb-4 text-sm font-medium text-emerald-300">
             {{ status }}
         </div>
 
-        <form class="mx-auto w-[90%] space-y-4" @submit.prevent="submit">
+        <form class="mx-auto w-[90%] space-y-3" @submit.prevent="submit">
             <div>
-                <InputLabel for="email" value="Email" class="text-lg text-[#d4c19a] dark:text-[#d4c19a]" />
-
-                <div class="mt-1 w-full">
+                <div class="w-full">
                     <TextInput
                         id="email"
                         type="email"
                         class="block w-full rounded-xl border border-[#2f435f] bg-[#07152c]/95 text-[#e6e2d7] shadow-none focus:border-[#7c6a49] focus:ring-[#7c6a49]"
                         v-model="form.email"
+                        aria-label="email"
                         required
                         autofocus
                         autocomplete="username"
@@ -51,14 +49,13 @@ const submit = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="Password" class="text-lg text-[#d4c19a] dark:text-[#d4c19a]" />
-
-                <div class="mt-1 w-full">
+                <div class="w-full">
                     <TextInput
                         id="password"
                         type="password"
                         class="block w-full rounded-xl border border-[#2f435f] bg-[#07152c]/95 text-[#e6e2d7] shadow-none focus:border-[#7c6a49] focus:ring-[#7c6a49]"
                         v-model="form.password"
+                        aria-label="password"
                         required
                         autocomplete="current-password"
                     />
@@ -67,17 +64,20 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="mt-2 flex items-center justify-end pe-4">
+            <div class="mt-1 flex items-center justify-center">
                 <button
                     type="submit"
-                    class="-translate-y-1"
+                    class="inline-flex h-11 w-14 -translate-y-1 items-center justify-center rounded-xl border border-[#8a7a56] bg-[#ded7c8] text-[#2a2a2a] transition hover:bg-[#f0eadf]"
                     :class="[
-                        'inline-flex items-center rounded-xl border border-[#8a7a56] bg-[#ded7c8] px-6 py-2 text-base font-semibold tracking-widest text-[#2a2a2a] transition hover:bg-[#f0eadf]',
                         form.processing ? 'opacity-25' : '',
                     ]"
                     :disabled="form.processing"
                 >
-                    Log in
+                    <span class="sr-only">submit</span>
+                    <span
+                        aria-hidden="true"
+                        class="block h-0 w-0 border-y-[6px] border-y-transparent border-l-[11px] border-l-[#2a2a2a]"
+                    ></span>
                 </button>
             </div>
         </form>

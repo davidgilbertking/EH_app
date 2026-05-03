@@ -35,7 +35,7 @@ function onCardError() {
                 class="pointer-events-none absolute inset-0 h-full w-full object-fill"
                 @error="onCardError"
             />
-            <div class="relative mx-auto w-[82%] py-9 sm:py-10">
+            <div class="relative mx-auto w-[82%] py-6 sm:py-7">
                 <slot />
             </div>
         </div>
