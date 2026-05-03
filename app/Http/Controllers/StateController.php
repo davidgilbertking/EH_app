@@ -36,7 +36,10 @@ class StateController extends Controller
         $state->blobs ??= [];
         $state->save();
 
-        return back();
+        // Inertia mutation requests (POST/PUT/PATCH/DELETE) should redirect
+        // with 303 so the follow-up request is always a GET across browsers.
+        // 302 can produce non-Inertia HTML modal overlays on some clients.
+        return back(status: 303);
     }
 
     public function setBlobs(Request $request): RedirectResponse
@@ -60,7 +63,7 @@ class StateController extends Controller
         $state->blobs = $data['blobs'];
         $state->save();
 
-        return back();
+        return back(status: 303);
     }
 
     public function clearBlobs(Request $request): RedirectResponse
@@ -69,6 +72,6 @@ class StateController extends Controller
         $state->blobs = [];
         $state->save();
 
-        return back();
+        return back(status: 303);
     }
 }

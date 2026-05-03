@@ -60,6 +60,7 @@ class PageRoutesTest extends TestCase
             ->withSession(['_token' => 'test-token'])
             ->from('/encounters')
             ->post('/state/ancient-one', ['slug' => $ancient->slug, '_token' => 'test-token'])
+            ->assertStatus(303)
             ->assertRedirect('/encounters');
 
         $this->assertDatabaseHas('user_states', [
@@ -79,6 +80,7 @@ class PageRoutesTest extends TestCase
             ->withSession(['_token' => 'test-token'])
             ->from('/encounters')
             ->post('/state/blobs', ['blobs' => $payload, '_token' => 'test-token'])
+            ->assertStatus(303)
             ->assertRedirect('/encounters');
 
         $this->assertDatabaseHas('user_states', [
@@ -90,6 +92,7 @@ class PageRoutesTest extends TestCase
             ->withSession(['_token' => 'test-token'])
             ->from('/encounters')
             ->delete('/state/blobs', ['_token' => 'test-token'])
+            ->assertStatus(303)
             ->assertRedirect('/encounters');
 
         $this->assertSame([], \App\Models\UserState::where('user_id', $user->id)->first()->blobs);
