@@ -4,6 +4,7 @@ import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
 import { warmImageCache } from '@/composables/useImageCacheWarmup';
+import { useYellowSignFavicon } from '@/composables/useYellowSignFavicon';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
@@ -15,6 +16,7 @@ const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
 const preloadImageUrls = computed(() => page.props.assetPreload?.imageUrls ?? []);
+const yellowSignSeed = computed(() => page.props.ui?.yellowSignSeed ?? null);
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
@@ -111,6 +113,8 @@ onMounted(() => {
 watch(preloadImageUrls, (urls) => {
     warmImageCache(urls);
 });
+
+useYellowSignFavicon(yellowSignSeed);
 </script>
 
 <template>

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\AncientOne;
 use App\Models\Investigator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -34,11 +35,15 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $state = $user?->state()->with('ancientOne')->first();
         $ancient = $state?->ancientOne;
+        $yellowSignSeed = $this->yellowSignSeed($request);
 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user,
+            ],
+            'ui' => [
+                'yellowSignSeed' => $yellowSignSeed,
             ],
             'assetPreload' => fn () => $user ? [
                 'imageUrls' => $this->imagePreloadUrls(),
@@ -54,6 +59,19 @@ class HandleInertiaRequests extends Middleware
                 'blobs' => $state->blobs ?? [],
             ] : null,
         ];
+    }
+
+    private function yellowSignSeed(Request $request): string
+    {
+        $session = $request->session();
+        $seed = $session->get('yellow_sign_seed');
+        if (is_string($seed) && $seed !== '') {
+            return $seed;
+        }
+
+        $seed = Str::uuid()->toString();
+        $session->put('yellow_sign_seed', $seed);
+        return $seed;
     }
 
     /**

@@ -1,11 +1,16 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import YellowSignGlyph from '@/Components/YellowSignGlyph.vue';
+import { useYellowSignFavicon } from '@/composables/useYellowSignFavicon';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
-const logoSrc = '/icons/src/logo.png';
 const customCardSrc = '/images/auth/login-card.png';
 const fallbackCardSrc = '/icons/src/plate.png';
 const cardSrc = ref(customCardSrc);
+const page = usePage();
+const yellowSignSeed = computed(() => page.props.ui?.yellowSignSeed ?? null);
+
+useYellowSignFavicon(yellowSignSeed);
 
 function onCardError() {
     if (cardSrc.value !== fallbackCardSrc) {
@@ -18,11 +23,12 @@ function onCardError() {
     <div class="flex min-h-screen flex-col items-center bg-[#04080f] px-4 pt-6 sm:justify-center sm:pt-0">
         <div>
             <Link href="/">
-                <img
-                    :src="logoSrc"
-                    alt="Logo"
-                    class="h-24 w-24 object-contain"
-                />
+                <div class="h-24 w-24">
+                    <YellowSignGlyph
+                        :seed="yellowSignSeed"
+                        color="#f2c94c"
+                    />
+                </div>
             </Link>
         </div>
 
