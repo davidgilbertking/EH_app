@@ -4,7 +4,11 @@ use App\Http\Controllers\AudioController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StateController;
+use App\Http\Controllers\YellowSignIconController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/ui/yellow-sign-icon.png', YellowSignIconController::class)
+    ->name('ui.yellowSignIcon');
 
 Route::middleware('auth')->group(function () {
     // ---- Pages ----
