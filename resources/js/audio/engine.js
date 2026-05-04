@@ -208,14 +208,6 @@ class AudioEngine {
         this.state.pausedLabel = this.current.label;
 
         try {
-            if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
-                if (soundId != null) {
-                    howl.pause(soundId);
-                } else {
-                    howl.pause();
-                }
-                return true;
-            }
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
             if (soundId != null) {
                 howl.fade(startVol, 0, PAUSE_TOGGLE_FADE_MS, soundId);
@@ -346,6 +338,9 @@ class AudioEngine {
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
+        // iOS + HTML5 audio has inconsistent programmatic volume control, which
+        // breaks fade-in/fade-out on iPhone Chrome/Safari. Use WebAudio there.
+        const useHtml5Stream = !(this._isPhoneLikeDevice() && this._isIOSDevice());
 
         // seekApplied guards against the onplay handler firing more than once
         // per Howl (e.g. on loop or re-seek) and re-randomising the position.
@@ -356,7 +351,7 @@ class AudioEngine {
             // Stream URL has no file extension; Howler/browsers can't sniff codec
             // from URL alone. Pass the format hint from the server.
             format: format ? [format] : undefined,
-            html5: true, // stream from URL; required for files > a few MB
+            html5: useHtml5Stream,
             volume: useFadeIn ? 0 : 1,
             onload: () => {
                 if (
@@ -407,20 +402,8 @@ class AudioEngine {
                     : null;
                 const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
                 if (useFadeIn && currentVol < 1) {
-                    if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
-                        // iOS HTML5 media ignores programmatic volume ramps.
-                        // Avoid "silent then jump" by forcing full volume.
-                        try {
-                            if (activeId != null) {
-                                howl.volume(1, activeId);
-                            } else {
-                                howl.volume(1);
-                            }
-                        } catch (_) { /* ignore */ }
-                    } else {
-                        const fadeId = activeId ?? (typeof id === 'number' ? id : null);
-                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
-                    }
+                    const fadeId = activeId ?? (typeof id === 'number' ? id : null);
+                    this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
                 }
                 // Crossfade: only NOW (when the new track is actually audible)
                 // do we start fading the previous one. Guarantees no silent
@@ -496,19 +479,6 @@ class AudioEngine {
 
     _fadeOutAndUnload(howl, soundId = null) {
         this._clearPendingMobileFade(howl);
-        if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
-            try {
-                if (soundId != null) {
-                    howl.stop(soundId);
-                } else {
-                    howl.stop();
-                }
-                howl.unload();
-            } catch (_) {
-                try { howl.unload(); } catch (__) { /* ignore */ }
-            }
-            return;
-        }
         try {
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
             if (soundId != null) {
