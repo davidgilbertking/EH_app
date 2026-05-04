@@ -33,6 +33,8 @@ const RANDOM_POS_MAX_FRACTION = 0.6;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 const IPHONE_RAMP_INTERVAL_MS = 40;
+const RANDOM_FRAGMENT_SEEK_FALLBACK_MS = 700;
+const RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC = 2.5;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
 const TAIL_PROTECTION_SEC = 60;
@@ -381,17 +383,30 @@ class AudioEngine {
         // iPhone + iOS browsers (incl. Chrome) can ignore HTML5 audio volume ramps.
         // Force WebAudio only on iPhone to restore fade-in/fade-out behaviour.
         const useHtml5Streaming = !this._isIPhoneDevice();
+        const randomStartSec = useRandomPos
+            ? this._pickRandomStartSec(durationSec)
+            : null;
+        const useRandomStartFragment = Boolean(
+            useHtml5Streaming
+            && useRandomPos
+            && Number.isFinite(randomStartSec)
+            && randomStartSec > 0
+        );
+        const streamSrc = useRandomStartFragment
+            ? `${streamUrl}#t=${randomStartSec.toFixed(3)}`
+            : streamUrl;
 
         // seekApplied guards against the onplay handler firing more than once
         // per Howl (e.g. on loop or re-seek) and re-randomising the position.
         let seekApplied = false;
 
         const howl = new Howl({
-            src: [streamUrl],
+            src: [streamSrc],
             // Stream URL has no file extension; Howler/browsers can't sniff codec
             // from URL alone. Pass the format hint from the server.
             format: format ? [format] : undefined,
             html5: useHtml5Streaming,
+            preload: useHtml5Streaming ? 'metadata' : true,
             volume: useFadeIn ? 0 : 1,
             onload: () => {
                 if (
@@ -424,17 +439,49 @@ class AudioEngine {
                 }
                 if (!seekApplied && useRandomPos) {
                     seekApplied = true;
-                    const dur = durationSec || howl.duration() || 0;
-                    if (dur > 0) {
-                        // Cap at 60% of the track OR duration - 60s tail,
-                        // whichever ceiling is lower. Guarantees we never start
-                        // within the final 60s.
-                        const max = Math.max(
-                            0,
-                            Math.min(dur * RANDOM_POS_MAX_FRACTION, dur - TAIL_PROTECTION_SEC),
-                        );
-                        const pos = Math.random() * max;
-                        try { howl.seek(pos); } catch (_) { /* ignore */ }
+                    const pos = Number.isFinite(randomStartSec)
+                        ? randomStartSec
+                        : this._pickRandomStartSec(howl.duration());
+                    if (Number.isFinite(pos) && pos > 0) {
+                        if (useRandomStartFragment) {
+                            // Most desktop browsers honor #t= media fragments and
+                            // start requesting from the target time. If a browser
+                            // ignores the fragment, fall back to an explicit seek.
+                            setTimeout(() => {
+                                if (
+                                    requestToken !== this._playRequestToken
+                                    || this.current?.howl !== howl
+                                ) {
+                                    return;
+                                }
+                                const seekId = this.current.soundId ?? (typeof id === 'number' ? id : null);
+                                const currentPos = Number(
+                                    seekId != null
+                                        ? howl.seek(seekId)
+                                        : howl.seek()
+                                );
+                                if (
+                                    !Number.isFinite(currentPos)
+                                    || currentPos < Math.max(1, pos - RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC)
+                                ) {
+                                    try {
+                                        if (seekId != null) {
+                                            howl.seek(pos, seekId);
+                                        } else {
+                                            howl.seek(pos);
+                                        }
+                                    } catch (_) { /* ignore */ }
+                                }
+                            }, RANDOM_FRAGMENT_SEEK_FALLBACK_MS);
+                        } else {
+                            try {
+                                if (typeof id === 'number') {
+                                    howl.seek(pos, id);
+                                } else {
+                                    howl.seek(pos);
+                                }
+                            } catch (_) { /* ignore */ }
+                        }
                     }
                 }
                 const activeId = this.current?.howl === howl
@@ -510,6 +557,21 @@ class AudioEngine {
         this.state.canResume = true;
         this.state.pausedFolder = null;
         this.state.pausedLabel = null;
+    }
+
+    _pickRandomStartSec(durationSec) {
+        const dur = Number(durationSec);
+        if (!Number.isFinite(dur) || dur <= 0) return null;
+
+        // Cap at 60% of the track OR duration - 60s tail,
+        // whichever ceiling is lower. Guarantees we never start
+        // within the final 60s.
+        const max = Math.max(
+            0,
+            Math.min(dur * RANDOM_POS_MAX_FRACTION, dur - TAIL_PROTECTION_SEC),
+        );
+        if (max <= 0) return 0;
+        return Math.random() * max;
     }
 
     _safeUnload(howl) {
