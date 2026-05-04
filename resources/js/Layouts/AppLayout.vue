@@ -173,7 +173,7 @@ watch(preloadImageUrls, (urls) => {
                 class="relative w-[18rem] max-w-[82vw] aspect-[6/4] rounded-xl border-2 border-[#f2c94c] bg-black shadow-[0_0_28px_rgba(242,201,76,0.22)]"
             >
                 <div
-                    class="absolute left-1/2 top-1/2 h-[31.25%] w-[41.6667%] -translate-x-1/2 -translate-y-1/2 border-2 border-[#f2c94c]"
+                    class="absolute left-1/2 top-1/2 h-[31.25%] w-[41.6667%] -translate-x-1/2 -translate-y-1/2 rounded-[0.22rem] border-2 border-[#f2c94c]"
                 >
                     <div class="absolute bottom-[25%] left-[87.5%] h-1/2 w-[2px] -translate-x-1/2 bg-[#f2c94c]"></div>
                 </div>
