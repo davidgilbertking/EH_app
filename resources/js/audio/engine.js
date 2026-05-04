@@ -30,6 +30,7 @@ const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 3000;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
+const MOBILE_FADE_PLAYING_FALLBACK_MS = 1200;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
 const TAIL_PROTECTION_SEC = 60;
@@ -43,6 +44,7 @@ class AudioEngine {
         this._pauseFadeTimer = null;
         this._pauseOpToken = 0;
         this._playRequestToken = 0;
+        this._pendingMobileFadeCleanup = new WeakMap();
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -396,11 +398,8 @@ class AudioEngine {
                     : null;
                 const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
                 if (useFadeIn && currentVol < 1) {
-                    if (activeId != null) {
-                        howl.fade(0, 1, FADE_IN_MS, activeId);
-                    } else {
-                        howl.fade(0, 1, FADE_IN_MS);
-                    }
+                    const fadeId = activeId ?? (typeof id === 'number' ? id : null);
+                    this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
                 }
                 // Crossfade: only NOW (when the new track is actually audible)
                 // do we start fading the previous one. Guarantees no silent
@@ -470,10 +469,12 @@ class AudioEngine {
     }
 
     _safeUnload(howl) {
+        this._clearPendingMobileFade(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
     _fadeOutAndUnload(howl, soundId = null) {
+        this._clearPendingMobileFade(howl);
         try {
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
             if (soundId != null) {
@@ -511,6 +512,95 @@ class AudioEngine {
         this.state.canResume = false;
         this.state.pausedFolder = null;
         this.state.pausedLabel = null;
+    }
+
+    _isPhoneLikeDevice() {
+        if (typeof window === 'undefined') return false;
+        try {
+            const isTouchPrimary = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+            const isNarrowTouch = isTouchPrimary
+                && (window.matchMedia?.('(max-width: 900px)').matches ?? false);
+            const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '';
+            const looksLikeMobileUa = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+            const isIpad = /iPad/i.test(ua)
+                || (
+                    typeof navigator !== 'undefined'
+                    && navigator.platform === 'MacIntel'
+                    && navigator.maxTouchPoints > 1
+                );
+            return isNarrowTouch || (looksLikeMobileUa && !isIpad);
+        } catch (_) {
+            return false;
+        }
+    }
+
+    _clearPendingMobileFade(howl) {
+        const cleanup = this._pendingMobileFadeCleanup.get(howl);
+        if (!cleanup) return;
+        this._pendingMobileFadeCleanup.delete(howl);
+        try { cleanup(); } catch (_) { /* ignore */ }
+    }
+
+    _fadeInWhenPlaybackStabilizes(howl, soundId, durationMs) {
+        const runNativeFade = (id = null) => {
+            try {
+                if (id != null) {
+                    howl.fade(0, 1, durationMs, id);
+                } else {
+                    howl.fade(0, 1, durationMs);
+                }
+            } catch (_) { /* ignore */ }
+        };
+
+        if (!this._isPhoneLikeDevice()) {
+            runNativeFade(soundId ?? null);
+            return;
+        }
+
+        const sound = (typeof howl._soundById === 'function' && soundId != null)
+            ? howl._soundById(soundId)
+            : null;
+        const node = sound?._node;
+        if (!node || typeof node.addEventListener !== 'function') {
+            runNativeFade(soundId ?? null);
+            return;
+        }
+
+        this._clearPendingMobileFade(howl);
+        let settled = false;
+        let fallbackTimer = null;
+
+        const tearDown = () => {
+            try { node.removeEventListener('playing', onPlaying); } catch (_) { /* ignore */ }
+            if (fallbackTimer) {
+                clearTimeout(fallbackTimer);
+                fallbackTimer = null;
+            }
+        };
+
+        const startFade = () => {
+            if (settled) return;
+            settled = true;
+            tearDown();
+            this._pendingMobileFadeCleanup.delete(howl);
+            if (!this.current || this.current.howl !== howl) return;
+            const activeId = this.current.soundId ?? soundId ?? null;
+            runNativeFade(activeId);
+        };
+
+        const onPlaying = () => {
+            startFade();
+        };
+
+        try {
+            node.addEventListener('playing', onPlaying, { once: true });
+        } catch (_) {
+            runNativeFade(soundId ?? null);
+            return;
+        }
+
+        fallbackTimer = setTimeout(startFade, MOBILE_FADE_PLAYING_FALLBACK_MS);
+        this._pendingMobileFadeCleanup.set(howl, tearDown);
     }
 }
 
