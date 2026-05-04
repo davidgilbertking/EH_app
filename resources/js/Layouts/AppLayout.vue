@@ -168,12 +168,14 @@ watch(preloadImageUrls, (urls) => {
             v-if="showRotateLandscapePrompt"
             class="fixed inset-0 z-[90] flex items-center justify-center bg-[#04080f]/95 px-6 text-center backdrop-blur-md"
         >
-            <div class="max-w-sm rounded-xl border border-amber-400/40 bg-black/40 px-6 py-7 shadow-[0_0_28px_rgba(242,201,76,0.22)]">
+            <div
+                aria-hidden="true"
+                class="relative w-[18rem] max-w-[82vw] aspect-[6/4] border-2 border-[#f2c94c] bg-black shadow-[0_0_28px_rgba(242,201,76,0.22)]"
+            >
                 <div
-                    aria-hidden="true"
-                    class="relative mx-auto h-14 w-36 overflow-hidden rounded-sm border border-[#f2c94c] bg-black"
+                    class="absolute left-1/2 top-1/2 h-1/4 w-1/3 -translate-x-1/2 -translate-y-1/2 border-2 border-[#f2c94c]"
                 >
-                    <div class="absolute inset-y-0 right-0 w-3 bg-[#f2c94c]"></div>
+                    <div class="absolute bottom-[25%] left-[87.5%] h-1/2 w-[2px] -translate-x-1/2 bg-[#f2c94c]"></div>
                 </div>
             </div>
         </div>
