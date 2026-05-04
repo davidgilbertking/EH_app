@@ -156,7 +156,12 @@ class Pages
         foreach (self::investigators() as [$slug, $name]) {
             $folders["special/characters/$slug"] = [
                 'name' => $name,
-                'mode' => $slug === 'patrice-hathaway'
+                'mode' => in_array($slug, [
+                    'patrice-hathaway',
+                    'agatha-crane',
+                    'calvin-wright',
+                    'lola-hayes',
+                ], true)
                     ? self::MODE_RANDOM
                     : self::MODE_FROM_START,
             ];
