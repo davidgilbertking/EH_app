@@ -33,7 +33,7 @@ const RANDOM_POS_MAX_FRACTION = 0.6;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 const IPHONE_RAMP_INTERVAL_MS = 40;
-const RANDOM_FRAGMENT_SEEK_FALLBACK_MS = 700;
+const RANDOM_FRAGMENT_SETTLE_CHECK_MS = 220;
 const RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC = 2.5;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
@@ -416,6 +416,11 @@ class AudioEngine {
                     this._safeUnload(howl);
                     return;
                 }
+                // HTML5 path queues playback right after Howl creation to shave
+                // startup latency. Avoid a second play() here.
+                if (useHtml5Streaming) {
+                    return;
+                }
                 // Kick off playback as soon as metadata loads. Seeking and fading
                 // are deferred to `onplay` because, with html5:true, calling
                 // seek() before the audio element has actually started playing
@@ -437,42 +442,20 @@ class AudioEngine {
                 if (this.current?.howl === howl && typeof id === 'number') {
                     this.current.soundId = id;
                 }
+                let plannedPos = null;
+                let waitForFragmentSettle = false;
                 if (!seekApplied && useRandomPos) {
                     seekApplied = true;
                     const pos = Number.isFinite(randomStartSec)
                         ? randomStartSec
                         : this._pickRandomStartSec(howl.duration());
                     if (Number.isFinite(pos) && pos > 0) {
+                        plannedPos = pos;
                         if (useRandomStartFragment) {
-                            // Most desktop browsers honor #t= media fragments and
-                            // start requesting from the target time. If a browser
-                            // ignores the fragment, fall back to an explicit seek.
-                            setTimeout(() => {
-                                if (
-                                    requestToken !== this._playRequestToken
-                                    || this.current?.howl !== howl
-                                ) {
-                                    return;
-                                }
-                                const seekId = this.current.soundId ?? (typeof id === 'number' ? id : null);
-                                const currentPos = Number(
-                                    seekId != null
-                                        ? howl.seek(seekId)
-                                        : howl.seek()
-                                );
-                                if (
-                                    !Number.isFinite(currentPos)
-                                    || currentPos < Math.max(1, pos - RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC)
-                                ) {
-                                    try {
-                                        if (seekId != null) {
-                                            howl.seek(pos, seekId);
-                                        } else {
-                                            howl.seek(pos);
-                                        }
-                                    } catch (_) { /* ignore */ }
-                                }
-                            }, RANDOM_FRAGMENT_SEEK_FALLBACK_MS);
+                            // Delay audible fade very briefly so we can verify
+                            // whether #t= was honored. If not, seek while volume
+                            // is still 0 to avoid an audible "jump".
+                            waitForFragmentSettle = true;
                         } else {
                             try {
                                 if (typeof id === 'number') {
@@ -488,19 +471,59 @@ class AudioEngine {
                     ? (this.current.soundId ?? null)
                     : null;
                 const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
-                if (useFadeIn && currentVol < 1) {
-                    const fadeId = activeId ?? (typeof id === 'number' ? id : null);
-                    this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
-                }
-                // Crossfade: only NOW (when the new track is actually audible)
-                // do we start fading the previous one. Guarantees no silent
-                // gap when the user re-taps a blob or switches between blobs.
-                if (prevHowlForCrossfade) {
-                    this._fadeOutAndUnload(
-                        prevHowlForCrossfade.howl,
-                        prevHowlForCrossfade.soundId ?? null,
-                    );
-                    prevHowlForCrossfade = null;
+                const fadeId = activeId ?? (typeof id === 'number' ? id : null);
+                const makeAudible = () => {
+                    if (
+                        requestToken !== this._playRequestToken
+                        || this.current?.howl !== howl
+                    ) {
+                        return;
+                    }
+                    if (useFadeIn && currentVol < 1) {
+                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
+                    }
+                    // Crossfade: only NOW (when the new track is actually audible)
+                    // do we start fading the previous one. Guarantees no silent
+                    // gap when the user re-taps a blob or switches between blobs.
+                    if (prevHowlForCrossfade) {
+                        this._fadeOutAndUnload(
+                            prevHowlForCrossfade.howl,
+                            prevHowlForCrossfade.soundId ?? null,
+                        );
+                        prevHowlForCrossfade = null;
+                    }
+                };
+
+                if (waitForFragmentSettle && Number.isFinite(plannedPos) && plannedPos > 0) {
+                    setTimeout(() => {
+                        if (
+                            requestToken !== this._playRequestToken
+                            || this.current?.howl !== howl
+                        ) {
+                            return;
+                        }
+                        const seekId = this.current.soundId ?? (typeof id === 'number' ? id : null);
+                        const currentPos = Number(
+                            seekId != null
+                                ? howl.seek(seekId)
+                                : howl.seek()
+                        );
+                        if (
+                            !Number.isFinite(currentPos)
+                            || currentPos < Math.max(1, plannedPos - RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC)
+                        ) {
+                            try {
+                                if (seekId != null) {
+                                    howl.seek(plannedPos, seekId);
+                                } else {
+                                    howl.seek(plannedPos);
+                                }
+                            } catch (_) { /* ignore */ }
+                        }
+                        makeAudible();
+                    }, RANDOM_FRAGMENT_SETTLE_CHECK_MS);
+                } else {
+                    makeAudible();
                 }
             },
             // Auto-continue: when a track finishes naturally, pick another random
@@ -557,6 +580,15 @@ class AudioEngine {
         this.state.canResume = true;
         this.state.pausedFolder = null;
         this.state.pausedLabel = null;
+
+        // For HTML5 streaming, queue play immediately instead of waiting for
+        // the onload callback to reduce start latency on large tracks.
+        if (useHtml5Streaming) {
+            const queuedId = howl.play();
+            if (typeof queuedId === 'number' && this.current?.howl === howl) {
+                this.current.soundId = queuedId;
+            }
+        }
     }
 
     _pickRandomStartSec(durationSec) {
