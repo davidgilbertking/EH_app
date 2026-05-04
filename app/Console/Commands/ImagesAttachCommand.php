@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Storage;
 #[Description('Match files in storage/app/public/{ancients,investigators}/ to DB rows by slug and fill image_path.')]
 class ImagesAttachCommand extends Command
 {
+    /**
+     * @var array<string, array<string, string>>
+     */
+    private array $dirFileIndexCache = [];
+
     public function handle(): int
     {
         $updated = 0;
@@ -70,12 +75,49 @@ class ImagesAttachCommand extends Command
     private function findFile(string $dir, string $slug): ?string
     {
         $disk = Storage::disk('public');
+
+        // Fast path for exact-case match.
         foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
             $rel = "$dir/$slug.$ext";
             if ($disk->exists($rel)) {
                 return $rel;
             }
         }
+
+        // Linux FS is case-sensitive, while local macOS often is not.
+        // Build a per-directory lowercase index so matching is truly
+        // case-insensitive for both basename and extension.
+        $index = $this->fileIndexForDir($dir);
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $needle = strtolower("$dir/$slug.$ext");
+            if (isset($index[$needle])) {
+                return $index[$needle];
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * @return array<string, string> lowercased_relative_path => actual_relative_path
+     */
+    private function fileIndexForDir(string $dir): array
+    {
+        if (isset($this->dirFileIndexCache[$dir])) {
+            return $this->dirFileIndexCache[$dir];
+        }
+
+        $index = [];
+        foreach (Storage::disk('public')->files($dir) as $path) {
+            $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+            if (! in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                continue;
+            }
+            $index[strtolower($path)] = $path;
+        }
+
+        $this->dirFileIndexCache[$dir] = $index;
+
+        return $index;
     }
 }
