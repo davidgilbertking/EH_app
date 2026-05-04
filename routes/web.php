@@ -5,10 +5,36 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\YellowSignIconController;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ui/yellow-sign-icon.png', YellowSignIconController::class)
     ->name('ui.yellowSignIcon');
+
+Route::get('/debug/version', static function () {
+    $head = trim((string) @shell_exec('git rev-parse --short HEAD 2>/dev/null'));
+    $manifestPath = public_path('build/manifest.json');
+    $manifest = [];
+    if (File::exists($manifestPath)) {
+        $raw = File::get($manifestPath);
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $manifest = $decoded;
+        }
+    }
+    $appAsset = $manifest['resources/js/app.js']['file'] ?? null;
+    $appAssetPath = $appAsset ? public_path("build/{$appAsset}") : null;
+    return response()->json([
+        'git_head' => $head !== '' ? $head : null,
+        'manifest_exists' => File::exists($manifestPath),
+        'manifest_mtime' => File::exists($manifestPath) ? @date(DATE_ATOM, File::lastModified($manifestPath)) : null,
+        'app_asset' => $appAsset,
+        'app_asset_exists' => $appAssetPath ? File::exists($appAssetPath) : false,
+        'app_asset_mtime' => ($appAssetPath && File::exists($appAssetPath))
+            ? @date(DATE_ATOM, File::lastModified($appAssetPath))
+            : null,
+    ]);
+});
 
 Route::middleware('auth')->group(function () {
     // ---- Pages ----
