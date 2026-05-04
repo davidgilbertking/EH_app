@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ResolvesStoragePathCase;
 use Illuminate\Database\Eloquent\Model;
 
 class AncientOne extends Model
 {
+    use ResolvesStoragePathCase;
+
     protected $fillable = ['slug', 'name', 'image_path', 'bg_image_path', 'sort_order'];
 
     public function imageUrl(): ?string
     {
-        return $this->image_path ? asset('storage/'.$this->image_path) : null;
+        return $this->publicStorageAsset($this->image_path);
     }
 
     /**
@@ -21,6 +24,6 @@ class AncientOne extends Model
     public function bgImageUrl(): ?string
     {
         $path = $this->bg_image_path ?: $this->image_path;
-        return $path ? asset('storage/'.$path) : null;
+        return $this->publicStorageAsset($path);
     }
 }
