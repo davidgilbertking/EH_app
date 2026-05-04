@@ -15,6 +15,10 @@ const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
 const preloadImageUrls = computed(() => page.props.assetPreload?.imageUrls ?? []);
+const imageWarmupSessionKey = computed(() => {
+    const userId = page.props.auth?.user?.id ?? 'guest';
+    return `eh:image-warmup:v1:user:${userId}`;
+});
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
 const showRotateLandscapePrompt = ref(false);
 const BASE_WIDTH = 1512;
@@ -64,11 +68,23 @@ function syncRotateLandscapePrompt() {
     showRotateLandscapePrompt.value = isPhone && isTouchPrimary && isPortrait;
 }
 
+function warmImageCacheOncePerSession(urls) {
+    if (!Array.isArray(urls) || urls.length === 0) return;
+    if (typeof window === 'undefined' || !window.sessionStorage) {
+        warmImageCache(urls);
+        return;
+    }
+    const key = imageWarmupSessionKey.value;
+    if (window.sessionStorage.getItem(key) === '1') return;
+    window.sessionStorage.setItem(key, '1');
+    warmImageCache(urls);
+}
+
 onMounted(() => {
     syncHeaderHeight();
     syncUiScale();
     syncRotateLandscapePrompt();
-    warmImageCache(preloadImageUrls.value);
+    warmImageCacheOncePerSession(preloadImageUrls.value);
     if (typeof ResizeObserver !== 'undefined' && headerWrapEl.value) {
         resizeObserver = new ResizeObserver(syncHeaderHeight);
         resizeObserver.observe(headerWrapEl.value);
@@ -123,7 +139,7 @@ onMounted(() => {
 });
 
 watch(preloadImageUrls, (urls) => {
-    warmImageCache(urls);
+    warmImageCacheOncePerSession(urls);
 });
 </script>
 
