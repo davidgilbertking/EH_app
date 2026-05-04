@@ -28,7 +28,6 @@ import { reactive } from 'vue';
 // so by the time it actually starts, the old one is already mostly gone.
 const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 3000;
-const PAUSE_TOGGLE_FADE_MS = 1000;
 const RANDOM_POS_MAX_FRACTION = 0.6;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
@@ -40,8 +39,6 @@ export const MODE_FROM_START_NO_FADE = 'from_start_no_fade';
 class AudioEngine {
     constructor() {
         this.current = null; // { howl, folderSlug, label }
-        this._pauseFadeTimer = null;
-        this._pauseOpToken = 0;
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -69,7 +66,6 @@ class AudioEngine {
      */
     async play({ folderSlug, mode, label, hardSwitch = false, crossfade = false }) {
         if (!folderSlug) return;
-        this._cancelPauseTransition();
 
         // If there is a paused track and user explicitly starts another folder,
         // discard paused buffer and treat this as a brand new playback choice.
@@ -148,7 +144,6 @@ class AudioEngine {
 
     /** Stop the currently-playing track with fade-out. */
     stop() {
-        this._cancelPauseTransition();
         if (!this.current) return;
         if (this.state.isPaused) {
             try {
@@ -164,64 +159,26 @@ class AudioEngine {
 
     pause() {
         if (!this.current || this.state.isPaused) return false;
-
-        this._cancelPauseTransition();
-        const opToken = ++this._pauseOpToken;
-        const howl = this.current.howl;
-
-        // Reflect paused state in UI immediately while audio fades out.
-        this.state.isPaused = true;
-        this.state.playingFolder = null;
-        this.state.playingLabel = null;
-        this.state.canResume = true;
-        this.state.pausedFolder = this.current.folderSlug;
-        this.state.pausedLabel = this.current.label;
-
         try {
-            const startVol = howl.volume();
-            howl.fade(startVol, 0, PAUSE_TOGGLE_FADE_MS);
-            this._pauseFadeTimer = setTimeout(() => {
-                if (opToken !== this._pauseOpToken) return;
-                try {
-                    howl.pause();
-                    // Keep at 0 so resume can fade in from silence.
-                    howl.volume(0);
-                } catch (_) { /* ignore */ }
-                this._pauseFadeTimer = null;
-            }, PAUSE_TOGGLE_FADE_MS + 30);
+            this.current.howl.pause();
+            this.state.isPaused = true;
+            // Keep resume capability, but remove active-playing markers so page
+            // buttons don't look "currently playing" while paused.
+            this.state.playingFolder = null;
+            this.state.playingLabel = null;
+            this.state.canResume = true;
+            this.state.pausedFolder = this.current.folderSlug;
+            this.state.pausedLabel = this.current.label;
             return true;
         } catch (_) {
-            try {
-                howl.pause();
-                howl.volume(0);
-                return true;
-            } catch (__) {
-                // Revert UI markers if pause could not be applied.
-                this.state.isPaused = false;
-                this.state.playingFolder = this.current?.folderSlug || null;
-                this.state.playingLabel = this.current?.label || null;
-                this.state.canResume = Boolean(this.current);
-                this.state.pausedFolder = null;
-                this.state.pausedLabel = null;
-                return false;
-            }
+            return false;
         }
     }
 
     resume() {
         if (!this.current || !this.state.isPaused) return false;
-
-        this._cancelPauseTransition();
-        const howl = this.current.howl;
-
         try {
-            if (!howl.playing()) {
-                howl.play();
-            }
-
-            const startVol = howl.volume();
-            howl.fade(startVol, 1, PAUSE_TOGGLE_FADE_MS);
-
+            this.current.howl.play();
             this.state.isPaused = false;
             this.state.playingFolder = this.current.folderSlug;
             this.state.playingLabel = this.current.label;
@@ -230,13 +187,6 @@ class AudioEngine {
             this.state.pausedLabel = null;
             return true;
         } catch (_) {
-            // Keep paused markers if resume failed.
-            this.state.isPaused = true;
-            this.state.playingFolder = null;
-            this.state.playingLabel = null;
-            this.state.canResume = true;
-            this.state.pausedFolder = this.current.folderSlug;
-            this.state.pausedLabel = this.current.label;
             return false;
         }
     }
@@ -337,14 +287,6 @@ class AudioEngine {
             }, FADE_OUT_MS + 200);
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
-        }
-    }
-
-    _cancelPauseTransition() {
-        this._pauseOpToken += 1;
-        if (this._pauseFadeTimer) {
-            clearTimeout(this._pauseFadeTimer);
-            this._pauseFadeTimer = null;
         }
     }
 
