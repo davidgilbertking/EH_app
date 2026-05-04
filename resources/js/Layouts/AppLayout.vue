@@ -169,12 +169,12 @@ watch(preloadImageUrls, (urls) => {
             class="fixed inset-0 z-[90] flex items-center justify-center bg-[#04080f]/95 px-6 text-center backdrop-blur-md"
         >
             <div class="max-w-sm rounded-xl border border-amber-400/40 bg-black/40 px-6 py-7 shadow-[0_0_28px_rgba(242,201,76,0.22)]">
-                <div class="text-base font-semibold uppercase tracking-[0.12em] text-amber-300">
-                    Landscape Only
+                <div
+                    aria-hidden="true"
+                    class="relative mx-auto h-20 w-52 overflow-hidden rounded-sm border border-amber-100/70 bg-[#f2c94c]"
+                >
+                    <div class="absolute inset-y-0 right-0 w-4 bg-[#d7a92d]"></div>
                 </div>
-                <p class="mt-3 text-sm leading-snug text-neutral-200">
-                    Please rotate phone to horizontal orientation.
-                </p>
             </div>
         </div>
     </div>
