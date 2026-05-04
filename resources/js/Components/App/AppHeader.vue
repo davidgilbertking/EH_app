@@ -115,7 +115,7 @@ const mythosBindings = useLongPress({
     >
         <button
             type="button"
-            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn"
+            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn whitespace-normal break-words leading-tight"
             :class="[
                 actionClass,
                 isActionActive ? 'ring-2 ring-amber-400' : '',
@@ -134,7 +134,7 @@ const mythosBindings = useLongPress({
 
         <button
             type="button"
-            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn"
+            class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn whitespace-normal break-words leading-tight"
             :class="[
                 combatClass,
                 isCombatActive ? 'ring-2 ring-amber-400' : '',
@@ -153,19 +153,19 @@ const mythosBindings = useLongPress({
 
         <Link
             href="/encounters"
-            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 isEncountersActive ? variantClasses.encountersActive : variantClasses.encounters,
                 isEncountersBranchActive ? 'ring-2 ring-amber-400' : '',
             ]"
         >
             Encounters
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true" class="max-[640px]:hidden">›</span>
         </Link>
 
         <button
             type="button"
-            class="flex-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
+            class="flex-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 variantClasses.mythos,
                 isMythosActive ? 'ring-2 ring-amber-400' : '',
@@ -178,14 +178,14 @@ const mythosBindings = useLongPress({
 
         <Link
             href="/other"
-            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link"
+            class="flex flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 isOtherActive ? variantClasses.otherActive : variantClasses.other,
                 isOtherBranchActive ? 'ring-2 ring-amber-400' : '',
             ]"
         >
             Other
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true" class="max-[640px]:hidden">›</span>
         </Link>
     </header>
 </template>

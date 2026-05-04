@@ -168,7 +168,7 @@ const bindings = useLongPress({
                     class="h-full w-full scale-110 object-cover"
                 />
             </span>
-            <span class="leading-tight" :class="props.labelClass">
+            <span class="min-w-0 max-w-full whitespace-normal break-words leading-tight" :class="props.labelClass">
                 <template v-if="props.mobileShortLabel">
                     <span class="ui-phone-short-mobile-only">{{ props.mobileShortLabel }}</span>
                     <span class="ui-phone-short-desktop-only">{{ label }}</span>

@@ -97,7 +97,7 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-else
             class="ui-image-btn-icon grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="ui-image-btn-label flex-1 font-bold tracking-wide">{{ label }}</span>
+        <span class="ui-image-btn-label min-w-0 flex-1 whitespace-normal break-words font-bold tracking-wide leading-tight">{{ label }}</span>
     </Link>
 
     <button
@@ -122,6 +122,6 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
             v-else
             class="ui-image-btn-icon grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
         >?</span>
-        <span class="ui-image-btn-label flex-1 font-bold tracking-wide">{{ label }}</span>
+        <span class="ui-image-btn-label min-w-0 flex-1 whitespace-normal break-words font-bold tracking-wide leading-tight">{{ label }}</span>
     </button>
 </template>

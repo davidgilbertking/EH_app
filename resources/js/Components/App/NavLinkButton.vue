@@ -70,7 +70,7 @@ const isBranchPlaying = computed(() => isHrefBranchActive(props.href, activeFold
                 :alt="props.label"
                 class="ui-main-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
             />
-            <span :class="props.labelClass">
+            <span class="min-w-0 max-w-full whitespace-normal break-words leading-tight" :class="props.labelClass">
                 <template v-if="props.mobileShortLabel">
                     <span class="ui-phone-short-mobile-only">{{ props.mobileShortLabel }}</span>
                     <span class="ui-phone-short-desktop-only">{{ props.label }}</span>

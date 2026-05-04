@@ -26,7 +26,7 @@ const rows = [
     [
         play('Death (Sanity)',    'death-sanity',    { variant: 'deathSanity' }),
         play('Death (Health)',    'death-health',    { variant: 'deathHealth' }),
-        play('Death (Sacrifice)', 'death-sacrifice', { variant: 'deathSacrifice' }),
+        play('Sacrifice', 'death-sacrifice', { variant: 'deathSacrifice' }),
         // Devoured: stark black — "nothing left" state.
         play('Devoured', 'devoured', {
             tone: 'bg-black hover:bg-neutral-900 text-neutral-100 border-neutral-700',

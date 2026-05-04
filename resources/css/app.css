@@ -95,8 +95,8 @@ body {
 
 @media (max-width: 480px) and (pointer: coarse) {
     :root {
-        --header-btn-font: 1.14rem;
-        --header-link-font: 1.2rem;
+        --header-btn-font: 0.92rem;
+        --header-link-font: 0.98rem;
         --main-btn-font: 1.24rem;
         --main-btn-min-h: 2.45rem;
         --image-btn-label: 1.2rem;
@@ -105,8 +105,8 @@ body {
 
 @media (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
     :root {
-        --header-btn-font: 1.28rem;
-        --header-link-font: 1.34rem;
+        --header-btn-font: 0.9rem;
+        --header-link-font: 0.96rem;
         --main-btn-font: 1.62rem;
         --main-btn-min-h: 2.55rem;
         --image-btn-h: 2.95rem;
