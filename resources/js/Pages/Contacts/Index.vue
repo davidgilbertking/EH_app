@@ -33,6 +33,7 @@ const elderBtn = computed(() => {
     return {
         type: 'nav',
         label: 'Pick Ancient One',
+        labelClass: 'max-[640px]:whitespace-nowrap max-[640px]:text-[0.82em] max-[640px]:tracking-normal',
         href: '/other/ancient-ones',
         tone: 'bg-zinc-300 hover:bg-zinc-200 text-zinc-900 border-zinc-100',
     };

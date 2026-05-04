@@ -13,6 +13,8 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 const props = defineProps({
     folderSlug: { type: String, required: true },
     label: { type: String, required: true },
+    labelClass: { type: String, default: '' },
+    mobileShortLabel: { type: String, default: '' },
     imageUrl: { type: String, default: null },
     showImage: { type: Boolean, default: false },
     mode: { type: String, default: null },
@@ -166,7 +168,13 @@ const bindings = useLongPress({
                     class="h-full w-full scale-110 object-cover"
                 />
             </span>
-            <span class="leading-tight">{{ label }}</span>
+            <span class="leading-tight" :class="props.labelClass">
+                <template v-if="props.mobileShortLabel">
+                    <span class="hidden max-[640px]:inline">{{ props.mobileShortLabel }}</span>
+                    <span class="max-[640px]:hidden">{{ label }}</span>
+                </template>
+                <template v-else>{{ label }}</template>
+            </span>
         </span>
     </button>
 </template>

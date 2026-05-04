@@ -16,12 +16,23 @@ const labels = [
     'Вы не можете поверить, когда видите более молодого себя, участвующего в ритуале культа, открывшего этот портал.',
     'Жители Аркхэма бродят по улицам, охотясь на ведьм.',
 ];
+const shortLabels = [
+    'Себя в детстве',
+    'Старое оборудование',
+    'Безумец в дюнах',
+    'Старый Провиденс',
+    'Последний день Му',
+    'Пустой зелёный город',
+    'Ритуал молодого себя',
+    'Охота на ведьм',
+];
 const pastIcon = '/images/other-worlds/past.png';
 // Fixed 8-colour palette, same order every session so button N is always the
 // same colour (easy to reference during a game).
 const items = labels.map((label, i) => ({
     slug: `contacts/other-world/past/${i + 1}`,
     label,
+    mobileShortLabel: shortLabels[i] ?? '',
     tone: PALETTE_8[i],
     imageUrl: pastIcon,
 }));
@@ -50,9 +61,10 @@ for (let row = 0; row < ROWS; row++) {
             :key="i.slug"
             :folder-slug="i.slug"
             :label="i.label"
+            :mobile-short-label="i.mobileShortLabel"
             :tone="i.tone"
             :image-url="i.imageUrl"
-            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.48rem,calc(1.125rem*var(--ui-scale)),1.125rem)] !leading-tight"
+            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] max-[640px]:!h-[5.2rem] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.56rem,calc(1.125rem*var(--ui-scale)),1.125rem)] max-[640px]:!text-[0.74rem] !leading-tight"
             :big="false"
         />
     </div>

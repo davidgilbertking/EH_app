@@ -16,12 +16,23 @@ const labels = [
     'Вы оказываетесь в эпохе технологических чудес.',
     'Будущий вы лежите в затхлом гостиничном номере, бессвязно бормоча и медленно умирая от жестоких ран.',
 ];
+const shortLabels = [
+    'Чужой Таймс-сквер',
+    'Город без света',
+    'Выжженная земля',
+    'Карантин будущего',
+    'Река времени',
+    'Эпоха идолов',
+    'Техно-эпоха',
+    'Умирающий двойник',
+];
 const futureIcon = '/images/other-worlds/future.png';
 // Same 8-colour fixed palette as Past.vue. Button N has the same colour on
 // both pages — not a problem because users only see one page at a time.
 const items = labels.map((label, i) => ({
     slug: `contacts/other-world/future/${i + 1}`,
     label,
+    mobileShortLabel: shortLabels[i] ?? '',
     tone: PALETTE_8[i],
     imageUrl: futureIcon,
 }));
@@ -50,9 +61,10 @@ for (let row = 0; row < ROWS; row++) {
             :key="i.slug"
             :folder-slug="i.slug"
             :label="i.label"
+            :mobile-short-label="i.mobileShortLabel"
             :tone="i.tone"
             :image-url="i.imageUrl"
-            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.48rem,calc(1.125rem*var(--ui-scale)),1.125rem)] !leading-tight"
+            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] max-[640px]:!h-[5.2rem] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.56rem,calc(1.125rem*var(--ui-scale)),1.125rem)] max-[640px]:!text-[0.74rem] !leading-tight"
             :big="false"
         />
     </div>
