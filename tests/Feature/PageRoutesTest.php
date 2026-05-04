@@ -107,4 +107,31 @@ class PageRoutesTest extends TestCase
             ->getJson('/audio/folder/action/random')
             ->assertNotFound();
     }
+
+    public function test_audio_stream_uses_x_accel_redirect_when_enabled(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $folder = \App\Models\SoundFolder::create([
+            'slug' => 'action',
+            'name' => 'Action',
+            'mode' => \App\Models\SoundFolder::MODE_RANDOM_POS_FADE,
+        ]);
+        $track = \App\Models\SoundTrack::create([
+            'sound_folder_id' => $folder->id,
+            'file_path' => 'action/test.mp3',
+            'duration_seconds' => 3.5,
+        ]);
+
+        \Illuminate\Support\Facades\Storage::disk('local')->put('audio/action/test.mp3', 'fake-mp3');
+
+        config()->set('eh.audio_accel_enabled', true);
+        config()->set('eh.audio_accel_internal_prefix', '/_protected-audio/');
+
+        $this->actingAs($user)
+            ->get($track->streamUrl())
+            ->assertOk()
+            ->assertHeader('X-Accel-Redirect', '/_protected-audio/audio/action/test.mp3')
+            ->assertHeader('Content-Type', 'audio/mpeg')
+            ->assertHeader('Accept-Ranges', 'bytes');
+    }
 }

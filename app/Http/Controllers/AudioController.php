@@ -105,6 +105,15 @@ class AudioController extends Controller
             $relative = config('eh.audio_root', 'audio').'/'.$alternate;
         }
 
+        if ($this->shouldUseNginxAccel()) {
+            return response('', 200, [
+                'Content-Type' => $this->mimeFor($relative),
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'private, max-age=31536000',
+                'X-Accel-Redirect' => $this->buildAccelInternalUri($relative),
+            ]);
+        }
+
         $path = $disk->path($relative);
         $size = filesize($path);
         $mime = $this->mimeFor($path);
@@ -186,5 +195,27 @@ class AudioController extends Controller
             return str_replace('/outer-world/', '/other-world/', $path);
         }
         return null;
+    }
+
+    private function shouldUseNginxAccel(): bool
+    {
+        return (bool) config('eh.audio_accel_enabled', false);
+    }
+
+    private function buildAccelInternalUri(string $relativePath): string
+    {
+        $prefix = '/'.trim((string) config('eh.audio_accel_internal_prefix', '/_protected-audio/'), '/').'/';
+        $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        // Guard against header path traversal if DB data is tampered.
+        if (
+            $normalized === ''
+            || str_starts_with($normalized, '..')
+            || str_contains($normalized, '/../')
+        ) {
+            abort(404);
+        }
+
+        return $prefix.$normalized;
     }
 }
