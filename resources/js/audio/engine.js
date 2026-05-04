@@ -30,8 +30,7 @@ const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 3000;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
-const MOBILE_FADE_START_FALLBACK_MS = 5000;
-const MOBILE_FADE_INTERVAL_MS = 50;
+const MOBILE_FADE_PLAYING_FALLBACK_MS = 1200;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
 const TAIL_PROTECTION_SEC = 60;
@@ -75,11 +74,6 @@ class AudioEngine {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
-        const useMobileCrossfade = this.current
-            && !hardSwitch
-            && !crossfade
-            && this._isPhoneLikeDevice();
-        const shouldCrossfade = crossfade || useMobileCrossfade;
 
         // If there is a paused track and user explicitly starts another folder,
         // discard paused buffer and treat this as a brand new playback choice.
@@ -107,7 +101,7 @@ class AudioEngine {
         //     or two to load.
         let prevHowlForCrossfade = null;
         if (this.current) {
-            if (shouldCrossfade) {
+            if (crossfade) {
                 prevHowlForCrossfade = {
                     howl: this.current.howl,
                     soundId: this.current.soundId ?? null,
@@ -573,83 +567,39 @@ class AudioEngine {
         }
 
         this._clearPendingMobileFade(howl);
-        let started = false;
+        let settled = false;
         let fallbackTimer = null;
-        let rampTimer = null;
-
-        const getActiveId = () => (this.current?.howl === howl
-            ? (this.current.soundId ?? soundId ?? null)
-            : (soundId ?? null));
-
-        const applyVolume = (id, value) => {
-            try {
-                if (id != null) {
-                    howl.volume(value, id);
-                } else {
-                    howl.volume(value);
-                }
-            } catch (_) { /* ignore */ }
-        };
 
         const tearDown = () => {
-            try { node.removeEventListener('timeupdate', onTimeUpdate); } catch (_) { /* ignore */ }
+            try { node.removeEventListener('playing', onPlaying); } catch (_) { /* ignore */ }
             if (fallbackTimer) {
                 clearTimeout(fallbackTimer);
                 fallbackTimer = null;
             }
-            if (rampTimer) {
-                clearInterval(rampTimer);
-                rampTimer = null;
-            }
-        };
-
-        const finish = () => {
-            tearDown();
-            this._pendingMobileFadeCleanup.delete(howl);
-        };
-
-        const startManualFade = () => {
-            if (started) return;
-            started = true;
-            if (!this.current || this.current.howl !== howl) {
-                finish();
-                return;
-            }
-            const activeId = getActiveId();
-            applyVolume(activeId, 0);
-            const startedAt = Date.now();
-            rampTimer = setInterval(() => {
-                if (!this.current || this.current.howl !== howl) {
-                    finish();
-                    return;
-                }
-                const id = getActiveId();
-                const elapsed = Date.now() - startedAt;
-                const nextVol = Math.min(1, Math.max(0, elapsed / durationMs));
-                applyVolume(id, nextVol);
-                if (nextVol >= 1) {
-                    finish();
-                }
-            }, MOBILE_FADE_INTERVAL_MS);
         };
 
         const startFade = () => {
+            if (settled) return;
+            settled = true;
+            tearDown();
+            this._pendingMobileFadeCleanup.delete(howl);
             if (!this.current || this.current.howl !== howl) return;
-            startManualFade();
+            const activeId = this.current.soundId ?? soundId ?? null;
+            runNativeFade(activeId);
         };
 
-        const onTimeUpdate = () => {
+        const onPlaying = () => {
             startFade();
         };
 
         try {
-            node.addEventListener('timeupdate', onTimeUpdate, { once: true });
+            node.addEventListener('playing', onPlaying, { once: true });
         } catch (_) {
             runNativeFade(soundId ?? null);
             return;
         }
 
-        fallbackTimer = setTimeout(startFade, MOBILE_FADE_START_FALLBACK_MS);
+        fallbackTimer = setTimeout(startFade, MOBILE_FADE_PLAYING_FALLBACK_MS);
         this._pendingMobileFadeCleanup.set(howl, tearDown);
     }
 }
