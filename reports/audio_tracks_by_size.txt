@@ -1,0 +1,476 @@
+Sorted by size_bytes DESC (then duration_sec DESC)
+name	duration_hms	duration_sec	size_mb	size_bytes	path	indexed_in_db
+Relaxing Vintage Music 10 Hours  1920s 1930s Music Ambience  ASMR Hotel Ambience.mp3	10:01:32	36091.507	826.069	866196303	action/Relaxing Vintage Music 10 Hours  1920s 1930s Music Ambience  ASMR Hotel Ambience.mp3	yes
+Vinyl ASMR - 1920s Jazz & Swing!.mp3	10:01:13	36072.816	550.428	577165868	action/Vinyl ASMR - 1920s Jazz & Swing!.mp3	yes
+AMENHOTEP lll - Ancient Pharaoh Music - Mystic & Calming Atmosphere - Dark Prayers & Mystic Chants.mp3	04:59:59	17999.040	275.222	288591248	ancient/nephren-ka/AMENHOTEP lll - Ancient Pharaoh Music - Mystic & Calming Atmosphere - Dark Prayers & Mystic Chants.mp3	yes
+4 Hours of Sacred Choir Music for Relaxing, Prayer, Meditation & Sleep.mp3	04:27:11	16031.295	245.711	257647058	contacts/big-city/rome/4 Hours of Sacred Choir Music for Relaxing, Prayer, Meditation & Sleep.mp3	yes
+Arkham Horror LCG - The Mountains of Madness.mp3	04:27:58	16077.576	245.668	257601526	ancient/rise-of-the-elder-things/Arkham Horror LCG - The Mountains of Madness.mp3	yes
+4 Hours Call of Cthulhu Dark Mystery Orchestral Remix for Gaming, Arkham Horror LCG, Call of Cthulhu.mp3	04:14:58	15297.594	234.344	245727239	ancient/cthulhu/4 Hours Call of Cthulhu Dark Mystery Orchestral Remix for Gaming, Arkham Horror LCG, Call of Cthulhu.mp3	yes
+Relaxing Vintage Music 4 Hours ｜ 1920s 1930s Ambience Music ｜ Gramophone in the Table.mp3	04:09:43	14983.053	229.259	240395470	action/Relaxing Vintage Music 4 Hours ｜ 1920s 1930s Ambience Music ｜ Gramophone in the Table.mp3	yes
+2 LAKE CAMP --- ❄ Scary Cold Howling Snowstorm in a Frozen Arctic Environment for Relaxation, Sleeping and Fantasy.mp3	04:00:18	14417.607	220.244	230942298	contacts/antarctica/lake-camp/2 LAKE CAMP --- ❄ Scary Cold Howling Snowstorm in a Frozen Arctic Environment for Relaxation, Sleeping and Fantasy.mp3	yes
+Unholy Anthem to Idiocy： AZATHOTH (dark Lovecraftian space ambient).mp3	03:35:08	12907.572	197.312	206896194	ancient/syzygy/Unholy Anthem to Idiocy： AZATHOTH (dark Lovecraftian space ambient).mp3	yes
+The ULTIMATE Monster Hunter World Battle Themes.mp3	03:23:18	12198.426	186.141	195183404	combat/The ULTIMATE Monster Hunter World Battle Themes.mp3	yes
+UNIVERSAL --- DnD Calm Fantasy Music for Adventure and Exploration ｜ 3 Hour Mix for Dungeons & Dragons.mp3	03:04:55	11095.275	170.306	178578974	contacts/expedition/expeditions/city/UNIVERSAL --- DnD Calm Fantasy Music for Adventure and Exploration ｜ 3 Hour Mix for Dungeons & Dragons.mp3	yes
+Blizzard Storm Sounds ｜ Relaxing Winter Background Sounds ｜ Heavy Wind & Snow.mp3	03:00:06	10806.283	165.997	174060180	ancient/ithaqua/Blizzard Storm Sounds ｜ Relaxing Winter Background Sounds ｜ Heavy Wind & Snow.mp3	yes
+HOT --- Indiana Jones ｜ Adventurous Ambient Soundscapes with Epic Music from the Film Series, 4 Scenes in 4k.mp3	03:00:11	10810.880	165.818	173872407	contacts/expedition/expeditions/hot/HOT --- Indiana Jones ｜ Adventurous Ambient Soundscapes with Epic Music from the Film Series, 4 Scenes in 4k.mp3	yes
+Abandoned City ｜ Eerie Ambience ｜ 3 Hours.mp3	03:00:00	10800.091	165.576	173618534	contacts/devastation/Abandoned City ｜ Eerie Ambience ｜ 3 Hours.mp3	yes
+Cthulhu ｜ DARK AMBIENT LOVECRAFTIAN MUSIC - 3 hours.mp3	03:00:00	10800.065	165.537	173578263	ancient/cthulhu/Cthulhu ｜ DARK AMBIENT LOVECRAFTIAN MUSIC - 3 hours.mp3	yes
+3 Hours of ＂Prison＂ Ambience  - Amnesia The Dark Descent (No Music).mp3	03:00:00	10800.091	165.319	173349805	contacts/obstruction/detained/3 Hours of ＂Prison＂ Ambience  - Amnesia The Dark Descent (No Music).mp3	yes
+Cthulhu Dreams in R'lyeh ｜ Underwater Dark Ambience ｜ 3 Hours.mp3	03:00:00	10800.091	164.799	172804742	ancient/antediluvium/Cthulhu Dreams in R'lyeh ｜ Underwater Dark Ambience ｜ 3 Hours.mp3	yes
+Sitting in an empty 1920's bar - Ambience 3 Hours focus.mp3	03:00:00	10800.144	164.799	172804396	action-muted/Sitting in an empty 1920's bar - Ambience 3 Hours focus.mp3	yes
+＂Yeti's Realm＂ Fantasy Ambience ⧸ Himalayan Encounter - Blowing Snow, Creature Sounds.mp3	03:00:00	10800.065	164.797	172802388	ancient/ithaqua/＂Yeti's Realm＂ Fantasy Ambience ⧸ Himalayan Encounter - Blowing Snow, Creature Sounds.mp3	yes
+3 UNDERWORLD --- D&D Ambience -  Dark, Dank Cave.m4a	02:55:20	10520.080	162.256	170138159	contacts/dreamlands/underworld/3 UNDERWORLD --- D&D Ambience -  Dark, Dank Cave.m4a	yes
+You're at a ball in The Gold Room (1921 Overlook Hotel ambience, oldies, people chatter 3 HOURS ASMR.mp3	02:56:56	10615.589	161.986	169854804	action-muted/You're at a ball in The Gold Room (1921 Overlook Hotel ambience, oldies, people chatter 3 HOURS ASMR.mp3	yes
+D&D Ambience -  Calm Sea Sailing.mp3	02:55:20	10520.085	161.889	169752537	contacts/general/sea/space-2/D&D Ambience -  Calm Sea Sailing.mp3	yes
+D&D Ambience - Ship In Storm.mp3	02:55:20	10520.007	161.865	169728261	contacts/general/sea/space-13/D&D Ambience - Ship In Storm.mp3	yes
+D&D Ambience -  Dark, Dank Cave.mp3	02:55:20	10520.085	161.744	169600996	contacts/other-world/underworld/D&D Ambience -  Dark, Dank Cave.mp3	yes
+D&D Ambience - Ship Cabin.mp3	02:55:20	10520.007	161.371	169209920	contacts/general/sea/space-12/D&D Ambience - Ship Cabin.mp3	yes
+5 CITY OF THE ELDER --- Arkham Horror The Card Game - City of the Elder Things - Original Soundtrack from Edge of the Earth.mp3	01:47:01	6420.506	146.954	154092283	contacts/antarctica/city-of-elder-things/5 CITY OF THE ELDER --- Arkham Horror The Card Game - City of the Elder Things - Original Soundtrack from Edge of the Earth.mp3	yes
+6 SELEPHAIS --- Y2meta.app - Arabic Ambience _ Old Arabian City Ambience (128 kbps).mp3	02:31:23	9083.087	138.597	145329530	contacts/dreamlands/celephais/6 SELEPHAIS --- Y2meta.app - Arabic Ambience _ Old Arabian City Ambience (128 kbps).mp3	yes
+Victorian Ambience： LONDON'S MYSTERY - The Dark Alley ｜ Mysterious Ambient Music with Thunderstorm (mp3cut.net).mp3	02:18:53	8332.800	127.157	133334113	contacts/big-city/london/Victorian Ambience： LONDON'S MYSTERY - The Dark Alley ｜ Mysterious Ambient Music with Thunderstorm (mp3cut.net).mp3	yes
+Amarna -- Relaxing Ancient Egyptian Music & Night River Ambience ｜ Triangle Harp ｜ sleep, study, meditation.mp3	02:10:19	7818.815	119.677	125490039	contacts/egypt/tel-el-amarna/Amarna -- Relaxing Ancient Egyptian Music & Night River Ambience ｜ Triangle Harp ｜ sleep, study, meditation.mp3	yes
+2h Dark Cinematic Ambience “The Shadow Out of Time”.mp3	02:02:03	7322.514	113.049	118540676	contacts/other-world/great-race/2h Dark Cinematic Ambience “The Shadow Out of Time”.mp3	yes
+2 Saat Osmanlı Musiki (Hasret).mp3	02:01:08	7267.683	112.387	117846391	contacts/big-city/istanbul/2 Saat Osmanlı Musiki (Hasret).mp3	yes
+1 ENCHANTED WOOD --- Enchanted Forest - Music & Ambience ✨🌲🧚🏻 (mp3cut.net).mp3	02:01:31	7290.985	112.348	117804937	contacts/dreamlands/enchanted-wood/1 ENCHANTED WOOD --- Enchanted Forest - Music & Ambience ✨🌲🧚🏻 (mp3cut.net).mp3	yes
+Alexandria -- you're in the library of alexandria overflowing your mind with so much knowledge (playlist).mp3	02:02:39	7359.164	112.294	117749295	contacts/egypt/alexandria/Alexandria -- you're in the library of alexandria overflowing your mind with so much knowledge (playlist).mp3	yes
+Cthulhu's Temple - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	02:01:51	7310.524	111.553	116971796	ancient/cthulhu/Cthulhu's Temple - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	yes
+2 Hours of Dark Mystery Horror Music： Beyond Arkham H.P. Lovecraft.mp3	02:00:14	7213.944	111.528	116945821	mythos/2 Hours of Dark Mystery Horror Music： Beyond Arkham H.P. Lovecraft.mp3	yes
+Prison Cell ｜ Ambience ｜ 2 hours.mp3	01:59:59	7199.086	111.217	116619679	contacts/obstruction/detained/Prison Cell ｜ Ambience ｜ 2 hours.mp3	yes
+Amarna -- Mysterious Ancient Egyptian Tomb Ambience ASMR 🏺 Tomb Sounds, Sand Debris, Moaning Phantoms + Mor (mp3cut.net).mp3	01:59:57	7197.074	111.169	116569402	contacts/egypt/tel-el-amarna/Amarna -- Mysterious Ancient Egyptian Tomb Ambience ASMR 🏺 Tomb Sounds, Sand Debris, Moaning Phantoms + Mor (mp3cut.net).mp3	yes
+DARK AMBIENT MUSIC ｜ H. P. Lovecraft - The Dunwich Horror.mp3	02:00:00	7200.000	111.094	116490945	ancient/yog-sothoth/DARK AMBIENT MUSIC ｜ H. P. Lovecraft - The Dunwich Horror.mp3	yes
+Post Apocalyptic City Ruins ｜ Ambience ｜ 2 hours.mp3	02:00:00	7199.556	110.866	116251233	contacts/devastation/Post Apocalyptic City Ruins ｜ Ambience ｜ 2 hours.mp3	yes
+Occult Meditation - Gregorian Chants - Dark Monastic Chantings - Occult Dark Ambient Music.mp3	02:00:00	7200.078	110.533	115901767	ancient/abhoth/Occult Meditation - Gregorian Chants - Dark Monastic Chantings - Occult Dark Ambient Music.mp3	yes
+ANUBIS Meditation - Dark Mysterious Atmospheric Ambient Music.mp3	01:59:59	7199.086	110.463	115829253	ancient/nephren-ka/ANUBIS Meditation - Dark Mysterious Atmospheric Ambient Music.mp3	yes
+OSIRIS Meditation - Egypt God Meditation - Dark Mysterious Atmospheric Ambient Music.mp3	01:59:59	7199.086	110.381	115742876	ancient/nephren-ka/OSIRIS Meditation - Egypt God Meditation - Dark Mysterious Atmospheric Ambient Music.mp3	yes
+20s Music and 20s Music Hits with 20s Music Instrumental Playlist.mp3	01:59:46	7186.416	110.342	115701908	action/20s Music and 20s Music Hits with 20s Music Instrumental Playlist.mp3	yes
+Sancta Tenebrae -  Occult Dark Ambient Music - Dark Monastic Chantings - Dark Gregorian Chants.mp3	02:00:00	7200.078	110.306	115664656	ancient/abhoth/Sancta Tenebrae -  Occult Dark Ambient Music - Dark Monastic Chantings - Dark Gregorian Chants.mp3	yes
+2 You find yourself in a familiar city, but there's no electricity.mp3	02:00:00	7200.418	110.259	115615279	contacts/other-world/future/2/2 You find yourself in a familiar city, but there's no electricity.mp3	yes
+Discovery - 2 Hours of Ambient Sci Fi Music ｜ Tranquil Atmospheric Ambience.mp3	01:58:27	7106.612	109.924	115263326	contacts/expedition/ruins/Discovery - 2 Hours of Ambient Sci Fi Music ｜ Tranquil Atmospheric Ambience.mp3	yes
+20s & 20s Music： Roaring 20s Music and Songs Playlist (Vintage 20s Jazz Music).mp3	01:59:54	7194.175	109.781	115113531	action/20s & 20s Music： Roaring 20s Music and Songs Playlist (Vintage 20s Jazz Music).mp3	yes
+Astray - A Deeply Mysterious Ambient Journey - Ethereal Ambient Forest Music [Sci Fi⧸Fantasy Vibes].mp3	01:58:27	7106.612	109.076	114374796	contacts/expedition/ruins/Astray - A Deeply Mysterious Ambient Journey - Ethereal Ambient Forest Music [Sci Fi⧸Fantasy Vibes].mp3	yes
+dark-ambient-east-(black25-teach me the magick of your sacred poems).mp3	01:52:36	6755.553	103.086	108093494	ancient/abhoth/dark-ambient-east-(black25-teach me the magick of your sacred poems).mp3	yes
+Anne-Sophie Mutter und Münchner Orchester - Beethoven Violinkonzert - Beethoven 5 (mp3cut.net).mp3	01:49:41	6581.016	100.828	105725548	special/characters/patrice-hathaway/Anne-Sophie Mutter und Münchner Orchester - Beethoven Violinkonzert - Beethoven 5 (mp3cut.net).mp3	yes
+Abandoned Town Ambience and Music  fantasy ambience of ruins of a town with music #ambientmusic.mp3	01:02:06	3726.106	85.284	89426683	contacts/devastation/Abandoned Town Ambience and Music  fantasy ambience of ruins of a town with music #ambientmusic.mp3	yes
+Hallucinations (Lovecraftian Dark Ambient Hour).mp3	01:01:41	3700.950	84.708	88822941	ancient/hypnos/Hallucinations (Lovecraftian Dark Ambient Hour).mp3	yes
+Vintage Music ｜ Best Songs From The Roaring 1920s #vintage  #goldenage  #roaring20s.mp3	01:31:39	5499.089	83.916	87992279	action/Vintage Music ｜ Best Songs From The Roaring 1920s #vintage  #goldenage  #roaring20s.mp3	yes
+DARK MYSTERIOUS AMBIENT MUSIC ｜ The Hall of the Dead King.mp3	01:30:56	5456.065	83.818	87890019	contacts/expedition/ruins/DARK MYSTERIOUS AMBIENT MUSIC ｜ The Hall of the Dead King.mp3	yes
+D&DRPG Combat Music Mix  1 Hour  Royalty Free  Travis Savoie.mp3	01:00:39	3638.596	83.282	87327693	combat/D&DRPG Combat Music Mix  1 Hour  Royalty Free  Travis Savoie.mp3	yes
+The Curse of La Llorona ｜ Dark Mysterious Ambient Music.mp3	01:30:00	5400.111	83.109	87145896	contacts/big-city/buenos-aires/The Curse of La Llorona ｜ Dark Mysterious Ambient Music.mp3	yes
+1 Hour of HP Lovecraft Music ¦ The Streets of Arkham and Other Places.mp3	01:00:27	3627.180	83.020	87052466	contacts/big-city/arkham/1 Hour of HP Lovecraft Music ¦ The Streets of Arkham and Other Places.mp3	yes
+2 ULTHAR Peaceful Village Ambience and Music  morning in a village ambience with fantasy music #ambientmusic.mp3	01:00:16	3615.896	82.761	86781629	contacts/dreamlands/ulthar/2 ULTHAR Peaceful Village Ambience and Music  morning in a village ambience with fantasy music #ambientmusic.mp3	yes
+10  .mp3	01:00:09	3609.469	82.614	86627402	contacts/general/wilderness/space-10/10  .mp3	yes
+Sahara -- Crossing the Desert Ambience and Music  sounds of a desert with ambient music #ambientmusic.mp3	01:00:09	3609.391	82.614	86626775	contacts/egypt/sahara-desert/Sahara -- Crossing the Desert Ambience and Music  sounds of a desert with ambient music #ambientmusic.mp3	yes
+Sailing Ship  High Seas Ambience  1 Hour.mp3	01:00:01	3601.110	82.423	86426781	contacts/general/sea/space-11/Sailing Ship  High Seas Ambience  1 Hour.mp3	yes
+3 UNDERWORLD --- Monster Infested Cave Ambience.mp3	00:59:59	3599.151	82.378	86379761	contacts/dreamlands/underworld/3 UNDERWORLD --- Monster Infested Cave Ambience.mp3	yes
+Traditional Japanese Music  Shamisen, Koto & Taiko Music.mp3	00:57:31	3450.648	78.980	82816846	contacts/big-city/tokyo/Traditional Japanese Music  Shamisen, Koto & Taiko Music.mp3	yes
+1920s Orchestra Swing Love Music From The Golden Age ｜ Old Dusty Fascinated Vinyls.mp3	01:21:54	4914.077	74.994	78636641	action/1920s Orchestra Swing Love Music From The Golden Age ｜ Old Dusty Fascinated Vinyls.mp3	yes
+Cthulhu - A Cryo Chamber Collaboration.mp3	01:19:43	4782.603	74.950	78590936	ancient/antediluvium/Cthulhu - A Cryo Chamber Collaboration.mp3	yes
+3 UNDERWORLD --- CAVE SOUNDS for DEEP SLEEP ⛰️  INSIDE the CAVE Ambience⧸ASMR + WATER DRIPPING.m4a	01:20:00	4800.053	74.036	77632560	contacts/dreamlands/underworld/3 UNDERWORLD --- CAVE SOUNDS for DEEP SLEEP ⛰️  INSIDE the CAVE Ambience⧸ASMR + WATER DRIPPING.m4a	yes
+Fascinating Rhythm： Great 1920s Vintage Jazz Music Hits (Past Perfect) #TheCharleston.mp3	01:18:42	4722.077	72.062	75562496	action/Fascinating Rhythm： Great 1920s Vintage Jazz Music Hits (Past Perfect) #TheCharleston.mp3	yes
+Dunwich Fantasia - Gnosis of Yog-Sothoth (Lovecraftian Dark Ambient Hour).mp3	01:17:59	4678.505	71.390	74858331	ancient/yog-sothoth/Dunwich Fantasia - Gnosis of Yog-Sothoth (Lovecraftian Dark Ambient Hour).mp3	yes
+1920s Music Golden Age Orchestra Music ｜ Old Dusty Fascinated Grooves Playlist.mp3	01:17:50	4670.093	71.267	74728896	action/1920s Music Golden Age Orchestra Music ｜ Old Dusty Fascinated Grooves Playlist.mp3	yes
+Charleston： Great Stars And Songs of the 1920s. Dance to Tunes Remastered by Past Perfect.mp3	01:16:14	4574.067	69.803	73193492	action/Charleston： Great Stars And Songs of the 1920s. Dance to Tunes Remastered by Past Perfect.mp3	yes
+DARK AMBIENT MUSIC ｜ Yuki-onna - The Snow Woman will leave you frozen in Fear.mp3	01:13:26	4405.969	68.512	71840305	contacts/big-city/shanghai/DARK AMBIENT MUSIC ｜ Yuki-onna - The Snow Woman will leave you frozen in Fear.mp3	yes
+Spiders' Cave _ Fantasy ASMR Ambience _ 1 Hour 4.mp3	01:00:00	3600.000	68.216	71530045	ancient/atlach-nacha/Spiders' Cave _ Fantasy ASMR Ambience _ 1 Hour 4.mp3	yes
+The Shadow Over Innsmouth ¦ 1 Hour of Dark Mystery HP Lovecraft Horror Music.mp3	01:12:58	4378.253	67.926	71225645	mythos/The Shadow Over Innsmouth ¦ 1 Hour of Dark Mystery HP Lovecraft Horror Music.mp3	yes
+Out of Space and Time (Dark Ambient Hour).mp3	01:12:23	4343.354	67.197	70461489	contacts/obstruction/lost/Out of Space and Time (Dark Ambient Hour).mp3	yes
+Nyarlathotep  - Dark Music Part 2 ⧸ 3.mp3	01:11:56	4315.847	66.419	69645454	ancient/nyarlathotep/Nyarlathotep  - Dark Music Part 2 ⧸ 3.mp3	yes
+ANUBIS AWAKENS ｜ Dark Mysterious Ambient Music.mp3	01:11:14	4273.763	65.696	68886986	ancient/nephren-ka/ANUBIS AWAKENS ｜ Dark Mysterious Ambient Music.mp3	yes
+Yig 1⧸2 - A Cryo Chamber Collaboration.mp3	01:10:21	4221.048	65.331	68504699	ancient/yig/Yig 1⧸2 - A Cryo Chamber Collaboration.mp3	yes
+Hastur 2 ⧸ 2.mp3	01:10:35	4235.180	65.274	68445040	ancient/hastur/Hastur 2 ⧸ 2.mp3	yes
+Hastur 1 ⧸ 2.mp3	01:09:44	4183.771	64.490	67622496	ancient/hastur/Hastur 1 ⧸ 2.mp3	yes
+The King in Yellow ¦ 1 Hour of Dark Orchestral Horror Music.mp3	01:09:11	4150.570	64.472	67603893	ancient/hastur/The King in Yellow ¦ 1 Hour of Dark Orchestral Horror Music.mp3	yes
+you're in a russian novel _ dark academia playlist [RveIxb_jZmM].mp3	01:23:34	5014.335	64.350	67476118	contacts/general/city/space-16/you're in a russian novel _ dark academia playlist [RveIxb_jZmM].mp3	yes
+Epic Dark Dramatic Intense Action Music ｜ ＂ Chaos And DESTRUCTION ＂ - Epic Battle Music Mix 2023.mp3	01:09:01	4140.722	64.256	67377740	ancient/shudde-mell/Epic Dark Dramatic Intense Action Music ｜ ＂ Chaos And DESTRUCTION ＂ - Epic Battle Music Mix 2023.mp3	yes
+Yig 2⧸2 - A Cryo Chamber Collaboration.mp3	01:09:07	4146.528	64.194	67312413	ancient/yig/Yig 2⧸2 - A Cryo Chamber Collaboration.mp3	yes
+Alexandria -- Ancient Egyptian ｜ Ambience & Music - Necropolis of Alexandria (mp3cut.net).mp3	01:08:38	4117.812	63.527	66612538	contacts/egypt/alexandria/Alexandria -- Ancient Egyptian ｜ Ambience & Music - Necropolis of Alexandria (mp3cut.net).mp3	yes
+5 DYLATH-LEEN --- Thebes - Ancient Fantasy Journey Music   - Beautiful Ambient Duduk for Study, Reading and Focus.mp3	01:08:12	4092.056	63.301	66375971	contacts/dreamlands/dylath-leen/5 DYLATH-LEEN --- Thebes - Ancient Fantasy Journey Music   - Beautiful Ambient Duduk for Study, Reading and Focus.mp3	yes
+Summoning Cthulhu - Sounds from the Deep.mp3	01:08:21	4101.225	62.584	65624566	ancient/antediluvium/Summoning Cthulhu - Sounds from the Deep.mp3	yes
+DARK AMBIENT MUSIC  Lovecraft  Lost in Arkham.mp3	00:45:00	2700.147	61.802	64803663	contacts/big-city/arkham/DARK AMBIENT MUSIC  Lovecraft  Lost in Arkham.mp3	yes
+Nyarlathotep  - Dark Music Part 1 ⧸ 3.mp3	01:05:53	3952.901	60.881	63838377	ancient/nyarlathotep/Nyarlathotep  - Dark Music Part 1 ⧸ 3.mp3	yes
+1 Hour HP Lovecraft Music ¦ The Esoteric Order of Dagon.mp3	01:04:42	3882.024	59.991	62905609	mythos/1 Hour HP Lovecraft Music ¦ The Esoteric Order of Dagon.mp3	yes
+Azathoth 2 ⧸ 2.mp3	01:05:00	3900.134	59.908	62817765	ancient/azathoth/Azathoth 2 ⧸ 2.mp3	yes
+HOT --- Wilderness Travel ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	01:03:41	3821.479	59.632	62528356	contacts/expedition/expeditions/hot/HOT --- Wilderness Travel ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	yes
+INNER SANCTUM  ( 1 Hour  Meditation in Darkness) - Occult Dark Ambient - V E X A G O R A.mp3	01:04:21	3861.081	59.560	62453148	ancient/abhoth/INNER SANCTUM  ( 1 Hour  Meditation in Darkness) - Occult Dark Ambient - V E X A G O R A.mp3	yes
+CITY --- Large City ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	01:03:12	3791.621	59.052	61920339	contacts/expedition/expeditions/city/CITY --- Large City ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	yes
+1920s Hotel ASMR Ambience {with vintage music from Tower of Terror}.mp3	01:04:17	3856.927	59.021	61888072	action-muted/1920s Hotel ASMR Ambience {with vintage music from Tower of Terror}.mp3	yes
+Cthulhu - Dark Atmospheric Ambient Journey - Lovecraftian Horror Music Inspired by H.P. Lovecraft.mp3	01:03:27	3806.772	58.871	61731120	ancient/cthulhu/Cthulhu - Dark Atmospheric Ambient Journey - Lovecraftian Horror Music Inspired by H.P. Lovecraft.mp3	yes
+CITY --- The Adventure Begins ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	01:02:38	3758.132	58.538	61381358	contacts/expedition/expeditions/city/CITY --- The Adventure Begins ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	yes
+Noir Jazz Ambience 🎷 Empire of Sin background 🎶 Rainy Night in 1920s Chicago_ Film Noir Remix 🎶 [WPdzpAUEMtA].mp3	01:02:18	3737.809	58.518	61360097	contacts/general/city/space-5/Noir Jazz Ambience 🎷 Empire of Sin background 🎶 Rainy Night in 1920s Chicago_ Film Noir Remix 🎶 [WPdzpAUEMtA].mp3	yes
+Epic Combat ｜ D&D⧸TTRPG Battle⧸Combat⧸Fight Music ｜ 1 Hour.mp3	01:02:12	3731.931	58.399	61236043	combat/Epic Combat ｜ D&D⧸TTRPG Battle⧸Combat⧸Fight Music ｜ 1 Hour.mp3	yes
+DARK --- Tense Path ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	01:02:11	3731.487	57.802	60609389	contacts/expedition/expeditions/cold/DARK --- Tense Path ｜ D&D⧸TTRPG Music ｜ 1 Hour.mp3	yes
+you're inside the cosmic horror world of lovecraft (a playlist).mp3	01:02:57	3777.463	57.642	60442445	contacts/other-world/dreamlands/you're inside the cosmic horror world of lovecraft (a playlist).mp3	yes
+Azathoth - Lovecraftian Dark Ambient Music - Original Composition inspired by H.P. Lovecraft.m4a	01:01:52	3711.780	57.251	60031717	ancient/azathoth/Azathoth - Lovecraftian Dark Ambient Music - Original Composition inspired by H.P. Lovecraft.m4a	yes
+Rhan-Tegoth Part 1  [ Dark Ambient Lovecraft series].mp3	01:01:34	3694.080	57.215	59993907	mythos/Rhan-Tegoth Part 1  [ Dark Ambient Lovecraft series].mp3	yes
+MEDITATIONS FOR SHAI-HULUD ｜ 1 Hour DUNE Soundscape for Focus.mp3	01:01:56	3715.840	57.140	59915482	ancient/shudde-mell/MEDITATIONS FOR SHAI-HULUD ｜ 1 Hour DUNE Soundscape for Focus.mp3	yes
+Aberration Fight ｜ D&D⧸TTRPG Battle⧸Combat⧸Fight Music ｜ 1 Hour.mp3	01:01:25	3685.277	57.008	59776926	combat/Aberration Fight ｜ D&D⧸TTRPG Battle⧸Combat⧸Fight Music ｜ 1 Hour.mp3	yes
+RPG BATTLE MUSIC SPIDER ｜ Musica de Batalha Aranhas ｜ No Copyrigh FANTASY MUSIC.mp3	01:00:56	3656.150	56.989	59757541	ancient/atlach-nacha/RPG BATTLE MUSIC SPIDER ｜ Musica de Batalha Aranhas ｜ No Copyrigh FANTASY MUSIC.mp3	yes
+1 Hour of H.P. Lovecraft Music： The House on Sentinel Hill for Gaming, Arkham Horror, CoC, D&D.mp3	01:00:45	3644.787	56.818	59577474	mythos/1 Hour of H.P. Lovecraft Music： The House on Sentinel Hill for Gaming, Arkham Horror, CoC, D&D.mp3	yes
+DEMONS _ 1 HOUR of Epic Dark Evil Sinister Dramatic Horror Music [SN5awaBMkuY].mp3	01:04:47	3886.733	56.810	59569538	combat-epic/DEMONS _ 1 HOUR of Epic Dark Evil Sinister Dramatic Horror Music [SN5awaBMkuY].mp3	yes
+14 GATES.mp3	00:41:21	2480.980	56.785	59543647	special/disaster/location/otherworldly-rifts/14 GATES.mp3	yes
+SYDNEY - Relaxing Meditative AMBIENT MUSIC： Post-Apocalyptic Cyberpunk Music at Sydney Opera House.mp3	01:00:00	3600.405	56.743	59499292	contacts/big-city/sydney/SYDNEY - Relaxing Meditative AMBIENT MUSIC： Post-Apocalyptic Cyberpunk Music at Sydney Opera House.mp3	yes
+Cairo -- EGYPTIAN PARADISE 🌈 Relaxing Egyptian music l stress and anxiety relief.mp3	01:00:00	3600.118	56.630	59380929	contacts/egypt/cairo/Cairo -- EGYPTIAN PARADISE 🌈 Relaxing Egyptian music l stress and anxiety relief.mp3	yes
+1 BASE --- One Hour at Station Blue • Antarctic Horror Ambience.mp3	01:01:36	3695.883	56.624	59374984	contacts/antarctica/miskatonic-outpost/1 BASE --- One Hour at Station Blue • Antarctic Horror Ambience.mp3	yes
+Flute of Azathoth - Eldritch Music of the Old Ones ｜ Dark Ambient Music.mp3	01:01:35	3695.282	56.603	59352830	ancient/syzygy/Flute of Azathoth - Eldritch Music of the Old Ones ｜ Dark Ambient Music.mp3	yes
+Yog-Sothoth ( Part 1 of 2 ).mp3	01:01:10	3669.525	56.546	59293094	ancient/yog-sothoth/Yog-Sothoth ( Part 1 of 2 ).mp3	yes
+1 Hour of H.P. Lovecraft Music： Orchestral Ambient Creepy Horror Music for Role-Playing and Gaming.mp3	01:00:27	3627.128	56.537	59283206	mythos/1 Hour of H.P. Lovecraft Music： Orchestral Ambient Creepy Horror Music for Role-Playing and Gaming.mp3	yes
+1920s Music Playing in Another Room ｜ Oldies and Ocean View Ambience.mp3	01:00:28	3628.278	56.536	59282347	action-muted/1920s Music Playing in Another Room ｜ Oldies and Ocean View Ambience.mp3	yes
+Skyrim - Ambience - Apocrypha [Black Book, Dragon, Plane of Oblivion].mp3	01:00:03	3602.730	56.531	59276677	contacts/other-world/celaeno/Skyrim - Ambience - Apocrypha [Black Book, Dragon, Plane of Oblivion].mp3	yes
+COLD --- Artic Expedition： Unraveling the Frozen Enigma - 1 Hour of Winter Polar Ambience Music 4K ASMR (mp3cut.net).mp3	01:00:30	3630.132	56.489	59233021	contacts/expedition/expeditions/cold/COLD --- Artic Expedition： Unraveling the Frozen Enigma - 1 Hour of Winter Polar Ambience Music 4K ASMR (mp3cut.net).mp3	yes
+Cairo -- Nation Arab Music Ensemble ＂Classical Music of Egypt＂.mp3	01:01:35	3694.811	56.472	59215662	contacts/egypt/cairo/Cairo -- Nation Arab Music Ensemble ＂Classical Music of Egypt＂.mp3	yes
+Eldritch Horror & Elder Sign： 1 Hour of H.P. Lovecraft Creepy Music for Board Games and Role Playing.mp3	01:00:45	3644.500	56.431	59172452	mythos/Eldritch Horror & Elder Sign： 1 Hour of H.P. Lovecraft Creepy Music for Board Games and Role Playing.mp3	yes
+HOT --- Plane of Wildlife ｜ Dangerous and Mysterious ASMR Ambience ｜ 1 Hour #DnD #RPG.mp3	01:00:00	3600.091	56.394	59132953	contacts/expedition/expeditions/hot/HOT --- Plane of Wildlife ｜ Dangerous and Mysterious ASMR Ambience ｜ 1 Hour #DnD #RPG.mp3	yes
+Nightmares from the Mist - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	01:00:59	3659.233	56.327	59062880	mythos/Nightmares from the Mist - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	yes
+1 Hour of HP Lovecraft Music Orchestral Ambient Creepy Horror Music for Role-Playing and Gaming.mp3	01:00:09	3609.360	56.326	59061779	mythos/1 Hour of HP Lovecraft Music Orchestral Ambient Creepy Horror Music for Role-Playing and Gaming.mp3	yes
+7 KADATH --- Dream-Quest to Unknown Kadath (Lovecraftian Dark Ambient Hour).mp3	01:00:24	3624.359	56.317	59052519	contacts/dreamlands/unknown-kadath/7 KADATH --- Dream-Quest to Unknown Kadath (Lovecraftian Dark Ambient Hour).mp3	yes
+Dream-Quest to Unknown Kadath (Lovecraftian Dark Ambient Hour).mp3	01:00:24	3624.359	56.317	59052519	contacts/other-world/kadath/Dream-Quest to Unknown Kadath (Lovecraftian Dark Ambient Hour).mp3	yes
+1920s Hotel II ASMR Ambience {8d vintage music}.mp3	01:01:02	3662.315	56.083	58807667	action-muted/1920s Hotel II ASMR Ambience {8d vintage music}.mp3	yes
+Wasteland ｜ Windy Post-apocalyptic Ambience for Reading, Studying, Relaxing..mp3	01:00:05	3605.081	56.028	58749203	contacts/devastation/Wasteland ｜ Windy Post-apocalyptic Ambience for Reading, Studying, Relaxing..mp3	yes
+8 The people of Arkham are prowling the streets hunting a witch.mp3	01:00:01	3601.104	56.023	58744277	contacts/other-world/past/8/8 The people of Arkham are prowling the streets hunting a witch.mp3	yes
+Prison ｜ Immersive Medieval Ambience ｜ 1 Hour #dnd.mp3	01:00:01	3601.084	55.995	58714801	contacts/obstruction/detained/Prison ｜ Immersive Medieval Ambience ｜ 1 Hour #dnd.mp3	yes
+Dark Ambient Occult Meditation Music - MONASTERY - A Dark Atmospheric Journey.mp3	01:00:01	3600.771	55.991	58710661	ancient/shub-niggurath/Dark Ambient Occult Meditation Music - MONASTERY - A Dark Atmospheric Journey.mp3	yes
+1 HOUR HYPNOS MEDITATION - Atmospheric Sci Fi Dark Ambient Music Video Mix -.mp3	01:00:00	3600.091	55.970	58688619	ancient/hypnos/1 HOUR HYPNOS MEDITATION - Atmospheric Sci Fi Dark Ambient Music Video Mix -.mp3	yes
+Broken Pyramid -- TEMPLE OF ANUBIS ｜ Ancient Chant in Egyptian Tomb ｜ ASMR.mp3	01:00:00	3600.091	55.965	58683910	contacts/egypt/bent-pyramid/Broken Pyramid -- TEMPLE OF ANUBIS ｜ Ancient Chant in Egyptian Tomb ｜ ASMR.mp3	yes
+COLD --- E X P E D I T I O N ｜ 1905 Kanchenjunga Expedition (Ambience + Ambient Mysticwave).mp3	01:00:00	3600.065	55.963	58681357	contacts/expedition/expeditions/cold/COLD --- E X P E D I T I O N ｜ 1905 Kanchenjunga Expedition (Ambience + Ambient Mysticwave).mp3	yes
+E X P E D I T I O N ｜ 1905 Kanchenjunga Expedition (Ambience + Ambient Mysticwave).mp3	01:00:00	3600.065	55.963	58681357	contacts/expedition/ruins/E X P E D I T I O N ｜ 1905 Kanchenjunga Expedition (Ambience + Ambient Mysticwave).mp3	yes
+3 SNOWY MOUNTAINS --- Dark Ambient Hour Meditations - Circumference (4 Hz Theta Binaural Ambience).mp3	01:00:00	3600.118	55.933	58650123	contacts/antarctica/snowy-mountains/3 SNOWY MOUNTAINS --- Dark Ambient Hour Meditations - Circumference (4 Hz Theta Binaural Ambience).mp3	yes
+DARK AMBIENT MUSIC ｜ ONI - 鬼 ｜ Japanese Demons.mp3	01:00:00	3600.118	55.873	58586940	contacts/big-city/tokyo/DARK AMBIENT MUSIC ｜ ONI - 鬼 ｜ Japanese Demons.mp3	yes
+Ruined Castle ｜ Haunted Or Not ？ Ambience ｜ 1 Hour #dnd.mp3	01:00:01	3601.084	55.815	58526530	contacts/devastation/Ruined Castle ｜ Haunted Or Not ？ Ambience ｜ 1 Hour #dnd.mp3	yes
+Pharaoh Meditation - Inspiring Egyptian Meditation Music - Mysterious Middle Eastern Ambient Music.mp3	01:00:00	3600.039	55.809	58520252	ancient/nephren-ka/Pharaoh Meditation - Inspiring Egyptian Meditation Music - Mysterious Middle Eastern Ambient Music.mp3	yes
+Losing Sanity ｜ Cthulhu Ambience ｜ 1 Hour.mp3	01:00:00	3600.091	55.797	58507056	special/death-sanity/Losing Sanity ｜ Cthulhu Ambience ｜ 1 Hour.mp3	yes
+Haunted Ghost Ship Ambience ｜ 1Hour of creepy ambience.mp3	01:00:04	3603.670	55.770	58478763	contacts/general/sea/space-8/Haunted Ghost Ship Ambience ｜ 1Hour of creepy ambience.mp3	yes
+Shub-Niggurath 2⧸2.mp3	01:00:16	3616.366	55.742	58449299	ancient/shub-niggurath/Shub-Niggurath 2⧸2.mp3	yes
+HOT --- Enchanted Lands, Volume 3 ｜ Ambient Fantasy Music ｜ 1 Hour.mp3	01:00:00	3600.091	55.736	58443848	contacts/expedition/expeditions/hot/HOT --- Enchanted Lands, Volume 3 ｜ Ambient Fantasy Music ｜ 1 Hour.mp3	yes
+Nile -- Nile Valley in Ancient Egypt ｜ Relaxing Music & Nature Sounds (Remastered Version).mp3	01:00:00	3600.248	55.728	58435384	contacts/egypt/nile-river/Nile -- Nile Valley in Ancient Egypt ｜ Relaxing Music & Nature Sounds (Remastered Version).mp3	yes
+The Awakening of the Great Old Ones - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	01:00:22	3622.452	55.640	58342763	ancient/rise-of-the-elder-things/The Awakening of the Great Old Ones - Dark Ambient Music - Immersive Lovecraftian Horror Atmosphere.mp3	yes
+1 Hour of Dark and Mysterious Ambient Music for writing and creativity ｜ Dnd ⧸ RPG Ambience.mp3	01:00:06	3606.465	55.618	58319216	contacts/expedition/ruins/1 Hour of Dark and Mysterious Ambient Music for writing and creativity ｜ Dnd ⧸ RPG Ambience.mp3	yes
+C T H U L H U ｜ Ruins (Ambience + Dark Ambient Music).mp3	01:00:00	3600.065	55.610	58311354	contacts/devastation/C T H U L H U ｜ Ruins (Ambience + Dark Ambient Music).mp3	yes
+Getting Ready for a Party in 1921 (Ambience).mp3	01:00:00	3600.091	55.568	58267178	action-muted/Getting Ready for a Party in 1921 (Ambience).mp3	yes
+Dark Chantings Temple Occult Music - TEMPLE.mp3	01:00:00	3600.144	55.476	58171164	ancient/abhoth/Dark Chantings Temple Occult Music - TEMPLE.mp3	yes
+RPG ｜ D&D Ambience - Giant Sand Worm (sand, earthquake, roaring).mp3	01:00:00	3600.300	55.471	58165679	ancient/shudde-mell/RPG ｜ D&D Ambience - Giant Sand Worm (sand, earthquake, roaring).mp3	yes
+Ruined Town ｜ Medieval ASMR Ambience ｜ 1 Hour.mp3	01:00:00	3600.091	55.444	58137160	contacts/devastation/Ruined Town ｜ Medieval ASMR Ambience ｜ 1 Hour.mp3	yes
+7 You are shocked to see a younger version of yourself.mp3	01:00:00	3600.065	55.270	57954933	contacts/other-world/past/7/7 You are shocked to see a younger version of yourself.mp3	yes
+Nile -- Ancient Egypt Ambience - NILE RIVER AMBIENT, Egypt Music & Soundtrack, River sounds, Best relaxatio__KoEu4AZhWY.mp3	01:00:00	3599.883	55.220	57902186	contacts/egypt/nile-river/Nile -- Ancient Egypt Ambience - NILE RIVER AMBIENT, Egypt Music & Soundtrack, River sounds, Best relaxatio__KoEu4AZhWY.mp3	yes
+Sailboat at Night Ambience. Calm Ocean Sounds. Relax, Meditate, Sleep. Subscribe for More! 🌃😴.mp3	01:00:01	3600.666	55.173	57852979	contacts/general/sea/space-18/Sailboat at Night Ambience. Calm Ocean Sounds. Relax, Meditate, Sleep. Subscribe for More! 🌃😴.mp3	yes
+19.mp3	01:00:00	3600.091	55.139	57817305	contacts/general/wilderness/space-19/19.mp3	yes
+Dark and Mysterious Ambient Music ｜ 1 Hour Playlist ｜ D&D Ambience.mp3	01:00:11	3611.089	55.105	57781754	contacts/expedition/ruins/Dark and Mysterious Ambient Music ｜ 1 Hour Playlist ｜ D&D Ambience.mp3	yes
+A dream for the Ancient.mp3	01:00:06	3606.100	55.030	57703409	ancient/hypnos/A dream for the Ancient.mp3	yes
+Dance of the Demons ｜ 1 Hour of Japanese War Drums (鬼の踊り).mp3	00:59:51	3591.105	54.980	57651069	contacts/big-city/tokyo/Dance of the Demons ｜ 1 Hour of Japanese War Drums (鬼の踊り).mp3	yes
+Dark Space Ambient for Sleep.mp3	01:00:00	3600.091	54.938	57607016	ancient/syzygy/Dark Space Ambient for Sleep.mp3	yes
+DARK AMBIENT MUSIC ｜ Wendigo - Nature's Darkest Hunger.mp3	01:00:00	3600.091	54.936	57604862	ancient/ithaqua/DARK AMBIENT MUSIC ｜ Wendigo - Nature's Darkest Hunger.mp3	yes
+Spider's Den ｜ Ambience ｜ 1 Hour Extended.mp3	01:00:00	3600.091	54.935	57604004	ancient/atlach-nacha/Spider's Den ｜ Ambience ｜ 1 Hour Extended.mp3	yes
+You're a stray soul in this abandoned town ｜ Dark Background Ambience.mp3	01:00:00	3600.118	54.935	57603867	contacts/devastation/You're a stray soul in this abandoned town ｜ Dark Background Ambience.mp3	yes
+Dark_Ambient_Music_At_the_Mountains_of_Madness_inspired_by_H_P_Lovecraft (online-audio-converter.com).mp3	01:00:00	3600.065	54.934	57602026	ancient/rise-of-the-elder-things/Dark_Ambient_Music_At_the_Mountains_of_Madness_inspired_by_H_P_Lovecraft (online-audio-converter.com).mp3	yes
+4 FROZEN WASTE --- BLIZZARD IN ANTARCTICA_ Howling wind and blowing snow for Relaxing_ Studying_ Sleep_ Winter Ambience [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/antarctica/frozen-waste/4 FROZEN WASTE --- BLIZZARD IN ANTARCTICA_ Howling wind and blowing snow for Relaxing_ Studying_ Sleep_ Winter Ambience [ ezmp3.cc ].mp3	yes
+1 BASE --- Arctic Camp - Wind - Fire - Distant Wolves - 10 Hours [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/antarctica/miskatonic-outpost/1 BASE --- Arctic Camp - Wind - Fire - Distant Wolves - 10 Hours [ ezmp3.cc ].mp3	yes
+6 PLATEAU OF LENG --- 10 Hours At the Mountains of Madness ⛰️ Dark Lovecraftian Sounds for Sleep [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/antarctica/plateau-of-leng/6 PLATEAU OF LENG --- 10 Hours At the Mountains of Madness ⛰️ Dark Lovecraftian Sounds for Sleep [ ezmp3.cc ].mp3	yes
+3 SNOWY MOUNTAINS --- Calmsound Antarctic Wind - 10 Hour Katabatic Wind Sounds for Sleep and Relaxation [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/antarctica/snowy-mountains/3 SNOWY MOUNTAINS --- Calmsound Antarctic Wind - 10 Hour Katabatic Wind Sounds for Sleep and Relaxation [ ezmp3.cc ].mp3	yes
+3 UNDERWORLD --- 🎧 Dark cave ambience sound sounds on high quality white noise ASMR black screen dark screen [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/dreamlands/underworld/3 UNDERWORLD --- 🎧 Dark cave ambience sound sounds on high quality white noise ASMR black screen dark screen [ ezmp3.cc ].mp3	yes
+Sahara -- Howling Desert Wind in Monument Valley _ Ambience, Sounds, Windy _ Wilderness White Noise _ 12 Hr 4K [ ezmp3.cc ].mp3	01:00:00	3600.013	54.933	57601181	contacts/egypt/sahara-desert/Sahara -- Howling Desert Wind in Monument Valley _ Ambience, Sounds, Windy _ Wilderness White Noise _ 12 Hr 4K [ ezmp3.cc ].mp3	yes
+4 FROZEN WASTE --- Windy Winter Storm in Antarctica _ Howling Blizzard Ambience Wind Snow Snowstorm White Noise _ 12 Hr [ ezmp3.cc ].mp3	00:59:59	3599.020	54.918	57585299	contacts/antarctica/frozen-waste/4 FROZEN WASTE --- Windy Winter Storm in Antarctica _ Howling Blizzard Ambience Wind Snow Snowstorm White Noise _ 12 Hr [ ezmp3.cc ].mp3	yes
+Nuclear Winter Ambience & Sounds _ Howling Windy Snow Storm Post Apocalypse White Noise _ 12 Hr 4K [ ezmp3.cc ].mp3	00:59:59	3599.020	54.918	57585299	contacts/devastation/Nuclear Winter Ambience & Sounds _ Howling Windy Snow Storm Post Apocalypse White Noise _ 12 Hr 4K [ ezmp3.cc ].mp3	yes
+Post Apocalypse Ambience & Sounds _ Nuclear Winter White Noise Apocalyptic Abandoned City _ 12 Hr 4K [ ezmp3.cc ].mp3	00:59:59	3599.020	54.918	57585299	contacts/devastation/Post Apocalypse Ambience & Sounds _ Nuclear Winter White Noise Apocalyptic Abandoned City _ 12 Hr 4K [ ezmp3.cc ].mp3	yes
+DARK AMBIENT MUSIC _ Dagon by H.P. Lovecraft.mp3	00:59:40	3580.108	54.629	57282831	ancient/dagon/DARK AMBIENT MUSIC _ Dagon by H.P. Lovecraft.mp3	yes
+Degung Sundanese Music of West Java [2nrgTossoB0].mp3	00:59:37	3577.208	54.532	57180919	contacts/general/city/space-20/Degung Sundanese Music of West Java [2nrgTossoB0].mp3	yes
+Chinese Ancient Music   Vol 1, Picture of Primitive Hunting classical, traditional & folk.mp3	00:58:53	3533.427	54.047	56672642	contacts/big-city/shanghai/Chinese Ancient Music   Vol 1, Picture of Primitive Hunting classical, traditional & folk.mp3	yes
+Dark Ambient from Night City.mp3	00:58:30	3510.152	53.566	56168500	contacts/big-city/san-francisco/Dark Ambient from Night City.mp3	yes
+1 Hour of HP Lovecraft Music： At the Mountains of Madness (Original Soundtrack).mp3	00:58:21	3501.166	53.428	56023484	ancient/rise-of-the-elder-things/1 Hour of HP Lovecraft Music： At the Mountains of Madness (Original Soundtrack).mp3	yes
+The Dunwich Horror Complete Soundtrack 1 Hour of  HP Lovecraft Horror Music.mp3	00:58:17	3497.274	53.367	55959511	ancient/yog-sothoth/The Dunwich Horror Complete Soundtrack 1 Hour of  HP Lovecraft Horror Music.mp3	yes
+Shub-Niggurath 1⧸2.mp3	00:57:25	3444.898	53.125	55705815	ancient/shub-niggurath/Shub-Niggurath 1⧸2.mp3	yes
+16 7 ТУНГУСКА 1.mp3	00:57:40	3460.180	52.801	55365809	contacts/general/wilderness/tunguska/16 7 ТУНГУСКА 1.mp3	yes
+Yog-Sothoth ( Part 2 of 2 ).mp3	00:56:57	3417.469	52.700	55260206	ancient/yog-sothoth/Yog-Sothoth ( Part 2 of 2 ).mp3	yes
+Seamonster battle Music.mp3	00:56:00	3360.157	52.519	55070445	combat/Seamonster battle Music.mp3	yes
+Lovecraft OST - The Shadow Out of Time (Cosmic Horror Music).mp3	00:57:03	3423.399	52.313	54853961	contacts/other-world/great-race/Lovecraft OST - The Shadow Out of Time (Cosmic Horror Music).mp3	yes
+Various – Vintage Music From India [Full Compilation] [QD8RbhySzts].mp3	01:15:55	4554.998	52.281	54820159	contacts/general/city/space-17/Various – Vintage Music From India [Full Compilation] [QD8RbhySzts].mp3	yes
+Yuggoth： 5.mp3	00:44:33	2673.162	52.058	54586379	contacts/other-world/yuggoth/Yuggoth： 5.mp3	yes
+1 Hour Of Innsmouth Ambient (Lovecraftian Ambient) #lovecraftianambient #hplovecraft #innsmouth.mp3	00:55:52	3351.641	51.699	54209924	special/characters/silas-marsh/1 Hour Of Innsmouth Ambient (Lovecraftian Ambient) #lovecraftianambient #hplovecraft #innsmouth.mp3	yes
+Nyarlathotep  - Dark Music Part 3 ⧸ 3.mp3	00:55:46	3346.364	51.627	54135315	ancient/nyarlathotep/Nyarlathotep  - Dark Music Part 3 ⧸ 3.mp3	yes
+Alaska, 1925 [vRq0BZg_Zms].mp3	01:00:00	3600.091	51.035	53514139	contacts/general/city/space-1/Alaska, 1925 [vRq0BZg_Zms].mp3	yes
+Nyarlathotep ｜ horror ambient music 🎧.mp3	00:54:15	3254.831	50.447	52897926	ancient/nyarlathotep/Nyarlathotep ｜ horror ambient music 🎧.mp3	yes
+Tense Fight _ D&D_TTRPG Battle_Combat_Fight Music _ 1 Hour _ Copyright free [378jfMSW8V4].mp3	01:04:02	3841.959	50.361	52807280	combat/Tense Fight _ D&D_TTRPG Battle_Combat_Fight Music _ 1 Hour _ Copyright free [378jfMSW8V4].mp3	yes
+Azathoth 1⧸ 2.mp3	00:54:25	3265.123	50.218	52657568	ancient/azathoth/Azathoth 1⧸ 2.mp3	yes
+Dagon - 2 - 2 hours of Dark Lovecraft Ambience.mp3	00:54:36	3276.147	49.991	52419329	ancient/dagon/Dagon - 2 - 2 hours of Dark Lovecraft Ambience.mp3	yes
+Dark Ambient Dreams.mp3	00:52:37	3156.696	48.770	51138659	ancient/hypnos/Dark Ambient Dreams.mp3	yes
+Dagon - 1 - 2 hours of Dark Lovecraft Ambience.mp3	00:53:00	3180.016	48.524	50881239	ancient/dagon/Dagon - 1 - 2 hours of Dark Lovecraft Ambience.mp3	yes
+Psyclopean - The Dreamlands (full album) Lovecraft dark ambient, dungeon synth, atmospheric mythos.mp3	00:52:36	3155.879	48.163	50502604	contacts/other-world/dreamlands/Psyclopean - The Dreamlands (full album) Lovecraft dark ambient, dungeon synth, atmospheric mythos.mp3	yes
+Rachmaninov - Trio élégiaque no. 2, op. 9 (Audio+Sheet) [Kogan⧸Luzanov⧸Svetlanov].mp3	00:52:29	3149.453	48.059	50393779	special/characters/william-yorick/Rachmaninov - Trio élégiaque no. 2, op. 9 (Audio+Sheet) [Kogan⧸Luzanov⧸Svetlanov].mp3	yes
+Mozart - «The Great Mass» in C minor, KV427 ｜ La Chambre Philharmonique.mp3	00:49:05	2944.862	47.031	49315255	special/characters/zoey-samaras/Mozart - «The Great Mass» in C minor, KV427 ｜ La Chambre Philharmonique.mp3	yes
+HP Lovecraft Dark and Mysterious Orchestral Music： Cultistorm.mp3	00:50:32	3032.085	46.269	48516563	mythos/HP Lovecraft Dark and Mysterious Orchestral Music： Cultistorm.mp3	yes
+African Voodoo Drum Music.mp3	00:49:06	2946.194	45.251	47448989	special/characters/akachi-onyele/African Voodoo Drum Music.mp3	yes
+Beethoven Sonata quasi una fantasia, No.14 in C# Minor, Moonlight (Lortie, Jando).mp3	00:31:36	1896.411	43.406	45514011	special/characters/dexter-drake/Beethoven Sonata quasi una fantasia, No.14 in C# Minor, Moonlight (Lortie, Jando).mp3	yes
+Down Darker Trails： Orchestral Horror Music for Ain't Slayed Nobody Podcast.mp3	00:46:10	2770.338	42.275	44328746	mythos/Down Darker Trails： Orchestral Horror Music for Ain't Slayed Nobody Podcast.mp3	yes
+8 A future version of you lies in a rancid hotel room.mp3	00:43:07	2586.645	40.119	42068087	contacts/other-world/future/8/8 A future version of you lies in a rancid hotel room.mp3	yes
+The King in Yellow.mp3	00:40:43	2442.841	38.213	40069624	ancient/hastur/The King in Yellow.mp3	yes
+DARK --- The Lost Expedition Into The Hollow Earth (AI Art Project w⧸ dark ambient soundscape).mp3	00:33:55	2034.625	31.874	33421931	contacts/expedition/expeditions/cold/DARK --- The Lost Expedition Into The Hollow Earth (AI Art Project w⧸ dark ambient soundscape).mp3	yes
+[Kocsis-Ránki] Mozart Sonata for Two Pianos in D, K448.mp3	00:22:53	1372.552	31.415	32941381	special/characters/harvey-walters/[Kocsis-Ránki] Mozart Sonata for Two Pianos in D, K448.mp3	yes
+6 enormous primitive buildings made of green stone.mp3	00:33:05	1984.549	30.288	31759715	contacts/other-world/past/6/6 enormous primitive buildings made of green stone.mp3	yes
+4 MOON --- [Outer Wilds Ambiance] The Quantum Moon.mp3	00:32:27	1946.723	29.880	31331950	contacts/dreamlands/moon/4 MOON --- [Outer Wilds Ambiance] The Quantum Moon.mp3	yes
+Seong-Jin Cho - Mozart Piano Concerto No. 20 in D minor, K.466 (2011).mp3	00:31:09	1869.035	29.860	31310460	special/characters/vincent-lee/Seong-Jin Cho - Mozart Piano Concerto No. 20 in D minor, K.466 (2011).mp3	yes
+cae6e3595ab843d4bdb24d18710c6c3817773717588604438.m4a	00:30:00	1800.000	28.178	29546549	contacts/general/wilderness/space-4/cae6e3595ab843d4bdb24d18710c6c3817773717588604438.m4a	yes
+Broken Pyramid -- Relaxing Egyptian Ambient Music - 30 min.mp3	00:30:17	1816.790	27.969	29327125	contacts/egypt/bent-pyramid/Broken Pyramid -- Relaxing Egyptian Ambient Music - 30 min.mp3	yes
+10 1 ПИРАМИДЫ.mp3	00:30:17	1816.790	27.969	29327125	contacts/general/wilderness/pyramids/10 1 ПИРАМИДЫ.mp3	yes
+TO KILL A GOD ｜ Epic Battle Dark Heroic Music ｜ Epic Music Mix by @audiomachine.mp3	00:30:03	1802.945	27.518	28854292	special/awakening/TO KILL A GOD ｜ Epic Battle Dark Heroic Music ｜ Epic Music Mix by @audiomachine.mp3	yes
+COLD -- White Noise Sounds of Frozen Arctic Ocean with Polar Icebreaker Idling - Creating Delta Waves [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/general/sea/antarctica/COLD -- White Noise Sounds of Frozen Arctic Ocean with Polar Icebreaker Idling - Creating Delta Waves [ ezmp3.cc ].mp3	yes
+10 Hours _ Sailing Ship Ambience • A Soothing Voyage Across the Sea [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/general/sea/space-3/10 Hours _ Sailing Ship Ambience • A Soothing Voyage Across the Sea [ ezmp3.cc ].mp3	yes
+7.5 АМАЗОНКА.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/amazon/7.5 АМАЗОНКА.mp3	yes
+10 5 СЕРДЦЕ АФРИКИ 1.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/heart-of-africa/10 5 СЕРДЦЕ АФРИКИ 1.mp3	yes
+10 5 СЕРДЦЕ АФРИКИ 2.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/heart-of-africa/10 5 СЕРДЦЕ АФРИКИ 2.mp3	yes
+17 5 ГИМАЛАИ 1.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/himalayas/17 5 ГИМАЛАИ 1.mp3	yes
+17 5 ГИМАЛАИ 2.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/himalayas/17 5 ГИМАЛАИ 2.mp3	yes
+21 1.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/space-21/21 1.mp3	yes
+21 2.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/space-21/21 2.mp3	yes
+9 1.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/space-9/9 1.mp3	yes
+9 2.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/space-9/9 2.mp3	yes
+16 7 ТУНГУСКА 2.mp3	00:30:00	1800.020	27.467	28801286	contacts/general/wilderness/tunguska/16 7 ТУНГУСКА 2.mp3	yes
+Hollow Knight Ambience 10h - Abyss [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/other-world/abyss/Hollow Knight Ambience 10h - Abyss [ ezmp3.cc ].mp3	yes
+Nine Hours in the Abyss (Dark Ambient Free) [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/other-world/abyss/Nine Hours in the Abyss (Dark Ambient Free) [ ezmp3.cc ].mp3	yes
+The Abyss Experience (9+ Hour Dark Ambient) [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/other-world/abyss/The Abyss Experience (9+ Hour Dark Ambient) [ ezmp3.cc ].mp3	yes
+10 Hours At the Mountains of Madness ⛰️ Dark Lovecraftian Sounds for Sleep [ ezmp3.cc ].mp3	00:30:00	1800.020	27.467	28801286	contacts/other-world/leng/10 Hours At the Mountains of Madness ⛰️ Dark Lovecraftian Sounds for Sleep [ ezmp3.cc ].mp3	yes
+7 KADATH --- The Dream-Quest of Unknown Kadath ¦ Dark Orchestral Music HP Lovecraft.mp3	00:26:59	1619.383	24.712	25912188	contacts/dreamlands/unknown-kadath/7 KADATH --- The Dream-Quest of Unknown Kadath ¦ Dark Orchestral Music HP Lovecraft.mp3	yes
+The Dream-Quest of Unknown Kadath ¦ Dark Orchestral Music HP Lovecraft.mp3	00:26:59	1619.383	24.712	25912188	contacts/other-world/kadath/The Dream-Quest of Unknown Kadath ¦ Dark Orchestral Music HP Lovecraft.mp3	yes
+1920s Salon Music The Softer Sound Of The Era  @Pax41.mp3	00:25:06	1506.456	23.619	24765872	action/1920s Salon Music The Softer Sound Of The Era  @Pax41.mp3	yes
+Hit Songs From the Roaring 1920s  @Pax41.mp3	00:25:24	1523.540	23.253	24382305	action/Hit Songs From the Roaring 1920s  @Pax41.mp3	yes
+1920s music compilation Nr.4 (1920s Jazz and Charleston).mp3	00:24:30	1470.067	22.434	23524159	action/1920s music compilation Nr.4 (1920s Jazz and Charleston).mp3	yes
+CURSED - Epic Horror Music Mix ｜ Dark Intense Hybrid Horror Music.mp3	00:23:18	1398.047	21.337	22373016	combat-epic/CURSED - Epic Horror Music Mix ｜ Dark Intense Hybrid Horror Music.mp3	yes
+The Hound ¦ HP Lovecraft Orchestral Horror Music.mp3	00:22:30	1350.060	20.919	21934894	mythos/The Hound ¦ HP Lovecraft Orchestral Horror Music.mp3	yes
+Симфоническая поэма, соч. 54 ＂Поэма экстаза＂.mp3	00:20:09	1209.156	19.693	20649498	special/characters/calvin-wright/Симфоническая поэма, соч. 54 ＂Поэма экстаза＂.mp3	yes
+Yig  - Father of Serpents ｜ Lovecraftian Ambience⧸Drone.mp3	00:20:51	1251.048	19.523	20471791	ancient/yig/Yig  - Father of Serpents ｜ Lovecraftian Ambience⧸Drone.mp3	yes
+2 According to the papers the year is 1771.mp3	00:21:05	1265.189	19.315	20252967	contacts/other-world/past/2/2 According to the papers the year is 1771.mp3	yes
+5 You appear on the continent of Mu.mp3	00:19:27	1167.360	18.744	19654294	contacts/other-world/past/5/5 You appear on the continent of Mu.mp3	yes
+4 3.mp3	00:16:23	982.805	17.224	18061103	contacts/general/wilderness/space-4/4 3.mp3	yes
+Forest Ambush ｜ Combat Music ｜ D&D Fantasy Background Music ｜ RPG Playlist (1).mp3	00:17:41	1061.172	17.173	18006862	combat-epic/Forest Ambush ｜ Combat Music ｜ D&D Fantasy Background Music ｜ RPG Playlist (1).mp3	yes
+Forest Ambush ｜ Combat Music ｜ D&D Fantasy Background Music ｜ RPG Playlist.mp3	00:17:41	1061.172	17.173	18006862	combat/Forest Ambush ｜ Combat Music ｜ D&D Fantasy Background Music ｜ RPG Playlist.mp3	yes
+11 WATER.mp3	00:18:31	1110.622	16.948	17771662	special/disaster/weather/waterspouts/11 WATER.mp3	yes
+I MISS YOU - Heart Moving Piano Music Mix ｜ Emotional Touching Piano Music.mp3	00:17:01	1020.891	15.583	16340096	contacts/defeated/sanity/I MISS YOU - Heart Moving Piano Music Mix ｜ Emotional Touching Piano Music.mp3	yes
+Rhapsody In Blue： Gershwin.mp3	00:16:27	986.593	15.208	15947152	special/characters/skids-otoole/Rhapsody In Blue： Gershwin.mp3	yes
+Psyclopean - Lost Carcosa - 5.mp3	00:15:15	915.017	14.854	15575959	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 5.mp3	yes
+Creepy Music 2 Yog Sothoth.mp3	00:15:13	913.345	14.493	15196653	ancient/yog-sothoth/Creepy Music 2 Yog Sothoth.mp3	yes
+Rachmaninov： Trio élégiaque in G Minor, № 1..mp3	00:14:57	896.967	14.349	15046388	special/characters/trish-scarborough/Rachmaninov： Trio élégiaque in G Minor, № 1..mp3	yes
+4 The police have surrounded what looks like a church.mp3	00:15:00	900.206	14.280	14973227	contacts/other-world/past/4/4 The police have surrounded what looks like a church.mp3	yes
+Psyclopean - Lost Carcosa - 2.mp3	00:14:30	870.008	14.168	14855815	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 2.mp3	yes
+1 You stand in Times Square, New York.mp3	00:15:00	900.023	13.734	14401338	contacts/other-world/future/1/1 You stand in Times Square, New York.mp3	yes
+3 Large beetle-like creatures.mp3	00:15:00	900.023	13.734	14401338	contacts/other-world/future/3/3 Large beetle-like creatures.mp3	yes
+🎧 Dark cave ambience sound sounds on high quality white noise ASMR black screen dark screen [ ezmp3.cc ].mp3	00:15:00	900.023	13.734	14401338	contacts/other-world/underworld/🎧 Dark cave ambience sound sounds on high quality white noise ASMR black screen dark screen [ ezmp3.cc ].mp3	yes
+H. P. Lovecraft Jazz [1920's Ambience] Cthulhu Mythos and the Old Ones.mp3	00:14:56	896.340	13.678	14342927	action-muted/H. P. Lovecraft Jazz [1920's Ambience] Cthulhu Mythos and the Old Ones.mp3	yes
+Psyclopean - Lost Carcosa - 3.mp3	00:13:30	810.005	13.252	13895763	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 3.mp3	yes
+6 PLATEAU OF LENG --- Psyclopean - The Men Of Leng (dark ambientatmosphericLovecraftmythosexperimentaldrone)2018.mp3	00:09:05	545.149	12.478	13083722	contacts/antarctica/plateau-of-leng/6 PLATEAU OF LENG --- Psyclopean - The Men Of Leng (dark ambientatmosphericLovecraftmythosexperimentaldrone)2018.mp3	yes
+Yuggoth： 4.mp3	00:09:55	595.017	12.420	13023473	contacts/other-world/yuggoth/Yuggoth： 4.mp3	yes
+Pastorale in F Major, BWV 590.mp3	00:13:00	779.938	12.393	12995389	special/characters/sister-mary/Pastorale in F Major, BWV 590.mp3	yes
+Herbert West： Reanimator Original Soundtrack (HP Lovecraft).mp3	00:11:41	701.127	10.878	11405949	mythos/Herbert West： Reanimator Original Soundtrack (HP Lovecraft).mp3	yes
+Richard Wagner - ＂Tristan und Isolde＂, Prelude.mp3	00:10:59	658.651	10.575	11089008	special/characters/lola-hayes/Richard Wagner - ＂Tristan und Isolde＂, Prelude.mp3	yes
+Prelude & Fugue in E-Flat Major, BWV 552： I. Prelude.mp3	00:10:53	652.539	10.471	10980081	special/characters/sister-mary/Prelude & Fugue in E-Flat Major, BWV 552： I. Prelude.mp3	yes
+The Dreamlands.mp3	00:11:04	664.477	10.418	10924468	contacts/other-world/dreamlands/The Dreamlands.mp3	yes
+Psyclopean - Lost Carcosa - 1.mp3	00:10:00	600.059	10.049	10536625	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 1.mp3	yes
+Dreams in the Witch House ¦ HP Lovecraft Horror Music.mp3	00:09:56	595.592	9.942	10425342	mythos/Dreams in the Witch House ¦ HP Lovecraft Horror Music.mp3	yes
+Psyclopean - Lost Carcosa - 6.mp3	00:09:53	592.771	9.937	10420014	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 6.mp3	yes
+Claude Debussy, Prélude à l'Après-midi d'un faune.mp3	00:10:50	650.088	9.920	10402220	special/characters/agatha-crane/Claude Debussy, Prélude à l'Après-midi d'un faune.mp3	yes
+Camille Saint-Saëns - Danse Macabre.mp3	00:07:10	429.845	9.862	10341052	special/characters/diana-stanley/Camille Saint-Saëns - Danse Macabre.mp3	yes
+Dune Sketchbook Soundtrack ｜ Shai-hulud - Hans Zimmer ｜ WaterTower.mp3	00:09:48	587.834	9.466	9925962	ancient/shudde-mell/Dune Sketchbook Soundtrack ｜ Shai-hulud - Hans Zimmer ｜ WaterTower.mp3	yes
+Psyclopean - Lost Carcosa - 4.mp3	00:08:55	535.014	9.056	9495907	contacts/other-world/carcosa/Psyclopean - Lost Carcosa - 4.mp3	yes
+Mozart_Violin_Concerto_No_5_in_A_Major,_K_219_I_Allegro_aperto_Anne.mp3	00:09:43	582.720	8.892	9323564	special/victory/Mozart_Violin_Concerto_No_5_in_A_Major,_K_219_I_Allegro_aperto_Anne.mp3	yes
+Whiplash Soundtrack 06 - Caravan - Eloquence Music (128k).mp3	00:09:20	560.118	8.547	8962017	special/victory/Whiplash Soundtrack 06 - Caravan - Eloquence Music (128k).mp3	yes
+MW2 soundtrack ＂Enemy of my enemy is my friend＂.mp3	00:08:52	532.323	8.363	8768734	special/death-health/MW2 soundtrack ＂Enemy of my enemy is my friend＂.mp3	yes
+The End For A New Beginning ｜ by Emil Nilsson (Epic Music World).mp3	00:08:57	537.130	8.204	8602186	special/death-health/The End For A New Beginning ｜ by Emil Nilsson (Epic Music World).mp3	yes
+Chinese Guqin  ： Flowing water Guqin 流水 古琴曲.mp3	00:08:00	480.052	8.194	8591656	contacts/big-city/shanghai/Chinese Guqin  ： Flowing water Guqin 流水 古琴曲.mp3	yes
+Beethoven - Coriolan Overture (Karajan & Berliner Philharmoniker).mp3	00:08:34	514.247	7.948	8334494	special/death-health/Beethoven - Coriolan Overture (Karajan & Berliner Philharmoniker).mp3	yes
+Yuggoth： 3.mp3	00:05:55	355.004	7.842	8223212	contacts/other-world/yuggoth/Yuggoth： 3.mp3	yes
+Levon Minassian ⧸ They Have Taken The One I Love⧸Lyrics.mp3	00:07:08	427.677	7.383	7741619	contacts/defeated/sanity/Levon Minassian ⧸ They Have Taken The One I Love⧸Lyrics.mp3	yes
+Nikriz Sirto (Tanburi Cemil Bey).mp3	00:07:29	448.549	7.339	7695260	contacts/big-city/istanbul/Nikriz Sirto (Tanburi Cemil Bey).mp3	yes
+Yog Sothoth.mp3	00:07:22	441.992	7.307	7661647	ancient/yog-sothoth/Yog Sothoth.mp3	yes
+The Necronomicon HP Lovecraft Orchestral Horror Music.mp3	00:06:38	398.446	7.304	7658541	mythos/The Necronomicon HP Lovecraft Orchestral Horror Music.mp3	yes
+Bach Brandenburg Concerto No  4 in G major, BWV 1049 mvt1 Allegro D°,Karl Richter.mp3	00:07:23	443.141	7.195	7544979	special/characters/sister-mary/Bach Brandenburg Concerto No  4 in G major, BWV 1049 mvt1 Allegro D°,Karl Richter.mp3	yes
+Turkish Ottoman Music Oud Taksim + Şarki in Makam Uşşak.mp3	00:05:56	355.709	7.185	7533592	contacts/big-city/istanbul/Turkish Ottoman Music Oud Taksim + Şarki in Makam Uşşak.mp3	yes
+The Prestige Score - The Price Of A Good Trick.mp3	00:05:07	307.331	7.034	7376071	special/characters/dexter-drake/The Prestige Score - The Price Of A Good Trick.mp3	yes
+Dark Piano - Dementia.mp3	00:07:24	443.507	6.999	7339193	special/death-sanity/Dark Piano - Dementia.mp3	yes
+Devil's Reef： H.P. Lovecraft Orchestral Horror Music.mp3	00:07:37	456.699	6.970	7309001	mythos/Devil's Reef： H.P. Lovecraft Orchestral Horror Music.mp3	yes
+The Rats in the Walls ¦ HP Lovecraft Horror Music.mp3	00:06:03	362.580	6.936	7272879	mythos/The Rats in the Walls ¦ HP Lovecraft Horror Music.mp3	yes
+Ennio Morricone - L'Ultima Diligenza di Red Rock (Versione Integrale).mp3	00:07:32	452.016	6.899	7234507	special/characters/tony-morgan/Ennio Morricone - L'Ultima Diligenza di Red Rock (Versione Integrale).mp3	yes
+Epic⧸Intense D&D Battle Music - D&D Boss Fight - Towering Death.mp3	00:06:48	407.693	6.854	7187366	special/awakening/Epic⧸Intense D&D Battle Music - D&D Boss Fight - Towering Death.mp3	yes
+Vintage Japanese Music - Sangai-bushi⧸Sado Okesa by Katsutaro Kouta 1938.mp3	00:07:13	433.136	6.827	7158827	contacts/big-city/tokyo/Vintage Japanese Music - Sangai-bushi⧸Sado Okesa by Katsutaro Kouta 1938.mp3	yes
+Plateau of Leng.mp3	00:07:06	426.214	6.817	7147989	contacts/other-world/leng/Plateau of Leng.mp3	yes
+6 PLATEAU OF LENG --- Plateau of Leng.mp3	00:07:06	426.214	6.817	7147780	contacts/antarctica/plateau-of-leng/6 PLATEAU OF LENG --- Plateau of Leng.mp3	yes
+𝐉𝐨𝐤𝐞𝐫'𝐬 𝐒𝐨𝐧𝐚𝐭𝐚 - Deep Dark Piano - Villain Music.mp3	00:07:20	439.928	6.715	7041325	special/death-sanity/𝐉𝐨𝐤𝐞𝐫'𝐬 𝐒𝐨𝐧𝐚𝐭𝐚 - Deep Dark Piano - Villain Music.mp3	yes
+The Shadow Out of Time ¦ HP Lovecraft Orchestral Horror Music.mp3	00:06:37	397.272	6.689	7014163	contacts/other-world/great-race/The Shadow Out of Time ¦ HP Lovecraft Orchestral Horror Music.mp3	yes
+Yog-Sothoth.mp3	00:06:13	372.898	6.652	6974790	ancient/yog-sothoth/Yog-Sothoth.mp3	yes
+Turkish Ottoman Music Klasik Kemençe Taksim + Semai in Makam Neva.mp3	00:06:11	370.704	6.643	6966197	contacts/big-city/istanbul/Turkish Ottoman Music Klasik Kemençe Taksim + Semai in Makam Neva.mp3	yes
+Yuggoth： 2.mp3	00:04:50	290.011	6.603	6923359	contacts/other-world/yuggoth/Yuggoth： 2.mp3	yes
+Nyarlathotep.mp3	00:06:07	367.125	6.564	6882424	ancient/nyarlathotep/Nyarlathotep.mp3	yes
+Sad Epic Emotional Music - Farewell Life.mp3	00:06:38	398.002	6.558	6876254	contacts/defeated/sanity/Sad Epic Emotional Music - Farewell Life.mp3	yes
+6 PLATEAU OF LENG --- 01. Item Caligo - Plateau of Leng.mp3	00:06:20	380.134	6.533	6850151	contacts/antarctica/plateau-of-leng/6 PLATEAU OF LENG --- 01. Item Caligo - Plateau of Leng.mp3	yes
+01. Item Caligo - Plateau of Leng.mp3	00:06:20	380.134	6.533	6850151	contacts/other-world/leng/01. Item Caligo - Plateau of Leng.mp3	yes
+Nocturne in B Flat Minor, Op. 9 No. 1： ＂A Madame Camille Pleyel＂.mp3	00:06:22	382.276	6.399	6709610	special/characters/jacqueline-fine/Nocturne in B Flat Minor, Op. 9 No. 1： ＂A Madame Camille Pleyel＂.mp3	yes
+Air on the G String (Suite No. 3, BWV 1068) J. S. Bach, original instruments.mp3	00:05:19	319.321	6.385	6694925	special/characters/mandy-thompson/Air on the G String (Suite No. 3, BWV 1068) J. S. Bach, original instruments.mp3	yes
+De Vermis Mysteriis： Cthulhu Mythos Orchestral Horror Music.mp3	00:05:32	332.016	6.059	6353432	mythos/De Vermis Mysteriis： Cthulhu Mythos Orchestral Horror Music.mp3	yes
+Yuggoth： 1.mp3	00:04:20	260.023	6.031	6323588	contacts/other-world/yuggoth/Yuggoth： 1.mp3	yes
+12 METEROR SHOWER (SERIO).mp3	00:04:18	258.482	5.953	6242301	special/disaster/location/meteor-showers/12 METEROR SHOWER (SERIO).mp3	yes
+Ancient Aztec and Mayan traditional music by Ricardo Tlalli Lozano. Song_ Tikal.mp3	00:06:18	378.175	5.890	6176013	contacts/general/city/space-7/Ancient Aztec and Mayan traditional music by Ricardo Tlalli Lozano. Song_ Tikal.mp3	yes
+Unaussprechlichen Kulten： Cthulhu Mythos Orchestral Horror Music.mp3	00:05:19	319.478	5.887	6173407	mythos/Unaussprechlichen Kulten： Cthulhu Mythos Orchestral Horror Music.mp3	yes
+Johann Strauss II - Frühlingsstimmen op. 410.mp3	00:05:48	347.873	5.883	6168531	special/victory/Johann Strauss II - Frühlingsstimmen op. 410.mp3	yes
+Chinese Empire⧸Qing Dynasty (1636-1912) Anthem ＂Cup of Solid Gold＂ Medley (1911)-[AudioTrimmer.com].mp3	00:06:23	382.537	5.840	6123911	special/characters/lily-chen/Chinese Empire⧸Qing Dynasty (1636-1912) Anthem ＂Cup of Solid Gold＂ Medley (1911)-[AudioTrimmer.com].mp3	yes
+Dimitri Kantemiroğlu - Hüseynî Peşrev (Alla Turca Kollektif).mp3	00:05:49	349.074	5.754	6033909	contacts/big-city/istanbul/Dimitri Kantemiroğlu - Hüseynî Peşrev (Alla Turca Kollektif).mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_tyAi1pRRjDY_005_128k-[AudioTrimmer.com].mp3	00:03:19	198.844	5.625	5898312	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_tyAi1pRRjDY_005_128k-[AudioTrimmer.com].mp3	yes
+Händel Messiah - Hallelujah Chorus.mp3	00:04:01	241.189	5.540	5808796	special/characters/father-mateo/Händel Messiah - Hallelujah Chorus.mp3	yes
+WHEN ALL HOPE IS LOST - ＂The Nuclear War＂ by Sigurd Jøhnk-Jensen.mp3	00:05:35	334.785	5.491	5758148	special/defeat/WHEN ALL HOPE IS LOST - ＂The Nuclear War＂ by Sigurd Jøhnk-Jensen.mp3	yes
+Sad Dramatic Emotional Epic Music - My Spirit Is Free [Royalty Free].mp3	00:05:11	311.014	5.410	5672334	special/death-sanity/Sad Dramatic Emotional Epic Music - My Spirit Is Free [Royalty Free].mp3	yes
+Music for a Brutal Betrayal - To The Gallows.mp3	00:05:46	346.331	5.393	5654861	special/death-health/Music for a Brutal Betrayal - To The Gallows.mp3	yes
+The Elder Scrolls V Dragonborn OST   Apocrypha 02.mp3	00:04:49	288.679	5.380	5641438	contacts/other-world/celaeno/The Elder Scrolls V Dragonborn OST   Apocrypha 02.mp3	yes
+＂Rolling Walnuts＂ (traditional Chinese)-[AudioTrimmer.com].mp3	00:05:50	350.328	5.349	5608477	special/characters/lily-chen/＂Rolling Walnuts＂ (traditional Chinese)-[AudioTrimmer.com].mp3	yes
+Ithaqua the Wind-Walker.mp3	00:05:16	316.029	5.310	5568356	ancient/ithaqua/Ithaqua the Wind-Walker.mp3	yes
+Dark & Moody Spanish Guitar Music.mp3	00:05:29	328.673	5.240	5494901	contacts/big-city/buenos-aires/Dark & Moody Spanish Guitar Music.mp3	yes
+Again and Again by Benny Carter.mp3	00:05:29	328.934	5.128	5376655	special/characters/roland-banks/Again and Again by Benny Carter.mp3	yes
+The Colour Out of Space HP Lovecraft Orchestra Horror Music.mp3	00:04:21	261.460	5.078	5324471	mythos/The Colour Out of Space HP Lovecraft Orchestra Horror Music.mp3	yes
+Dark Piano - Silence.mp3	00:04:34	273.554	5.025	5269303	special/death-sanity/Dark Piano - Silence.mp3	yes
+Dark Music - The Master Of Death ｜ Immortality.mp3	00:04:49	289.097	4.986	5228335	special/death-health/Dark Music - The Master Of Death ｜ Immortality.mp3	yes
+One_Flew_Over_The_Cuckoo's_Nest_Closing_from_One_Flew_Over_The_Cuckoo's.mp3	00:03:37	217.051	4.969	5210625	special/characters/jack-waters/One_Flew_Over_The_Cuckoo's_Nest_Closing_from_One_Flew_Over_The_Cuckoo's.mp3	yes
+The Haunter of the Dark ¦ HP Lovecraft Horror Music.mp3	00:04:38	278.047	4.937	5177088	mythos/The Haunter of the Dark ¦ HP Lovecraft Horror Music.mp3	yes
+17th Century Ottoman Classical Music  ｜ Nikriz Peşrev.mp3	00:04:32	272.091	4.893	5131145	contacts/big-city/istanbul/17th Century Ottoman Classical Music  ｜ Nikriz Peşrev.mp3	yes
+Musique Ottomane Osmanli musik Ottoman Turkish Music from 17th century (XVII ème siècle).mp3	00:05:04	304.353	4.864	5100393	contacts/big-city/istanbul/Musique Ottomane Osmanli musik Ottoman Turkish Music from 17th century (XVII ème siècle).mp3	yes
+5 wading through the endless river of time.mp3	00:04:54	294.165	4.831	5066047	contacts/other-world/future/5/5 wading through the endless river of time.mp3	yes
+＂TELL ME HOW HE DIED＂ by Dan Thiessen • Epic Music World ｜ World's Most Emotional Music.m4a	00:05:12	312.100	4.822	5056455	contacts/defeated/health/＂TELL ME HOW HE DIED＂ by Dan Thiessen • Epic Music World ｜ World's Most Emotional Music.m4a	yes
+Traditional Ottoman - Warrior's March.mp3	00:04:44	284.395	4.819	5053289	contacts/big-city/istanbul/Traditional Ottoman - Warrior's March.mp3	yes
+Nocturne in E Minor, Op. 72 No. 1, Op. Posthume.mp3	00:04:38	277.525	4.800	5033543	special/characters/jacqueline-fine/Nocturne in E Minor, Op. 72 No. 1, Op. Posthume.mp3	yes
+＂TELL ME HOW HE DIED＂ by Dan Thiessen • Epic Music World ｜ World's Most Emotional Music.mp3	00:05:12	312.111	4.771	5002938	special/death-health/＂TELL ME HOW HE DIED＂ by Dan Thiessen • Epic Music World ｜ World's Most Emotional Music.mp3	yes
+Ralpi - The Last Battle (Sad Emotional).mp3	00:04:00	240.118	4.705	4933738	special/death-health/Ralpi - The Last Battle (Sad Emotional).mp3	yes
+Ottoman-Turkish Music, Derya Türkan - Nikriz Peşrev.mp3	00:04:30	270.211	4.699	4927578	contacts/big-city/istanbul/Ottoman-Turkish Music, Derya Türkan - Nikriz Peşrev.mp3	yes
+Antonio Vivaldi ~ Winter (December) I ~ Allegro non molto.mp3	00:03:25	204.774	4.687	4914710	special/characters/george-barnaby/Antonio Vivaldi ~ Winter (December) I ~ Allegro non molto.mp3	yes
+Cavatina (Theme from ＂The Deer Hunter＂).mp3	00:04:18	257.567	4.661	4887164	special/death-sanity/Cavatina (Theme from ＂The Deer Hunter＂).mp3	yes
+The Elder Scrolls V Dragonborn OST - Apocrypha 01.mp3	00:03:59	239.073	4.622	4846765	contacts/other-world/celaeno/The Elder Scrolls V Dragonborn OST - Apocrypha 01.mp3	yes
+8 TOKYO.mp3	00:03:27	206.890	4.621	4845509	special/disaster/city/tokyo/8 TOKYO.mp3	yes
+Dark & Mysterious Spanish Guitar Music： MISTERIO - Al Marconi.mp3	00:04:06	245.603	4.545	4765890	contacts/big-city/buenos-aires/Dark & Mysterious Spanish Guitar Music： MISTERIO - Al Marconi.mp3	yes
+Bessie Smith-Aggravatin Papa.mp3	00:03:18	198.478	4.543	4763617	special/characters/daniela-reyes/Bessie Smith-Aggravatin Papa.mp3	yes
+Beethoven： Symphony No. 5 ⧸ Karajan · Berliner Philharmoniker.mp3	00:03:00	180.323	4.542	4762206	special/characters/sefina-rousseau/Beethoven： Symphony No. 5 ⧸ Karajan · Berliner Philharmoniker.mp3	yes
+Andrea Vanzo - Amélie - Comptine d’un autre été, l’après-midi (Reimagined) - (Official Video).mp3	00:03:16	195.709	4.541	4761295	special/characters/daisy-walker/Andrea Vanzo - Amélie - Comptine d’un autre été, l’après-midi (Reimagined) - (Official Video).mp3	yes
+If You Need The Most Epic Dark Boss Theme, Check This • ＂CTHULHU AWAKENS＂ by Apollon de Moura.mp3	00:04:27	266.527	4.535	4754823	special/awakening/If You Need The Most Epic Dark Boss Theme, Check This • ＂CTHULHU AWAKENS＂ by Apollon de Moura.mp3	yes
+Last Goodbye (Sad Piano) - Michael Ortega.mp3	00:04:05	244.898	4.472	4689278	contacts/defeated/sanity/Last Goodbye (Sad Piano) - Michael Ortega.mp3	yes
+Dark Piano Music - Insanity (Original Composition).mp3	00:04:29	269.009	4.449	4664941	special/death-sanity/Dark Piano Music - Insanity (Original Composition).mp3	yes
+EPIC DARK BATTLE MUSIC ｜ by @RokNardin.mp3	00:04:11	250.749	4.378	4590268	combat-epic/EPIC DARK BATTLE MUSIC ｜ by @RokNardin.mp3	yes
+7 You discover an era of technological marvels.mp3	00:03:43	223.425	4.349	4560619	contacts/other-world/future/7/7 You discover an era of technological marvels.mp3	yes
+4 imprisoned in a compound with hundreds of plague victims.mp3	00:04:18	258.194	4.333	4543240	contacts/other-world/future/4/4 imprisoned in a compound with hundreds of plague victims.mp3	yes
+The Music of Erich Zann ¦ HP Lovecraft Horror Music.mp3	00:03:42	222.093	4.318	4527831	mythos/The Music of Erich Zann ¦ HP Lovecraft Horror Music.mp3	yes
+Sergei Rachmaninoff： Schubert⧸Liszt, Ständchen (Serenade).mp3	00:04:27	267.102	4.257	4463453	special/characters/minh-thi-phan/Sergei Rachmaninoff： Schubert⧸Liszt, Ständchen (Serenade).mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_a4x5LTUyDVI_005_128k-[AudioTrimmer.com].mp3	00:04:10	249.522	4.242	4448242	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_a4x5LTUyDVI_005_128k-[AudioTrimmer.com].mp3	yes
+Penguin Cafe Orchestra - Perpetuum Mobile.mp3	00:04:36	276.312	4.217	4421804	special/characters/amanda-sharpe/Penguin Cafe Orchestra - Perpetuum Mobile.mp3	yes
+6 filled with wizards and the worship of blasphemous gods.mp3	00:04:07	246.779	4.189	4392083	contacts/other-world/future/6/6 filled with wizards and the worship of blasphemous gods.mp3	yes
+CHOPIN - Nocturne No. 20 in C Sharp Minor, Op. Posthume 1830 - François Chaplin.mp3	00:04:12	251.794	4.166	4368839	special/characters/jacqueline-fine/CHOPIN - Nocturne No. 20 in C Sharp Minor, Op. Posthume 1830 - François Chaplin.mp3	yes
+Haendel - Sarabande.mp3	00:04:04	243.749	4.155	4357276	special/death-health/Haendel - Sarabande.mp3	yes
+Memory of music - folk instrument videos (part 4) - kantelar (128k)-[AudioTrimmer.com].mp3	00:04:32	271.569	4.145	4346076	contacts/general/city/space-14/Memory of music - folk instrument videos (part 4) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Lightnin' Hopkins - Woke Up This Morning.mp3	00:04:31	270.816	4.133	4334087	special/characters/wilson-richards/Lightnin' Hopkins - Woke Up This Morning.mp3	yes
+＂THERE WILL BE GENERATIONS BECAUSE OF YOU＂ by Dan Thiessen • World's Most Emotional Music.mp3	00:04:28	268.069	4.098	4297037	special/death-sanity/＂THERE WILL BE GENERATIONS BECAUSE OF YOU＂ by Dan Thiessen • World's Most Emotional Music.mp3	yes
+＂WHO WILL HELP ME CARRY HIM＂ by Dan Thiessen • World's Most Emotional Music.mp3	00:04:25	265.273	4.055	4251457	special/death-health/＂WHO WILL HELP ME CARRY HIM＂ by Dan Thiessen • World's Most Emotional Music.mp3	yes
+Метель： No. 2, Вальс.mp3	00:03:56	236.487	4.054	4251401	special/characters/wendy-adams/Метель： No. 2, Вальс.mp3	yes
+Epic Dark Battle Music • ＂Where Is Your God Now＂ by @RokNardin.mp3	00:03:07	186.828	4.015	4210112	special/awakening/Epic Dark Battle Music • ＂Where Is Your God Now＂ by @RokNardin.mp3	yes
+Georgi Sviridov - Time, forward.mp3	00:03:34	214.073	4.011	4205969	special/characters/rita-young/Georgi Sviridov - Time, forward.mp3	yes
+Liebesträume, S. 541： No. 3 in A-Flat Major ＂O lieb so lang' Du lieben kannst＂.mp3	00:04:20	259.997	3.969	4161873	special/characters/kate-winthrop/Liebesträume, S. 541： No. 3 in A-Flat Major ＂O lieb so lang' Du lieben kannst＂.mp3	yes
+Yibo Labo (These Are the Guys).mp3	00:04:39	279.354	3.947	4138903	contacts/general/city/space-15/Yibo Labo (These Are the Guys).mp3	yes
+Gladiator • Now We Are Free.mp3	00:04:18	258.429	3.944	4135843	special/victory/Gladiator • Now We Are Free.mp3	yes
+13 LEAD INVESTIGATOR.mp3	00:02:57	177.136	3.892	4081161	special/disaster/location/destructive-cyclone/13 LEAD INVESTIGATOR.mp3	yes
+Memento (Main Theme) - David Julyan.mp3	00:02:49	169.378	3.877	4065208	special/characters/darrell-simmons/Memento (Main Theme) - David Julyan.mp3	yes
+Memory of music - folk instrument videos (part 3) - kantelar (128k)-[AudioTrimmer.com].mp3	00:04:12	252.264	3.850	4037205	contacts/general/city/space-14/Memory of music - folk instrument videos (part 3) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Relaxing Arabian Music - A Red Sun Sets.mp3	00:03:34	213.682	3.837	4023753	contacts/defeated/health/Relaxing Arabian Music - A Red Sun Sets.mp3	yes
+Relaxing Arabian Music - A Red Sun Sets.mp3	00:03:34	213.682	3.837	4023753	special/death-health/Relaxing Arabian Music - A Red Sun Sets.mp3	yes
+Benny Carter - Nightfall.mp3	00:03:14	194.064	3.784	3967831	special/characters/michael-mcglen/Benny Carter - Nightfall.mp3	yes
+Memory of music - folk instrument videos (part 8) - kantelar (128k)-[AudioTrimmer.com].mp3	00:04:07	247.458	3.777	3960300	contacts/general/city/space-14/Memory of music - folk instrument videos (part 8) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Endless Storm ⧸ Epic Orchestral Battle Music (CC-BY).mp3	00:02:22	142.211	3.769	3952309	special/awakening/Endless Storm ⧸ Epic Orchestral Battle Music (CC-BY).mp3	yes
+Everything Ends Here.mp3	00:03:45	225.019	3.767	3949708	special/death-health/Everything Ends Here.mp3	yes
+Australia Ambient - Didgeridoo Improv 1 (Civilization 6 OST).mp3	00:02:32	151.693	3.758	3940870	contacts/big-city/sydney/Australia Ambient - Didgeridoo Improv 1 (Civilization 6 OST).mp3	yes
+Eine_kleine_Nachtmusik,_K_525_IV_Rondo_Allegro_Mozart,_Wolfgang.mp3	00:04:05	244.898	3.738	3919340	special/victory/Eine_kleine_Nachtmusik,_K_525_IV_Rondo_Allegro_Mozart,_Wolfgang.mp3	yes
+Ralpi - The Last Battle (Sad Emotional).m4a	00:04:00	240.118	3.707	3886701	contacts/defeated/health/Ralpi - The Last Battle (Sad Emotional).m4a	yes
+Memory of music - folk instrument videos (part 2) - kantelar (128k)-[AudioTrimmer.com].mp3	00:04:03	242.521	3.702	3881306	contacts/general/city/space-14/Memory of music - folk instrument videos (part 2) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Honey Pie (Remastered 2009).mp3	00:02:41	161.202	3.691	3870230	special/honey-pie/Honey Pie (Remastered 2009).mp3	yes
+Prince's Band - The Star Spangled Banner (1916).mp3	00:03:30	209.607	3.675	3853335	special/characters/charlie-kane/Prince's Band - The Star Spangled Banner (1916).mp3	yes
+Billie Holiday   Strange Fruit 1939.mp3	00:03:22	201.587	3.669	3847734	special/characters/marie-lambeau/Billie Holiday   Strange Fruit 1939.mp3	yes
+John Williams - Marion's Theme (Official Audio) ｜ Indiana Jones - Raiders of the Lost Ark.mp3	00:04:00	239.830	3.668	3845754	special/characters/ursula-downs/John Williams - Marion's Theme (Official Audio) ｜ Indiana Jones - Raiders of the Lost Ark.mp3	yes
+Lightnin' hopkins - Bring me my shotgun.mp3	00:03:58	238.158	3.637	3813248	special/characters/wilson-richards/Lightnin' hopkins - Bring me my shotgun.mp3	yes
+3 Through the shifting sands of the desert.mp3	00:03:21	200.620	3.610	3785592	contacts/other-world/past/3/3 Through the shifting sands of the desert.mp3	yes
+Boswell Sisters, The - If I Had A Million Dollars(1935).mp3	00:02:48	168.072	3.578	3751750	special/characters/preston-fairmont/Boswell Sisters, The - If I Had A Million Dollars(1935).mp3	yes
+Atonement - Briony ♪.mp3	00:02:35	155.298	3.555	3727288	special/characters/gloria-goldberg/Atonement - Briony ♪.mp3	yes
+Most Emotional Music： ＂A Final Sacrifice＂ — Luke Richards.mp3	00:02:41	161.097	3.548	3720291	special/death-sacrifice/Most Emotional Music： ＂A Final Sacrifice＂ — Luke Richards.mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_pFx-gJQvu6c_005_128k-[AudioTrimmer.com].mp3	00:03:32	212.349	3.506	3676500	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_pFx-gJQvu6c_005_128k-[AudioTrimmer.com].mp3	yes
+Epic Score - Enteral Shadow (Dark Intense Orchestral Music).mp3	00:03:02	182.178	3.494	3663833	special/defeat/Epic Score - Enteral Shadow (Dark Intense Orchestral Music).mp3	yes
+Memory of music - folk instrument videos (part 7) - kantelar (128k)-[AudioTrimmer.com].mp3	00:03:49	228.780	3.492	3661460	contacts/general/city/space-14/Memory of music - folk instrument videos (part 7) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+С.С.Прокофьев. ＂Монтекки и Капулетти＂. №1  из Второй орке.mp3	00:03:31	210.651	3.460	3627914	special/characters/mark-harrigan/С.С.Прокофьев. ＂Монтекки и Капулетти＂. №1  из Второй орке.mp3	yes
+Debussy plays Debussy ｜ Clair de Lune (1913).mp3	00:03:50	230.087	3.445	3612250	special/characters/luke-robinson/Debussy plays Debussy ｜ Clair de Lune (1913).mp3	yes
+5 CITY OF THE ELDER --- City of the Elder Things.mp3	00:02:48	167.758	3.444	3611434	contacts/antarctica/city-of-elder-things/5 CITY OF THE ELDER --- City of the Elder Things.mp3	yes
+16th Century Ottoman Attack March ⧸ 16. yüzyıl Osmanlı Hücum Marşı.mp3	00:02:58	177.502	3.438	3605232	contacts/big-city/istanbul/16th Century Ottoman Attack March ⧸ 16. yüzyıl Osmanlı Hücum Marşı.mp3	yes
+Once Upon a Time in America Soundtrack Speakeasy.mp3	00:02:27	147.096	3.367	3530429	special/characters/finn-edwards/Once Upon a Time in America Soundtrack Speakeasy.mp3	yes
+Sonny Boy (Remastered).mp3	00:03:06	185.992	3.340	3502750	special/characters/carson-sinclair/Sonny Boy (Remastered).mp3	yes
+The Ancient Book - Music by Navid Hejazi.mp3	00:03:15	194.795	3.316	3477392	mythos/The Ancient Book - Music by Navid Hejazi.mp3	yes
+1 Through the slits in the closet door.mp3	00:03:07	186.567	3.285	3444293	contacts/other-world/past/1/1 Through the slits in the closet door.mp3	yes
+1931 HITS ARCHIVE： Minnie The Moocher - Cab Calloway (original version).mp3	00:03:11	191.190	3.275	3434241	special/characters/michael-mcglen/1931 HITS ARCHIVE： Minnie The Moocher - Cab Calloway (original version).mp3	yes
+Le_nozze_di_Figaro,_K_492,_Act_4_Scene_14_Gente,_gente,_all'armi.mp3	00:03:34	214.248	3.270	3428780	special/victory/Le_nozze_di_Figaro,_K_492,_Act_4_Scene_14_Gente,_gente,_all'armi.mp3	yes
+Epic Battle Music： ＂Armageddon＂ — Alibi Music.m4a	00:03:32	211.581	3.267	3426114	special/awakening/Epic Battle Music： ＂Armageddon＂ — Alibi Music.m4a	yes
+Vivaldi Gloria - Gloria in excelsis Deo.mp3	00:02:19	139.285	3.259	3417705	special/characters/father-mateo/Vivaldi Gloria - Gloria in excelsis Deo.mp3	yes
+Epic Music ｜ Free To Use ｜ ＂No Way Out＂ AKA ＂Against Demons Epic Fight＂ (Prod. Sirius Beat).mp3	00:03:03	183.171	3.252	3409678	special/defeat/Epic Music ｜ Free To Use ｜ ＂No Way Out＂ AKA ＂Against Demons Epic Fight＂ (Prod. Sirius Beat).mp3	yes
+4 LONDON.mp3	00:03:14	194.011	3.245	3402527	special/disaster/city/london/4 LONDON.mp3	yes
+Sad Romantic Spanish Guitar Music： SHADES OF GREY by Al Marconi.mp3	00:02:53	173.349	3.231	3388238	contacts/big-city/buenos-aires/Sad Romantic Spanish Guitar Music： SHADES OF GREY by Al Marconi.mp3	yes
+Johannes Brahms -- Hungarian Dance No.5 - Hungarian Symphony Orchestra Budapest [ ezmp3.cc ].mp3	00:03:30	210.024	3.206	3361364	special/characters/norman-withers/Johannes Brahms -- Hungarian Dance No.5 - Hungarian Symphony Orchestra Budapest [ ezmp3.cc ].mp3	yes
+Sonny Boy - Al Jolson (1928).mp3	00:03:18	198.087	3.202	3357589	special/characters/carson-sinclair/Sonny Boy - Al Jolson (1928).mp3	yes
+In The Hall Of The Mountain King.mp3	00:02:47	166.949	3.194	3349498	special/characters/mark-harrigan/In The Hall Of The Mountain King.mp3	yes
+The Awakening ｜ Epic, Dark, Massive, Building Music.mp3	00:03:06	185.966	3.187	3341766	special/awakening/The Awakening ｜ Epic, Dark, Massive, Building Music.mp3	yes
+Nocturne in C Minor, Op. Posthume.mp3	00:02:51	170.998	3.175	3329063	special/characters/jacqueline-fine/Nocturne in C Minor, Op. Posthume.mp3	yes
+5 ROME.mp3	00:02:22	141.767	3.165	3319083	special/disaster/city/rome/5 ROME.mp3	yes
+Memory of music - folk instrument videos (part 12) - kantelar (128k)-[AudioTrimmer.com].mp3	00:03:27	207.360	3.165	3318733	contacts/general/city/space-14/Memory of music - folk instrument videos (part 12) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Dead Space soundtrack - The Leviathan.mp3	00:03:16	195.631	3.132	3284216	combat/Dead Space soundtrack - The Leviathan.mp3	yes
+Peter Gunn.mp3	00:02:06	126.354	3.101	3251768	special/characters/joe-diamond/Peter Gunn.mp3	yes
+Honey Bunch- Paul Specht Orchestra-1926.mp3	00:03:08	187.847	3.053	3201002	special/characters/jenny-barnes/Honey Bunch- Paul Specht Orchestra-1926.mp3	yes
+Peggy Lee ＂Why Don't You Do Right＂.mp3	00:03:19	199.288	3.042	3189884	special/characters/tommy-muldoon/Peggy Lee ＂Why Don't You Do Right＂.mp3	yes
+25. 9m1B Indie's Feats (Raiders of the Lost Ark Complete Score).mp3	00:03:19	198.949	3.039	3186890	special/characters/leo-anderson/25. 9m1B Indie's Feats (Raiders of the Lost Ark Complete Score).mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_HjlPmKwpeuA_005_128k-[AudioTrimmer.com].mp3	00:03:09	188.735	3.034	3180950	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_HjlPmKwpeuA_005_128k-[AudioTrimmer.com].mp3	yes
+Scary Dark and Evil Piano and Violin Music - Lucifers Waltz.mp3	00:02:59	178.965	3.033	3180322	special/death-sanity/Scary Dark and Evil Piano and Violin Music - Lucifers Waltz.mp3	yes
+Most Sorrowful Music Of All Times： In The Next Life.mp3	00:02:54	174.498	2.979	3123635	contacts/defeated/sanity/Most Sorrowful Music Of All Times： In The Next Life.mp3	yes
+Good_Whiskey_Blues_128k.mp3	00:03:14	194.247	2.965	3108916	special/characters/zadoc-allen/Good_Whiskey_Blues_128k.mp3	yes
+Black Betty- Leadbelly.mp3	00:02:09	129.280	2.959	3102857	special/characters/hank-samson/Black Betty- Leadbelly.mp3	yes
+Waiting for a Train.mp3	00:02:44	163.944	2.935	3077979	special/characters/ashcan-pete/Waiting for a Train.mp3	yes
+2 ARKHAM.mp3	00:02:15	134.504	2.902	3042602	special/disaster/city/arkham/2 ARKHAM.mp3	yes
+Lucienne Boyer - Parlez-Moi D'Amour [1930].mp3	00:03:02	182.073	2.888	3028273	special/characters/carolyn-fern/Lucienne Boyer - Parlez-Moi D'Amour [1930].mp3	yes
+Mozart： Requiem In D Minor, K.626 - 3. Sequentia： I. Dies irae.mp3	00:02:00	119.876	2.885	3025526	special/characters/zoey-samaras/Mozart： Requiem In D Minor, K.626 - 3. Sequentia： I. Dies irae.mp3	yes
+Most Epic Dark Choral Music： Death Mask.mp3	00:01:30	90.488	2.809	2945480	special/awakening/Most Epic Dark Choral Music： Death Mask.mp3	yes
+Mozart Requiem Bernstein 05. Rex tremendae.mpg.mp3	00:02:45	164.780	2.808	2944523	special/characters/rex-murphy/Mozart Requiem Bernstein 05. Rex tremendae.mpg.mp3	yes
+Norma_De_Guadalajara_Pérez_Prado_Alternativa_Representa_128k.mp3	00:03:03	183.360	2.799	2934572	special/victory/Norma_De_Guadalajara_Pérez_Prado_Alternativa_Representa_128k.mp3	yes
+10 RAILS.mp3	00:02:18	138.397	2.794	2929800	special/disaster/weather/frozen-rails/10 RAILS.mp3	yes
+C'est Si Bon (It's so Good) - Louis Armstrong (128k).mp3	00:03:03	182.544	2.786	2921670	special/victory/C'est Si Bon (It's so Good) - Louis Armstrong (128k).mp3	yes
+N. Paganini Caprice no. 5 ｜ Sumina Studer.mp3	00:02:45	165.433	2.756	2889841	special/characters/patrice-hathaway/N. Paganini Caprice no. 5 ｜ Sumina Studer.mp3	yes
+That's Life!.mp3	00:02:49	169.117	2.706	2837819	special/defeat/That's Life!.mp3	yes
+Billie Holiday - Summertime (1936).mp3	00:02:57	177.084	2.704	2835342	special/characters/marie-lambeau/Billie Holiday - Summertime (1936).mp3	yes
+Memory of music - folk instrument videos (part 6) - kantelar (128k)-[AudioTrimmer.com].mp3	00:02:57	176.980	2.701	2832647	contacts/general/city/space-14/Memory of music - folk instrument videos (part 6) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Carol of the Bells (Original) Lyrics.mp3	00:02:14	133.512	2.694	2824735	special/death-sanity/Carol of the Bells (Original) Lyrics.mp3	yes
+DEAD MAN BLUES King Oliver and his Dixie Syncopators 1926.mp3	00:02:45	164.885	2.688	2819034	special/characters/jim-culver/DEAD MAN BLUES King Oliver and his Dixie Syncopators 1926.mp3	yes
+The Beast (Digitally Remastered 95).mp3	00:02:33	152.973	2.679	2809102	special/characters/tony-morgan/The Beast (Digitally Remastered 95).mp3	yes
+15 EXPEDITION.mp3	00:02:25	144.666	2.675	2804434	special/disaster/location/upheaval/15 EXPEDITION.mp3	yes
+Antagonist - Epic Dark Hybrid Cinematic Music.mp3	00:02:31	151.458	2.635	2762749	combat/Antagonist - Epic Dark Hybrid Cinematic Music.mp3	yes
+Memory of music - folk instrument videos (part 10) - kantelar (128k)-[AudioTrimmer.com].mp3	00:02:51	171.468	2.617	2744457	contacts/general/city/space-14/Memory of music - folk instrument videos (part 10) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+Indiana Jones • Main Theme • John Williams.mp3	00:02:26	146.051	2.612	2738473	special/characters/monterey-jack/Indiana Jones • Main Theme • John Williams.mp3	yes
+3 BUENOS.mp3	00:01:57	117.290	2.581	2706220	special/disaster/city/buenos-aires/3 BUENOS.mp3	yes
+Mafia Soundtrack - Central Island.mp3	00:02:27	147.487	2.577	2701862	special/characters/skids-otoole/Mafia Soundtrack - Central Island.mp3	yes
+Starita Piccadilly Revels Band, Gentlemen Prefer Blues. London 1927.mp3	00:02:33	153.260	2.555	2679114	special/characters/bob-jenkins/Starita Piccadilly Revels Band, Gentlemen Prefer Blues. London 1927.mp3	yes
+Epic Slavic Music - Gods Awaken.mp3	00:02:16	136.046	2.536	2659467	special/awakening/Epic Slavic Music - Gods Awaken.mp3	yes
+María Bonita - Pérez Prado - Topic (128k).mp3	00:02:44	163.527	2.496	2617396	special/victory/María Bonita - Pérez Prado - Topic (128k).mp3	yes
+Atis Freivalds - Away ｜ SAD EMOTIONAL MUSIC.mp3	00:02:15	135.079	2.494	2614912	special/death-sanity/Atis Freivalds - Away ｜ SAD EMOTIONAL MUSIC.mp3	yes
+Oogway Ascends.mp3	00:02:04	123.533	2.477	2597292	special/characters/lily-chen/Oogway Ascends.mp3	yes
+Memory of music - folk instrument videos (part 11) - kantelar (128k)-[AudioTrimmer.com].mp3	00:02:35	155.011	2.366	2481143	contacts/general/city/space-14/Memory of music - folk instrument videos (part 11) - kantelar (128k)-[AudioTrimmer.com].mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_akf_Y7wAADg_005_128k-[AudioTrimmer.com].mp3	00:02:13	132.728	2.332	2445216	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_akf_Y7wAADg_005_128k-[AudioTrimmer.com].mp3	yes
+6 ISTANBUL.mp3	00:02:17	136.594	2.327	2439731	special/disaster/city/istanbul/6 ISTANBUL.mp3	yes
+Camille Saint-Saëns - Aquarium.mp3	00:02:31	150.816	2.302	2413869	special/characters/agnes-baker/Camille Saint-Saëns - Aquarium.mp3	yes
+The Boys Season 3 Episode 8 (FINALE) Ending Soundtrack - ＂I Can Do Anything ⧸ Finale＂.mp3	00:01:33	92.928	2.300	2411326	special/awakening/The Boys Season 3 Episode 8 (FINALE) Ending Soundtrack - ＂I Can Do Anything ⧸ Finale＂.mp3	yes
+Gal From Joe's (Hd Remastered Edition).mp3	00:02:29	149.064	2.276	2387032	special/characters/joe-diamond/Gal From Joe's (Hd Remastered Edition).mp3	yes
+7 SHANGHAI.mp3	00:02:22	142.315	2.261	2370319	special/disaster/city/shanghai/7 SHANGHAI.mp3	yes
+1 SAN FRAN.mp3	00:02:05	125.466	2.227	2335338	special/disaster/city/san-francisco/1 SAN FRAN.mp3	yes
+YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_ydL0uL392Ns_005_128k-[AudioTrimmer.com].mp3	00:02:04	123.533	2.158	2263174	contacts/general/city/space-14/YTDown_YouTube_Memory-of-music-folk-instrument-videos-p_Media_ydL0uL392Ns_005_128k-[AudioTrimmer.com].mp3	yes
+Burnt_Biscuits_Album_Version_Booker_T_&_the_M_G_’s_Topic_128k.mp3	00:02:17	136.934	2.090	2191914	special/victory/Burnt_Biscuits_Album_Version_Booker_T_&_the_M_G_’s_Topic_128k.mp3	yes
+9 SYDNEY.mp3	00:02:15	134.870	2.059	2159224	special/disaster/city/sydney/9 SYDNEY.mp3	yes
+Atis Freivalds - Away ｜ SAD EMOTIONAL MUSIC.m4a	00:02:15	135.071	2.048	2147429	contacts/defeated/health/Atis Freivalds - Away ｜ SAD EMOTIONAL MUSIC.m4a	yes
+Mr. Lucky - Henry Mancini (128k).mp3	00:02:13	133.320	2.035	2133932	special/victory/Mr. Lucky - Henry Mancini (128k).mp3	yes
+＊Pieces of Eden＊ - Satan's Arrival [Evil Epic Music].mp3	00:02:09	129.071	1.971	2067112	special/awakening/＊Pieces of Eden＊ - Satan's Arrival [Evil Epic Music].mp3	yes
+Ekseption - Dance Macabre.mp3	00:02:05	124.526	1.970	2065434	special/defeat/Ekseption - Dance Macabre.mp3	yes
+Thomas Bergersen - Hurt.mp3	00:01:43	103.367	1.920	2012930	special/death-health/Thomas Bergersen - Hurt.mp3	yes
+Ganimian & His Orientals - Come With Me To The Casbah.mp3	00:02:33	152.973	1.849	1938559	special/characters/becky-bishop/Ganimian & His Orientals - Come With Me To The Casbah.mp3	yes
+Xavier Cugat - TICO TICO - vegas1a (128k).mp3	00:01:59	118.920	1.815	1903532	special/victory/Xavier Cugat - TICO TICO - vegas1a (128k).mp3	yes
+Mark Korven - Stranded - The Lighthouse OST.mp3	00:02:20	140.278	1.811	1899381	special/characters/simon-fishbourne/Mark Korven - Stranded - The Lighthouse OST.mp3	yes
+Jimmie Rodgers Mule Skinner Blues (1930).mp3	00:03:03	183.301	1.764	1849305	contacts/general/city/space-6/Jimmie Rodgers Mule Skinner Blues (1930).mp3	yes
+1928 HITS ARCHIVE_ Blue Yodel (T for Texas) - Jimmie Rodgers.mp3	00:03:24	204.043	1.667	1748030	contacts/general/city/space-6/1928 HITS ARCHIVE_ Blue Yodel (T for Texas) - Jimmie Rodgers.mp3	yes
+Blue Yodel No. 8 by Jimmie Rodgers (1930).mp3	00:03:00	179.775	1.500	1572964	contacts/general/city/space-6/Blue Yodel No. 8 by Jimmie Rodgers (1930).mp3	yes
+Gene Autry - Way Out West In Texas 1933.mp3	00:02:50	169.953	1.488	1560118	contacts/general/city/space-6/Gene Autry - Way Out West In Texas 1933.mp3	yes
+Tchaikovsky - The Nutcracker, IV. Russian Dance - Trepak.mp3	00:01:15	75.233	1.482	1553473	special/victory/Tchaikovsky - The Nutcracker, IV. Russian Dance - Trepak.mp3	yes
+16 POLAR VORTEX.mp3	00:01:19	79.282	1.211	1269479	special/disaster/weather/polar-vortex/16 POLAR VORTEX.mp3	yes
+Spooky! Ominous bells of doom.mp3	00:01:11	71.393	0.767	803873	special/devoured/Spooky! Ominous bells of doom.mp3	yes
+test.mp3			0.000	8	action/test.mp3	no
