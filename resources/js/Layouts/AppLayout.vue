@@ -16,6 +16,7 @@ const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
 const preloadImageUrls = computed(() => page.props.assetPreload?.imageUrls ?? []);
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
+const showRotateLandscapePrompt = ref(false);
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
 const mainClass = computed(() =>
@@ -55,9 +56,18 @@ function syncUiScale() {
     document.documentElement.style.setProperty('--ui-scale', value);
 }
 
+function syncRotateLandscapePrompt() {
+    if (typeof window === 'undefined') return;
+    const isPhone = window.matchMedia('(max-width: 700px)').matches;
+    const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches;
+    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    showRotateLandscapePrompt.value = isPhone && isTouchPrimary && isPortrait;
+}
+
 onMounted(() => {
     syncHeaderHeight();
     syncUiScale();
+    syncRotateLandscapePrompt();
     warmImageCache(preloadImageUrls.value);
     if (typeof ResizeObserver !== 'undefined' && headerWrapEl.value) {
         resizeObserver = new ResizeObserver(syncHeaderHeight);
@@ -65,12 +75,16 @@ onMounted(() => {
     }
     window.addEventListener('resize', syncHeaderHeight);
     window.addEventListener('resize', syncUiScale);
+    window.addEventListener('resize', syncRotateLandscapePrompt);
+    window.addEventListener('orientationchange', syncRotateLandscapePrompt);
 });
 
 onBeforeUnmount(() => {
     resizeObserver?.disconnect();
     window.removeEventListener('resize', syncHeaderHeight);
     window.removeEventListener('resize', syncUiScale);
+    window.removeEventListener('resize', syncRotateLandscapePrompt);
+    window.removeEventListener('orientationchange', syncRotateLandscapePrompt);
 });
 
 // Route-dependent overlay:
@@ -149,5 +163,19 @@ watch(preloadImageUrls, (urls) => {
         <main :class="mainClass">
             <slot />
         </main>
+
+        <div
+            v-if="showRotateLandscapePrompt"
+            class="fixed inset-0 z-[90] flex items-center justify-center bg-[#04080f]/95 px-6 text-center backdrop-blur-md"
+        >
+            <div class="max-w-sm rounded-xl border border-amber-400/40 bg-black/40 px-6 py-7 shadow-[0_0_28px_rgba(242,201,76,0.22)]">
+                <div class="text-base font-semibold uppercase tracking-[0.12em] text-amber-300">
+                    Landscape Only
+                </div>
+                <p class="mt-3 text-sm leading-snug text-neutral-200">
+                    Please rotate phone to horizontal orientation.
+                </p>
+            </div>
+        </div>
     </div>
 </template>

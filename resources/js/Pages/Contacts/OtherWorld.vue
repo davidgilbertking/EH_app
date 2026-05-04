@@ -100,9 +100,4 @@ const worlds = [
 }
 }
 
-@media (max-width: 640px) and (orientation: portrait) and (pointer: coarse) {
-.other-world-fit {
-    --image-btn-label: 0.92rem;
-}
-}
 </style>
