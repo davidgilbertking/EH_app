@@ -31,6 +31,12 @@ class Pages
 {
     public const MODE_RANDOM = SoundFolder::MODE_RANDOM_POS_FADE;
     public const MODE_FROM_START = SoundFolder::MODE_FROM_START_NO_FADE;
+    private const SPECIAL_CHARACTER_RANDOM_MODE_SLUGS = [
+        'patrice-hathaway',
+        'agatha-crane',
+        'lola-hayes',
+        'calvin-wright',
+    ];
 
     /** All folder slugs that must exist with their default mode and display name. */
     public static function allFolders(): array
@@ -152,16 +158,12 @@ class Pages
         }
 
         // per-character folders (one per investigator).
-        // Exception: Patrice Hathaway plays by general rules (random pos + fade-in).
+        // Exceptions that play by general rules (random pos + fade-in):
+        // Patrice Hathaway, Agatha Crane, Lola Hayes, Calvin Wright.
         foreach (self::investigators() as [$slug, $name]) {
             $folders["special/characters/$slug"] = [
                 'name' => $name,
-                'mode' => in_array($slug, [
-                    'patrice-hathaway',
-                    'agatha-crane',
-                    'calvin-wright',
-                    'lola-hayes',
-                ], true)
+                'mode' => in_array($slug, self::SPECIAL_CHARACTER_RANDOM_MODE_SLUGS, true)
                     ? self::MODE_RANDOM
                     : self::MODE_FROM_START,
             ];
