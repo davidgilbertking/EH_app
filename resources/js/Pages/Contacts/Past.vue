@@ -26,6 +26,8 @@ const shortLabels = [
     'Ритуал молодого себя',
     'Охота на ведьм',
 ];
+// You can change these short labels to your own wording without touching
+// routing/logic; each entry maps to the same index in `labels`.
 const pastIcon = '/images/other-worlds/past.png';
 // Fixed 8-colour palette, same order every session so button N is always the
 // same colour (easy to reference during a game).
@@ -64,8 +66,17 @@ for (let row = 0; row < ROWS; row++) {
             :mobile-short-label="i.mobileShortLabel"
             :tone="i.tone"
             :image-url="i.imageUrl"
-            class="w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] max-[640px]:!h-[5.2rem] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.56rem,calc(1.125rem*var(--ui-scale)),1.125rem)] max-[640px]:!text-[0.74rem] !leading-tight"
+            class="other-world-mobile-btn w-full !h-[clamp(4.2rem,calc(10rem*var(--ui-scale)),10rem)] !py-[clamp(0.35rem,calc(1rem*var(--ui-scale)),1rem)] !text-[clamp(0.56rem,calc(1.125rem*var(--ui-scale)),1.125rem)] !leading-tight"
             :big="false"
         />
     </div>
 </template>
+
+<style scoped>
+@media (max-width: 640px), (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+    .other-world-mobile-btn {
+        height: 5.2rem !important;
+        font-size: 0.74rem !important;
+    }
+}
+</style>

@@ -57,6 +57,14 @@ body {
     text-size-adjust: 100%;
 }
 
+.ui-phone-short-mobile-only {
+    display: none;
+}
+
+.ui-phone-short-desktop-only {
+    display: inline;
+}
+
 @media (max-width: 900px) and (orientation: portrait) {
     :root {
         --corner-size: 2.8rem;
@@ -104,6 +112,16 @@ body {
         --image-btn-h: 2.95rem;
         --image-btn-label: 1.38rem;
         --image-btn-icon: 1.7rem;
+    }
+}
+
+@media (max-width: 640px), (max-width: 950px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+    .ui-phone-short-mobile-only {
+        display: inline;
+    }
+
+    .ui-phone-short-desktop-only {
+        display: none;
     }
 }
 

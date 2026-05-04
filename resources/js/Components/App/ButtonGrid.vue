@@ -34,6 +34,7 @@ defineProps({
                     :href="btn.href"
                     :label="btn.label"
                     :label-class="btn.labelClass"
+                    :mobile-short-label="btn.mobileShortLabel"
                     :variant="btn.variant"
                     :tone="btn.tone"
                     :image-url="btn.imageUrl"

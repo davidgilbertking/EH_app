@@ -170,8 +170,8 @@ const bindings = useLongPress({
             </span>
             <span class="leading-tight" :class="props.labelClass">
                 <template v-if="props.mobileShortLabel">
-                    <span class="hidden max-[640px]:inline">{{ props.mobileShortLabel }}</span>
-                    <span class="max-[640px]:hidden">{{ label }}</span>
+                    <span class="ui-phone-short-mobile-only">{{ props.mobileShortLabel }}</span>
+                    <span class="ui-phone-short-desktop-only">{{ label }}</span>
                 </template>
                 <template v-else>{{ label }}</template>
             </span>

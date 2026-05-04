@@ -12,6 +12,7 @@ const props = defineProps({
     href: { type: String, required: true },
     label: { type: String, required: true },
     labelClass: { type: String, default: '' },
+    mobileShortLabel: { type: String, default: '' },
     variant: { type: String, default: 'contacts' }, // matches PlayButton variants
     // Optional Tailwind class string that overrides `variant`. Lets pages
     // hard-code per-button colours without polluting the variant map.
@@ -69,7 +70,13 @@ const isBranchPlaying = computed(() => isHrefBranchActive(props.href, activeFold
                 :alt="props.label"
                 class="ui-main-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
             />
-            <span :class="props.labelClass">{{ props.label }}</span>
+            <span :class="props.labelClass">
+                <template v-if="props.mobileShortLabel">
+                    <span class="ui-phone-short-mobile-only">{{ props.mobileShortLabel }}</span>
+                    <span class="ui-phone-short-desktop-only">{{ props.label }}</span>
+                </template>
+                <template v-else>{{ props.label }}</template>
+            </span>
             <span
                 aria-hidden="true"
                 :class="props.big ? 'text-[1.15em] leading-none' : 'text-sm leading-none'"
