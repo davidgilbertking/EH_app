@@ -32,7 +32,6 @@ const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
-const IPHONE_RAMP_INTERVAL_MS = 40;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
 const TAIL_PROTECTION_SEC = 60;
@@ -47,7 +46,6 @@ class AudioEngine {
         this._pauseOpToken = 0;
         this._playRequestToken = 0;
         this._pendingMobileFadeCleanup = new WeakMap();
-        this._pendingIPhoneRampCleanup = new WeakMap();
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -210,32 +208,12 @@ class AudioEngine {
         this.state.pausedLabel = this.current.label;
 
         try {
-            if (this._isIPhoneDevice()) {
-                const finalizePause = () => {
-                    if (opToken !== this._pauseOpToken) return;
-                    try {
-                        if (soundId != null) {
-                            howl.pause(soundId);
-                            howl.volume(0, soundId);
-                        } else {
-                            howl.pause();
-                            howl.volume(0);
-                        }
-                    } catch (_) { /* ignore */ }
-                    if (this._pauseFadeTimer) {
-                        clearTimeout(this._pauseFadeTimer);
-                        this._pauseFadeTimer = null;
-                    }
-                };
-                this._runIPhoneVolumeRamp({
-                    howl,
-                    soundId,
-                    from: soundId != null ? howl.volume(soundId) : howl.volume(),
-                    to: 0,
-                    durationMs: PAUSE_TOGGLE_FADE_MS,
-                    onComplete: finalizePause,
-                });
-                this._pauseFadeTimer = setTimeout(finalizePause, PAUSE_TOGGLE_FADE_MS + 180);
+            if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
+                if (soundId != null) {
+                    howl.pause(soundId);
+                } else {
+                    howl.pause();
+                }
                 return true;
             }
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
@@ -303,16 +281,6 @@ class AudioEngine {
                     const id = this.current.soundId ?? idHint ?? null;
                     const startVol = id != null ? howl.volume(id) : howl.volume();
                     if (startVol >= 1) return;
-                    if (this._isIPhoneDevice()) {
-                        this._runIPhoneVolumeRamp({
-                            howl,
-                            soundId: id,
-                            from: startVol,
-                            to: 1,
-                            durationMs: PAUSE_TOGGLE_FADE_MS,
-                        });
-                        return;
-                    }
                     if (id != null) {
                         howl.fade(startVol, 1, PAUSE_TOGGLE_FADE_MS, id);
                     } else {
@@ -378,9 +346,6 @@ class AudioEngine {
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
-        // iPhone + iOS browsers (incl. Chrome) can ignore HTML5 audio volume ramps.
-        // Force WebAudio only on iPhone to restore fade-in/fade-out behaviour.
-        const useHtml5Streaming = !this._isIPhoneDevice();
 
         // seekApplied guards against the onplay handler firing more than once
         // per Howl (e.g. on loop or re-seek) and re-randomising the position.
@@ -391,7 +356,7 @@ class AudioEngine {
             // Stream URL has no file extension; Howler/browsers can't sniff codec
             // from URL alone. Pass the format hint from the server.
             format: format ? [format] : undefined,
-            html5: useHtml5Streaming,
+            html5: true, // stream from URL; required for files > a few MB
             volume: useFadeIn ? 0 : 1,
             onload: () => {
                 if (
@@ -442,8 +407,20 @@ class AudioEngine {
                     : null;
                 const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
                 if (useFadeIn && currentVol < 1) {
-                    const fadeId = activeId ?? (typeof id === 'number' ? id : null);
-                    this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
+                    if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
+                        // iOS HTML5 media ignores programmatic volume ramps.
+                        // Avoid "silent then jump" by forcing full volume.
+                        try {
+                            if (activeId != null) {
+                                howl.volume(1, activeId);
+                            } else {
+                                howl.volume(1);
+                            }
+                        } catch (_) { /* ignore */ }
+                    } else {
+                        const fadeId = activeId ?? (typeof id === 'number' ? id : null);
+                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
+                    }
                 }
                 // Crossfade: only NOW (when the new track is actually audible)
                 // do we start fading the previous one. Guarantees no silent
@@ -514,38 +491,22 @@ class AudioEngine {
 
     _safeUnload(howl) {
         this._clearPendingMobileFade(howl);
-        this._clearPendingIPhoneRamp(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
     _fadeOutAndUnload(howl, soundId = null) {
         this._clearPendingMobileFade(howl);
-        this._clearPendingIPhoneRamp(howl);
-        if (this._isIPhoneDevice()) {
-            let done = false;
-            const finalizeStop = () => {
-                if (done) return;
-                done = true;
-                try {
-                    if (soundId != null) {
-                        howl.stop(soundId);
-                    } else {
-                        howl.stop();
-                    }
-                    howl.unload();
-                } catch (_) {
-                    try { howl.unload(); } catch (__) { /* ignore */ }
+        if (this._isPhoneLikeDevice() && this._isIOSDevice()) {
+            try {
+                if (soundId != null) {
+                    howl.stop(soundId);
+                } else {
+                    howl.stop();
                 }
-            };
-            this._runIPhoneVolumeRamp({
-                howl,
-                soundId,
-                from: soundId != null ? howl.volume(soundId) : howl.volume(),
-                to: 0,
-                durationMs: FADE_OUT_MS,
-                onComplete: finalizeStop,
-            });
-            setTimeout(finalizeStop, FADE_OUT_MS + 240);
+                howl.unload();
+            } catch (_) {
+                try { howl.unload(); } catch (__) { /* ignore */ }
+            }
             return;
         }
         try {
@@ -575,9 +536,6 @@ class AudioEngine {
         if (this._pauseFadeTimer) {
             clearTimeout(this._pauseFadeTimer);
             this._pauseFadeTimer = null;
-        }
-        if (this.current?.howl) {
-            this._clearPendingIPhoneRamp(this.current.howl);
         }
     }
 
@@ -610,10 +568,12 @@ class AudioEngine {
         }
     }
 
-    _isIPhoneDevice() {
+    _isIOSDevice() {
         if (typeof navigator === 'undefined') return false;
         const ua = navigator.userAgent || '';
-        return /iPhone|iPod/i.test(ua);
+        if (/iPhone|iPod|iPad/i.test(ua)) return true;
+        // iPadOS in desktop mode.
+        return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
     }
 
     _clearPendingMobileFade(howl) {
@@ -623,102 +583,7 @@ class AudioEngine {
         try { cleanup(); } catch (_) { /* ignore */ }
     }
 
-    _clearPendingIPhoneRamp(howl) {
-        const cleanup = this._pendingIPhoneRampCleanup.get(howl);
-        if (!cleanup) return;
-        this._pendingIPhoneRampCleanup.delete(howl);
-        try { cleanup(); } catch (_) { /* ignore */ }
-    }
-
-    _runIPhoneVolumeRamp({
-        howl,
-        soundId = null,
-        from = 0,
-        to = 1,
-        durationMs = 0,
-        onComplete = null,
-    }) {
-        if (!this._isIPhoneDevice()) return false;
-
-        const applyVolume = (value) => {
-            try {
-                if (soundId != null) {
-                    howl.volume(value, soundId);
-                } else {
-                    howl.volume(value);
-                }
-            } catch (_) { /* ignore */ }
-        };
-
-        const clamp = (n) => Math.min(1, Math.max(0, Number.isFinite(n) ? n : 0));
-        const start = clamp(from);
-        const end = clamp(to);
-
-        this._clearPendingIPhoneRamp(howl);
-
-        if (durationMs <= 0 || start === end) {
-            applyVolume(end);
-            if (typeof onComplete === 'function') {
-                try { onComplete(); } catch (_) { /* ignore */ }
-            }
-            return true;
-        }
-
-        let finished = false;
-        let timer = null;
-        const startedAt = Date.now();
-
-        const finish = () => {
-            if (finished) return;
-            finished = true;
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-            }
-            this._pendingIPhoneRampCleanup.delete(howl);
-            applyVolume(end);
-            if (typeof onComplete === 'function') {
-                try { onComplete(); } catch (_) { /* ignore */ }
-            }
-        };
-
-        const cleanup = () => {
-            if (finished) return;
-            finished = true;
-            if (timer) {
-                clearInterval(timer);
-                timer = null;
-            }
-        };
-
-        applyVolume(start);
-        timer = setInterval(() => {
-            const elapsed = Date.now() - startedAt;
-            const t = Math.min(1, Math.max(0, elapsed / durationMs));
-            const nextVol = start + ((end - start) * t);
-            applyVolume(nextVol);
-            if (t >= 1) {
-                finish();
-            }
-        }, IPHONE_RAMP_INTERVAL_MS);
-
-        this._pendingIPhoneRampCleanup.set(howl, cleanup);
-        return true;
-    }
-
     _fadeInWhenPlaybackStabilizes(howl, soundId, durationMs) {
-        if (this._isIPhoneDevice()) {
-            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
-            this._runIPhoneVolumeRamp({
-                howl,
-                soundId: soundId ?? null,
-                from: startVol,
-                to: 1,
-                durationMs,
-            });
-            return;
-        }
-
         const runNativeFade = (id = null) => {
             try {
                 if (id != null) {
