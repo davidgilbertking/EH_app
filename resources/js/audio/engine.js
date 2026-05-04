@@ -30,7 +30,7 @@ const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 3000;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
-const MOBILE_FADE_START_FALLBACK_MS = 5000;
+const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
@@ -75,11 +75,6 @@ class AudioEngine {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
-        const useMobileCrossfade = this.current
-            && !hardSwitch
-            && !crossfade
-            && this._isPhoneLikeDevice();
-        const shouldCrossfade = crossfade || useMobileCrossfade;
 
         // If there is a paused track and user explicitly starts another folder,
         // discard paused buffer and treat this as a brand new playback choice.
@@ -107,7 +102,7 @@ class AudioEngine {
         //     or two to load.
         let prevHowlForCrossfade = null;
         if (this.current) {
-            if (shouldCrossfade) {
+            if (crossfade) {
                 prevHowlForCrossfade = {
                     howl: this.current.howl,
                     soundId: this.current.soundId ?? null,
@@ -343,6 +338,9 @@ class AudioEngine {
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
+        // iOS + HTML5 audio has inconsistent programmatic volume control, which
+        // breaks fade-in/fade-out on iPhone Chrome/Safari. Use WebAudio there.
+        const useHtml5Stream = !(this._isPhoneLikeDevice() && this._isIOSDevice());
 
         // seekApplied guards against the onplay handler firing more than once
         // per Howl (e.g. on loop or re-seek) and re-randomising the position.
@@ -353,7 +351,7 @@ class AudioEngine {
             // Stream URL has no file extension; Howler/browsers can't sniff codec
             // from URL alone. Pass the format hint from the server.
             format: format ? [format] : undefined,
-            html5: true, // stream from URL; required for files > a few MB
+            html5: useHtml5Stream,
             volume: useFadeIn ? 0 : 1,
             onload: () => {
                 if (
@@ -538,6 +536,14 @@ class AudioEngine {
         } catch (_) {
             return false;
         }
+    }
+
+    _isIOSDevice() {
+        if (typeof navigator === 'undefined') return false;
+        const ua = navigator.userAgent || '';
+        if (/iPhone|iPod|iPad/i.test(ua)) return true;
+        // iPadOS in desktop mode.
+        return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
     }
 
     _clearPendingMobileFade(howl) {

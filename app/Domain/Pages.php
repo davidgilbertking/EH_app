@@ -127,6 +127,7 @@ class Pages
             ['special/death-sanity', 'Death (Sanity)'],
             ['special/death-health', 'Death (Health)'],
             ['special/death-sacrifice', 'Sacrifice'],
+            ['special/devoured', 'Devoured'],
             ['special/honey-pie', 'Honey Pie'],
         ], self::MODE_FROM_START);
 
