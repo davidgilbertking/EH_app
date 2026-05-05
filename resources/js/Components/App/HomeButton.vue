@@ -6,7 +6,7 @@ import { Link } from '@inertiajs/vue3';
     <Link
         href="/"
         aria-label="Home"
-        class="ui-corner-btn fixed left-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] bottom-[clamp(0.15rem,calc(0.35rem*var(--ui-scale)),0.35rem)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition hover:bg-neutral-700"
+        class="ui-corner-btn fixed left-[var(--ui-corner-edge-gap)] bottom-[var(--ui-corner-edge-gap)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition hover:bg-neutral-700"
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"

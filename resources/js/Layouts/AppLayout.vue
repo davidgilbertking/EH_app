@@ -3,6 +3,7 @@ import AppHeader from '@/Components/App/AppHeader.vue';
 import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
+import VolumeSlider from '@/Components/App/VolumeSlider.vue';
 import { warmImageCache } from '@/composables/useImageCacheWarmup';
 import { usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
@@ -175,6 +176,7 @@ watch(preloadImageUrls, (urls) => {
         <HomeButton v-if="!isHome" />
         <BackButton v-if="!isHome" />
         <PauseToggleButton />
+        <VolumeSlider />
 
         <main :class="mainClass">
             <slot />

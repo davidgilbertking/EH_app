@@ -1,4 +1,4 @@
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { reactive } from 'vue';
 
 /**
@@ -37,6 +37,10 @@ const MOBILE_FADE_INTERVAL_MS = 50;
 const IPHONE_RAMP_INTERVAL_MS = 40;
 const RANDOM_FRAGMENT_SETTLE_CHECK_MS = 120;
 const RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC = 2.5;
+const DEFAULT_MASTER_VOLUME = 1;
+const MASTER_VOLUME_STORAGE_KEY = 'eh:master-volume:v1';
+const MASTER_VOLUME_SMOOTHING_FACTOR = 0.16;
+const MASTER_VOLUME_EPSILON = 0.002;
 // Never start a random-pos track inside the final TAIL_PROTECTION_SEC seconds.
 // Assumption: no tracks are shorter than this value.
 const TAIL_PROTECTION_SEC = 60;
@@ -50,6 +54,9 @@ class AudioEngine {
         this._pauseFadeTimer = null;
         this._pauseOpToken = 0;
         this._playRequestToken = 0;
+        this._masterVolumeTarget = DEFAULT_MASTER_VOLUME;
+        this._masterVolumeApplied = DEFAULT_MASTER_VOLUME;
+        this._masterVolumeRaf = null;
         this._pendingMobileFadeCleanup = new WeakMap();
         this._pendingIPhoneRampCleanup = new WeakMap();
         // Reactive surface for Vue components to bind to.
@@ -61,7 +68,29 @@ class AudioEngine {
             canResume: false,
             pausedFolder: null, // folder slug paused via corner pause button
             pausedLabel: null,
+            masterVolume: DEFAULT_MASTER_VOLUME,
         });
+
+        const initialMasterVolume = this._readStoredMasterVolume();
+        this._masterVolumeTarget = initialMasterVolume;
+        this._masterVolumeApplied = initialMasterVolume;
+        this.state.masterVolume = initialMasterVolume;
+        this._applyMasterVolume(initialMasterVolume);
+    }
+
+    setMasterVolume(volume, { smooth = true } = {}) {
+        const next = this._clampVolume(volume);
+        this._masterVolumeTarget = next;
+        this.state.masterVolume = next;
+        this._persistMasterVolume(next);
+
+        if (!smooth) {
+            this._applyMasterVolume(next);
+            return next;
+        }
+
+        this._startMasterVolumeSmoothing();
+        return next;
     }
 
     /**
@@ -711,6 +740,61 @@ class AudioEngine {
         this.state.canResume = false;
         this.state.pausedFolder = null;
         this.state.pausedLabel = null;
+    }
+
+    _startMasterVolumeSmoothing() {
+        if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+            this._applyMasterVolume(this._masterVolumeTarget);
+            return;
+        }
+        if (this._masterVolumeRaf != null) return;
+
+        const tick = () => {
+            const delta = this._masterVolumeTarget - this._masterVolumeApplied;
+            if (Math.abs(delta) <= MASTER_VOLUME_EPSILON) {
+                this._applyMasterVolume(this._masterVolumeTarget);
+                this._masterVolumeRaf = null;
+                return;
+            }
+            const next = this._masterVolumeApplied + (delta * MASTER_VOLUME_SMOOTHING_FACTOR);
+            this._applyMasterVolume(next);
+            this._masterVolumeRaf = window.requestAnimationFrame(tick);
+        };
+
+        this._masterVolumeRaf = window.requestAnimationFrame(tick);
+    }
+
+    _applyMasterVolume(volume) {
+        const next = this._clampVolume(volume);
+        this._masterVolumeApplied = next;
+        try {
+            Howler.volume(next);
+        } catch (_) { /* ignore */ }
+    }
+
+    _persistMasterVolume(volume) {
+        if (typeof window === 'undefined' || !window.localStorage) return;
+        try {
+            window.localStorage.setItem(MASTER_VOLUME_STORAGE_KEY, String(volume));
+        } catch (_) { /* ignore */ }
+    }
+
+    _readStoredMasterVolume() {
+        if (typeof window === 'undefined' || !window.localStorage) return DEFAULT_MASTER_VOLUME;
+        try {
+            const raw = window.localStorage.getItem(MASTER_VOLUME_STORAGE_KEY);
+            if (raw == null || raw === '') return DEFAULT_MASTER_VOLUME;
+            const parsed = Number(raw);
+            return this._clampVolume(parsed);
+        } catch (_) {
+            return DEFAULT_MASTER_VOLUME;
+        }
+    }
+
+    _clampVolume(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return DEFAULT_MASTER_VOLUME;
+        return Math.min(1, Math.max(0, n));
     }
 
     _isPhoneLikeDevice() {
