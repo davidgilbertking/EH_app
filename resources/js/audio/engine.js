@@ -27,12 +27,11 @@ import { reactive } from 'vue';
 // new track still needs ~500-1500ms to fetch metadata + buffer over HTTP,
 // so by the time it actually starts, the old one is already mostly gone.
 const FADE_OUT_MS = 1800;
-const FADE_IN_MS = 3000;
-const DESKTOP_FAST_FADE_IN_MS = 800;
+const FADE_IN_MS = 1800;
+const HARD_SWITCH_FADE_OUT_MS = 1800;
+const HARD_SWITCH_FADE_IN_MS = 1800;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
-const DESKTOP_FAST_RANDOM_POS_CAP_SEC = 35;
-const DESKTOP_FAST_LONG_TRACK_SEC = 12 * 60;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 const IPHONE_RAMP_INTERVAL_MS = 40;
@@ -78,7 +77,7 @@ class AudioEngine {
      *                                     where overlap between phases is
      *                                     undesirable.
      */
-    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = false }) {
+    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = true }) {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
@@ -118,9 +117,13 @@ class AudioEngine {
                 const prev = this.current;
                 this.current = null;
                 this._clearActiveState();
-                this._fadeOutAndUnload(prev.howl, prev.soundId ?? null);
+                this._fadeOutAndUnload(
+                    prev.howl,
+                    prev.soundId ?? null,
+                    hardSwitch ? HARD_SWITCH_FADE_OUT_MS : FADE_OUT_MS,
+                );
                 if (hardSwitch) {
-                    await new Promise((r) => setTimeout(r, FADE_OUT_MS + 80));
+                    await new Promise((r) => setTimeout(r, HARD_SWITCH_FADE_OUT_MS + 80));
                 }
             }
         }
@@ -160,6 +163,7 @@ class AudioEngine {
                 format: pick.format || null,
                 prevHowlForCrossfade,
                 requestToken,
+                hardSwitch,
             });
         } catch (e) {
             if (requestToken !== this._playRequestToken) return;
@@ -380,14 +384,14 @@ class AudioEngine {
         format,
         prevHowlForCrossfade = null,
         requestToken,
+        hardSwitch = false,
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
         // iPhone + iOS browsers (incl. Chrome) can ignore HTML5 audio volume ramps.
         // Force WebAudio only on iPhone to restore fade-in/fade-out behaviour.
         const useHtml5Streaming = !this._isIPhoneDevice();
-        const preferDesktopFastStart = this._shouldUseDesktopFastStart(useHtml5Streaming);
-        const fadeInDurationMs = preferDesktopFastStart ? DESKTOP_FAST_FADE_IN_MS : FADE_IN_MS;
+        const fadeInDurationMs = hardSwitch ? HARD_SWITCH_FADE_IN_MS : FADE_IN_MS;
         const randomStartSec = useRandomPos
             ? this._pickRandomStartSec(durationSec)
             : null;
@@ -608,30 +612,8 @@ class AudioEngine {
             Math.min(dur * RANDOM_POS_MAX_FRACTION, dur - TAIL_PROTECTION_SEC),
         );
 
-        // Desktop fast-start profile:
-        //  - very long tracks start at 00:00 (random track still preserves variety)
-        //  - other random starts are limited to the early part of the file
-        //    so the browser can become audible significantly faster.
-        if (this._shouldUseDesktopFastStart(true)) {
-            if (dur >= DESKTOP_FAST_LONG_TRACK_SEC) {
-                return 0;
-            }
-            max = Math.min(max, DESKTOP_FAST_RANDOM_POS_CAP_SEC);
-        }
-
         if (max <= 0) return 0;
         return Math.random() * max;
-    }
-
-    _shouldUseDesktopFastStart(useHtml5Streaming = true) {
-        if (!useHtml5Streaming || typeof window === 'undefined') return false;
-        try {
-            const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-            const narrowViewport = window.matchMedia?.('(max-width: 1024px)').matches ?? false;
-            return !coarsePointer && !narrowViewport;
-        } catch (_) {
-            return false;
-        }
     }
 
     _safeUnload(howl) {
@@ -640,7 +622,7 @@ class AudioEngine {
         try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
-    _fadeOutAndUnload(howl, soundId = null) {
+    _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
         this._clearPendingIPhoneRamp(howl);
         if (this._isIPhoneDevice()) {
@@ -664,18 +646,18 @@ class AudioEngine {
                 soundId,
                 from: soundId != null ? howl.volume(soundId) : howl.volume(),
                 to: 0,
-                durationMs: FADE_OUT_MS,
+                durationMs: fadeOutMs,
                 onComplete: finalizeStop,
             });
-            setTimeout(finalizeStop, FADE_OUT_MS + 240);
+            setTimeout(finalizeStop, fadeOutMs + 240);
             return;
         }
         try {
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
             if (soundId != null) {
-                howl.fade(startVol, 0, FADE_OUT_MS, soundId);
+                howl.fade(startVol, 0, fadeOutMs, soundId);
             } else {
-                howl.fade(startVol, 0, FADE_OUT_MS);
+                howl.fade(startVol, 0, fadeOutMs);
             }
             setTimeout(() => {
                 try {
@@ -686,7 +668,7 @@ class AudioEngine {
                     }
                     howl.unload();
                 } catch (_) { /* already unloaded */ }
-            }, FADE_OUT_MS + 200);
+            }, fadeOutMs + 200);
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }

@@ -55,16 +55,14 @@ const isMythosPaused = computed(() =>
     engine.state.isPaused && engine.state.pausedFolder === 'mythos'
 );
 
-// Tap toggles: second tap on the currently-playing folder fades it out.
-// Header buttons represent phase changes (Action / Combat / Mythos / etc.) —
-// so we use hardSwitch: true to guarantee the previous phase's track is fully
-// silent before the new one starts. No overlap allowed at phase boundaries.
+// Tap toggles: second tap on currently-playing folder fades it out.
+// Keep phase switches in crossfade mode to avoid audible gaps while next track loads.
 function toggle(folderSlug, label) {
     if (engine.state.playingFolder === folderSlug) {
         engine.stop();
         return;
     }
-    engine.play({ folderSlug, label, hardSwitch: true });
+    engine.play({ folderSlug, label, crossfade: true });
 }
 
 const actionBindings = useLongPress({
