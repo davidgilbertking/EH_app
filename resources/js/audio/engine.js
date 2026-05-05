@@ -28,6 +28,8 @@ import { reactive } from 'vue';
 // so by the time it actually starts, the old one is already mostly gone.
 const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 1800;
+const HARD_SWITCH_FADE_OUT_MS = 900;
+const HARD_SWITCH_FADE_IN_MS = 900;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
@@ -80,6 +82,7 @@ class AudioEngine {
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
         let hardSwitchUntilTs = null;
+        let startupFadeInMs = FADE_IN_MS;
 
         // If there is a paused track and user explicitly starts another folder,
         // discard paused buffer and treat this as a brand new playback choice.
@@ -116,9 +119,11 @@ class AudioEngine {
                 const prev = this.current;
                 this.current = null;
                 this._clearActiveState();
-                this._fadeOutAndUnload(prev.howl, prev.soundId ?? null);
+                const fadeOutMs = hardSwitch ? HARD_SWITCH_FADE_OUT_MS : FADE_OUT_MS;
+                this._fadeOutAndUnload(prev.howl, prev.soundId ?? null, fadeOutMs);
                 if (hardSwitch) {
-                    hardSwitchUntilTs = Date.now() + FADE_OUT_MS + 80;
+                    hardSwitchUntilTs = Date.now() + fadeOutMs + 80;
+                    startupFadeInMs = HARD_SWITCH_FADE_IN_MS;
                 }
             }
         }
@@ -159,6 +164,7 @@ class AudioEngine {
                 prevHowlForCrossfade,
                 requestToken,
                 hardSwitchUntilTs,
+                fadeInMs: startupFadeInMs,
             });
         } catch (e) {
             if (requestToken !== this._playRequestToken) return;
@@ -380,6 +386,7 @@ class AudioEngine {
         prevHowlForCrossfade = null,
         requestToken,
         hardSwitchUntilTs = null,
+        fadeInMs = FADE_IN_MS,
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
@@ -498,7 +505,7 @@ class AudioEngine {
                         } catch (_) { /* ignore */ }
                     }
                     if (useFadeIn && currentVol < 1) {
-                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
+                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, fadeInMs);
                     }
                     // Crossfade: only NOW (when the new track is actually audible)
                     // do we start fading the previous one. Guarantees no silent
@@ -638,7 +645,7 @@ class AudioEngine {
         try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
-    _fadeOutAndUnload(howl, soundId = null) {
+    _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
         this._clearPendingIPhoneRamp(howl);
         if (this._isIPhoneDevice()) {
@@ -662,18 +669,18 @@ class AudioEngine {
                 soundId,
                 from: soundId != null ? howl.volume(soundId) : howl.volume(),
                 to: 0,
-                durationMs: FADE_OUT_MS,
+                durationMs: fadeOutMs,
                 onComplete: finalizeStop,
             });
-            setTimeout(finalizeStop, FADE_OUT_MS + 240);
+            setTimeout(finalizeStop, fadeOutMs + 240);
             return;
         }
         try {
             const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
             if (soundId != null) {
-                howl.fade(startVol, 0, FADE_OUT_MS, soundId);
+                howl.fade(startVol, 0, fadeOutMs, soundId);
             } else {
-                howl.fade(startVol, 0, FADE_OUT_MS);
+                howl.fade(startVol, 0, fadeOutMs);
             }
             setTimeout(() => {
                 try {
@@ -684,7 +691,7 @@ class AudioEngine {
                     }
                     howl.unload();
                 } catch (_) { /* already unloaded */ }
-            }, FADE_OUT_MS + 200);
+            }, fadeOutMs + 200);
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }
