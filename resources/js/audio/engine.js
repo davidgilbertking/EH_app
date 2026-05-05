@@ -383,15 +383,19 @@ class AudioEngine {
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
+        // Experimental split audio set uses <=15m shards. Additional in-track
+        // random seek on these shards adds startup latency with little entropy
+        // gain, because shard selection itself is random.
+        const allowInTrackRandomSeek = useRandomPos && Number(durationSec) > 901;
         // iPhone + iOS browsers (incl. Chrome) can ignore HTML5 audio volume ramps.
         // Force WebAudio only on iPhone to restore fade-in/fade-out behaviour.
         const useHtml5Streaming = !this._isIPhoneDevice();
-        const randomStartSec = useRandomPos
+        const randomStartSec = allowInTrackRandomSeek
             ? this._pickRandomStartSec(durationSec)
             : null;
         const useRandomStartFragment = Boolean(
             useHtml5Streaming
-            && useRandomPos
+            && allowInTrackRandomSeek
             && Number.isFinite(randomStartSec)
             && randomStartSec > 0
         );
@@ -449,7 +453,7 @@ class AudioEngine {
                 }
                 let plannedPos = null;
                 let waitForFragmentSettle = false;
-                if (!seekApplied && useRandomPos) {
+                if (!seekApplied && allowInTrackRandomSeek) {
                     seekApplied = true;
                     const pos = Number.isFinite(randomStartSec)
                         ? randomStartSec
