@@ -28,11 +28,8 @@ import { reactive } from 'vue';
 // so by the time it actually starts, the old one is already mostly gone.
 const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 3000;
-const DESKTOP_FAST_FADE_IN_MS = 800;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
-const DESKTOP_FAST_RANDOM_POS_CAP_SEC = 35;
-const DESKTOP_FAST_LONG_TRACK_SEC = 12 * 60;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 const IPHONE_RAMP_INTERVAL_MS = 40;
@@ -386,8 +383,6 @@ class AudioEngine {
         // iPhone + iOS browsers (incl. Chrome) can ignore HTML5 audio volume ramps.
         // Force WebAudio only on iPhone to restore fade-in/fade-out behaviour.
         const useHtml5Streaming = !this._isIPhoneDevice();
-        const preferDesktopFastStart = this._shouldUseDesktopFastStart(useHtml5Streaming);
-        const fadeInDurationMs = preferDesktopFastStart ? DESKTOP_FAST_FADE_IN_MS : FADE_IN_MS;
         const randomStartSec = useRandomPos
             ? this._pickRandomStartSec(durationSec)
             : null;
@@ -485,7 +480,7 @@ class AudioEngine {
                         return;
                     }
                     if (useFadeIn && currentVol < 1) {
-                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, fadeInDurationMs);
+                        this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
                     }
                     // Crossfade: only NOW (when the new track is actually audible)
                     // do we start fading the previous one. Guarantees no silent
@@ -608,30 +603,8 @@ class AudioEngine {
             Math.min(dur * RANDOM_POS_MAX_FRACTION, dur - TAIL_PROTECTION_SEC),
         );
 
-        // Desktop fast-start profile:
-        //  - very long tracks start at 00:00 (random track still preserves variety)
-        //  - other random starts are limited to the early part of the file
-        //    so the browser can become audible significantly faster.
-        if (this._shouldUseDesktopFastStart(true)) {
-            if (dur >= DESKTOP_FAST_LONG_TRACK_SEC) {
-                return 0;
-            }
-            max = Math.min(max, DESKTOP_FAST_RANDOM_POS_CAP_SEC);
-        }
-
         if (max <= 0) return 0;
         return Math.random() * max;
-    }
-
-    _shouldUseDesktopFastStart(useHtml5Streaming = true) {
-        if (!useHtml5Streaming || typeof window === 'undefined') return false;
-        try {
-            const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-            const narrowViewport = window.matchMedia?.('(max-width: 1024px)').matches ?? false;
-            return !coarsePointer && !narrowViewport;
-        } catch (_) {
-            return false;
-        }
     }
 
     _safeUnload(howl) {
