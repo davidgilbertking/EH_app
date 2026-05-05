@@ -79,6 +79,7 @@ class AudioEngine {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
+        let hardSwitchUntilTs = null;
 
         // If there is a paused track and user explicitly starts another folder,
         // discard paused buffer and treat this as a brand new playback choice.
@@ -117,7 +118,7 @@ class AudioEngine {
                 this._clearActiveState();
                 this._fadeOutAndUnload(prev.howl, prev.soundId ?? null);
                 if (hardSwitch) {
-                    await new Promise((r) => setTimeout(r, FADE_OUT_MS + 80));
+                    hardSwitchUntilTs = Date.now() + FADE_OUT_MS + 80;
                 }
             }
         }
@@ -157,6 +158,7 @@ class AudioEngine {
                 format: pick.format || null,
                 prevHowlForCrossfade,
                 requestToken,
+                hardSwitchUntilTs,
             });
         } catch (e) {
             if (requestToken !== this._playRequestToken) return;
@@ -377,6 +379,7 @@ class AudioEngine {
         format,
         prevHowlForCrossfade = null,
         requestToken,
+        hardSwitchUntilTs = null,
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
@@ -395,6 +398,8 @@ class AudioEngine {
         const streamSrc = useRandomStartFragment
             ? `${streamUrl}#t=${randomStartSec.toFixed(3)}`
             : streamUrl;
+        const hardSwitchGateMs = Math.max(0, Number(hardSwitchUntilTs || 0) - Date.now());
+        const initialVolume = (hardSwitchGateMs > 0 || useFadeIn) ? 0 : 1;
 
         // seekApplied guards against the onplay handler firing more than once
         // per Howl (e.g. on loop or re-seek) and re-randomising the position.
@@ -407,7 +412,7 @@ class AudioEngine {
             format: format ? [format] : undefined,
             html5: useHtml5Streaming,
             preload: useHtml5Streaming ? 'metadata' : true,
-            volume: useFadeIn ? 0 : 1,
+            volume: initialVolume,
             onload: () => {
                 if (
                     requestToken !== this._playRequestToken
@@ -472,12 +477,21 @@ class AudioEngine {
                     : null;
                 const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
                 const fadeId = activeId ?? (typeof id === 'number' ? id : null);
-                const makeAudible = () => {
+                const makeAudibleNow = () => {
                     if (
                         requestToken !== this._playRequestToken
                         || this.current?.howl !== howl
                     ) {
                         return;
+                    }
+                    if (!useFadeIn && hardSwitchGateMs > 0 && currentVol < 1) {
+                        try {
+                            if (fadeId != null) {
+                                howl.volume(1, fadeId);
+                            } else {
+                                howl.volume(1);
+                            }
+                        } catch (_) { /* ignore */ }
                     }
                     if (useFadeIn && currentVol < 1) {
                         this._fadeInWhenPlaybackStabilizes(howl, fadeId, FADE_IN_MS);
@@ -492,6 +506,13 @@ class AudioEngine {
                         );
                         prevHowlForCrossfade = null;
                     }
+                };
+                const makeAudible = () => {
+                    if (hardSwitchGateMs > 0) {
+                        setTimeout(makeAudibleNow, hardSwitchGateMs);
+                        return;
+                    }
+                    makeAudibleNow();
                 };
 
                 if (waitForFragmentSettle && Number.isFinite(plannedPos) && plannedPos > 0) {
