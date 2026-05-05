@@ -26,10 +26,10 @@ import { reactive } from 'vue';
 // tail of the old track and the start of the new one stays minimal — the
 // new track still needs ~500-1500ms to fetch metadata + buffer over HTTP,
 // so by the time it actually starts, the old one is already mostly gone.
-const FADE_OUT_MS = 4200;
-const FADE_IN_MS = 1500;
-const HARD_SWITCH_FADE_OUT_MS = 4500;
-const HARD_SWITCH_FADE_IN_MS = 1400;
+const FADE_OUT_MS = 1800;
+const FADE_IN_MS = 1800;
+const HARD_SWITCH_FADE_OUT_MS = 1800;
+const HARD_SWITCH_FADE_IN_MS = 1800;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
 const MOBILE_FADE_START_FALLBACK_MS = 1500;
@@ -77,7 +77,7 @@ class AudioEngine {
      *                                     where overlap between phases is
      *                                     undesirable.
      */
-    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = false }) {
+    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = true }) {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
