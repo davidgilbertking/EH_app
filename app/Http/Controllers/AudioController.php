@@ -95,14 +95,28 @@ class AudioController extends Controller
         }
 
         $disk = Storage::disk('local');
-        $relative = config('eh.audio_root', 'audio').'/'.$track->file_path;
+        $relative = $this->resolveTrackStoragePath($disk, $track->file_path);
 
-        if (! $disk->exists($relative)) {
-            $alternate = $this->alternateWorldPath($track->file_path);
-            if (! $alternate || ! $disk->exists(config('eh.audio_root', 'audio').'/'.$alternate)) {
+        // During large audio sync/replace operations a picked row may briefly
+        // point to a file being swapped. Fallback to another existing track from
+        // same folder so playback doesn't abruptly stop with 404.
+        if (! $relative) {
+            $fallback = SoundTrack::query()
+                ->where('sound_folder_id', $track->sound_folder_id)
+                ->whereKeyNot($track->id)
+                ->inRandomOrder()
+                ->limit(40)
+                ->get(['file_path'])
+                ->first(fn (SoundTrack $candidate) => (bool) $this->resolveTrackStoragePath($disk, $candidate->file_path));
+
+            if (! $fallback) {
                 return response('Audio file missing', 404);
             }
-            $relative = config('eh.audio_root', 'audio').'/'.$alternate;
+
+            $relative = $this->resolveTrackStoragePath($disk, $fallback->file_path);
+            if (! $relative) {
+                return response('Audio file missing', 404);
+            }
         }
 
         if ($this->shouldUseNginxAccel()) {
@@ -217,5 +231,63 @@ class AudioController extends Controller
         }
 
         return $prefix.$normalized;
+    }
+
+    private function resolveTrackStoragePath($disk, string $trackFilePath): ?string
+    {
+        $root = config('eh.audio_root', 'audio');
+        $primary = $root.'/'.$trackFilePath;
+        $resolved = $this->resolveCaseAndUnicodePath($disk, $primary);
+        if ($resolved) {
+            return $resolved;
+        }
+
+        $alternate = $this->alternateWorldPath($trackFilePath);
+        if (! $alternate) {
+            return null;
+        }
+
+        return $this->resolveCaseAndUnicodePath($disk, $root.'/'.$alternate);
+    }
+
+    private function resolveCaseAndUnicodePath($disk, string $relative): ?string
+    {
+        if ($disk->exists($relative)) {
+            return $relative;
+        }
+
+        $normalized = ltrim(str_replace('\\', '/', $relative), '/');
+        $dir = trim((string) pathinfo($normalized, PATHINFO_DIRNAME), '/');
+        $file = (string) pathinfo($normalized, PATHINFO_BASENAME);
+        if ($file === '') {
+            return null;
+        }
+
+        $targetKey = $this->pathLookupKey($file);
+        foreach ($disk->files($dir === '.' ? '' : $dir) as $candidate) {
+            $candidateFile = (string) pathinfo($candidate, PATHINFO_BASENAME);
+            if ($this->pathLookupKey($candidateFile) === $targetKey) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private function pathLookupKey(string $value): string
+    {
+        $key = mb_strtolower($value, 'UTF-8');
+        if (class_exists(\Normalizer::class)) {
+            $normalized = \Normalizer::normalize($key, \Normalizer::FORM_KD);
+            if ($normalized !== false && $normalized !== null) {
+                $key = $normalized;
+            }
+            $withoutMarks = preg_replace('/\p{Mn}+/u', '', $key);
+            if (is_string($withoutMarks)) {
+                $key = $withoutMarks;
+            }
+        }
+
+        return $key;
     }
 }
