@@ -36,7 +36,11 @@ function onCardError() {
                 @error="onCardError"
             />
             <div class="relative mx-auto w-[82%] py-6 sm:py-7">
-                <slot />
+                <Transition name="ui-page-fade" mode="out-in">
+                    <div :key="$page.url">
+                        <slot />
+                    </div>
+                </Transition>
             </div>
         </div>
     </div>

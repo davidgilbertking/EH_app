@@ -191,7 +191,11 @@ const showingNavigationDropdown = ref(false);
 
             <!-- Page Content -->
             <main>
-                <slot />
+                <Transition name="ui-page-fade" mode="out-in">
+                    <div :key="$page.url">
+                        <slot />
+                    </div>
+                </Transition>
             </main>
         </div>
     </div>

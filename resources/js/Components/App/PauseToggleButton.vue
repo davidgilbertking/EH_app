@@ -4,6 +4,11 @@ import { computed } from 'vue';
 
 const isVisible = computed(() => Boolean(engine.state.playingFolder || engine.state.canResume));
 const isPaused = computed(() => engine.state.isPaused);
+const visibilityClass = computed(() => (
+    isVisible.value
+        ? 'opacity-100'
+        : 'opacity-0 pointer-events-none'
+));
 
 function togglePause() {
     if (isPaused.value) {
@@ -16,10 +21,10 @@ function togglePause() {
 
 <template>
     <button
-        v-if="isVisible"
         type="button"
         :aria-label="isPaused ? 'Resume' : 'Pause'"
-        class="ui-corner-btn fixed right-[var(--ui-corner-edge-gap)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur hover:bg-neutral-700 active:scale-95 transition"
+        class="ui-fade-500 ui-corner-btn fixed right-[var(--ui-corner-edge-gap)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur hover:bg-neutral-700 active:scale-95 transition"
+        :class="visibilityClass"
         style="top: calc(var(--header-h, 0px) + var(--ui-corner-edge-gap));"
         @click="togglePause"
     >

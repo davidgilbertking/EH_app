@@ -87,17 +87,20 @@ const bindings = useLongPress({ onTap: tap, onLongPress: longPress, threshold: 1
         class="ui-image-btn flex w-full items-center rounded-xl border text-left active:scale-[0.98] transition"
         :class="[tone, isNavBranchPlaying ? 'ring-2 ring-amber-400' : '']"
     >
-        <img
-            v-if="imageUrl"
-            :src="imageUrl"
-            :alt="label"
-            class="ui-image-btn-icon flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-        />
-        <span
-            v-else
-            class="ui-image-btn-icon grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
-        >?</span>
-        <span class="ui-image-btn-label min-w-0 flex-1 whitespace-normal break-words font-bold tracking-wide leading-tight">{{ label }}</span>
+        <span class="inline-flex w-full items-center justify-start text-left">
+            <img
+                v-if="imageUrl"
+                :src="imageUrl"
+                :alt="label"
+                class="ui-image-btn-icon mr-3 flex-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+            />
+            <span
+                v-else
+                class="ui-image-btn-icon mr-3 grid flex-none place-items-center rounded-lg bg-black/30 text-2xl opacity-60"
+            >?</span>
+            <span class="ui-image-btn-label min-w-0 max-w-full whitespace-normal break-words font-bold leading-tight">{{ label }}</span>
+            <span aria-hidden="true" class="ml-1 text-[1.15em] leading-none">›</span>
+        </span>
     </Link>
 
     <button

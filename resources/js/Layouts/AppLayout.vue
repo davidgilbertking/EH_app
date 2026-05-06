@@ -15,12 +15,26 @@ const isHome = computed(() => url.value === '/');
 const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
+const ANCIENT_BG_FADE_MS = 1250;
+const bgCurrentUrl = ref(bgUrl.value);
+const bgCurrentOpacity = ref(bgUrl.value ? 1 : 0);
+const bgCurrentTransitionMs = ref(ANCIENT_BG_FADE_MS);
+const bgPrevUrl = ref(null);
+const bgPrevOpacity = ref(0);
+const hasAnyBg = computed(() => Boolean(bgCurrentUrl.value || bgPrevUrl.value));
+const bgCurrentEl = ref(null);
+const bgPrevEl = ref(null);
 const preloadImageUrls = computed(() => page.props.assetPreload?.imageUrls ?? []);
 const imageWarmupSessionKey = computed(() => {
     const userId = page.props.auth?.user?.id ?? 'guest';
     return `eh:image-warmup:v1:user:${userId}`;
 });
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
+const cornerControlClass = computed(() => (
+    isHome.value
+        ? 'opacity-0 pointer-events-none ui-fade-500'
+        : 'opacity-100 ui-fade-500'
+));
 const showRotateLandscapePrompt = ref(false);
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
@@ -39,6 +53,10 @@ const mainClass = computed(() =>
 const rootEl = ref(null);
 const headerWrapEl = ref(null);
 let resizeObserver = null;
+let bgFadeTimer = null;
+let bgFadeRafA = null;
+let bgFadeRafB = null;
+let bgFadeToken = 0;
 
 function syncHeaderHeight() {
     if (!rootEl.value || !headerWrapEl.value) return;
@@ -81,6 +99,64 @@ function warmImageCacheOncePerSession(urls) {
     warmImageCache(urls);
 }
 
+function clearBgFadeWork() {
+    if (bgFadeTimer) {
+        clearTimeout(bgFadeTimer);
+        bgFadeTimer = null;
+    }
+    if (bgFadeRafA != null && typeof window !== 'undefined') {
+        window.cancelAnimationFrame(bgFadeRafA);
+        bgFadeRafA = null;
+    }
+    if (bgFadeRafB != null && typeof window !== 'undefined') {
+        window.cancelAnimationFrame(bgFadeRafB);
+        bgFadeRafB = null;
+    }
+}
+
+function onNextPaint(cb) {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+        cb();
+        return;
+    }
+    bgFadeRafA = window.requestAnimationFrame(() => {
+        bgFadeRafA = null;
+        bgFadeRafB = window.requestAnimationFrame(() => {
+            bgFadeRafB = null;
+            cb();
+        });
+    });
+}
+
+function preloadBackground(url) {
+    if (!url || typeof Image === 'undefined') return Promise.resolve();
+    return new Promise((resolve) => {
+        const img = new Image();
+        const finish = () => {
+            img.onload = null;
+            img.onerror = null;
+            resolve();
+        };
+
+        img.onload = finish;
+        img.onerror = finish;
+        img.src = url;
+
+        // Cached images may complete synchronously.
+        if (img.complete) finish();
+    });
+}
+
+function clampOpacity(value) {
+    return Math.max(0, Math.min(1, value));
+}
+
+function readRenderedOpacity(el, fallback = 0) {
+    if (typeof window === 'undefined' || !el) return clampOpacity(fallback);
+    const parsed = Number.parseFloat(window.getComputedStyle(el).opacity);
+    return Number.isFinite(parsed) ? clampOpacity(parsed) : clampOpacity(fallback);
+}
+
 onMounted(() => {
     syncHeaderHeight();
     syncUiScale();
@@ -102,6 +178,7 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', syncUiScale);
     window.removeEventListener('resize', syncRotateLandscapePrompt);
     window.removeEventListener('orientationchange', syncRotateLandscapePrompt);
+    clearBgFadeWork();
 });
 
 // Route-dependent overlay:
@@ -110,10 +187,10 @@ onBeforeUnmount(() => {
 //   - Home with blobs, and /encounters/* and /other/*: heavy dim + blur so
 //     the grid / buttons stay readable over busy illustration.
 //   - Other auth pages (e.g. /login): no background at all.
-const DIMMED = 'bg-black/75 backdrop-blur-md';
+const DIMMED = 'bg-[rgba(10,10,10,0.75)] backdrop-blur-md';
 // Subtle veil on Home when there are no blobs yet — just enough to knock
 // the saturation down so the screen doesn't feel glaring.
-const LIGHT_DIM = 'bg-black/40';
+const LIGHT_DIM = 'bg-[rgba(10,10,10,0.40)]';
 const overlayClass = computed(() => {
     if (isHome.value) return blobs.value.length ? DIMMED : LIGHT_DIM;
     if (url.value.startsWith('/encounters') || url.value.startsWith('/other')) {
@@ -139,6 +216,88 @@ onMounted(() => {
     });
 });
 
+watch(bgUrl, async (next, prev) => {
+    if (next === prev) return;
+    const token = ++bgFadeToken;
+    clearBgFadeWork();
+
+    const hasNext = Boolean(next);
+
+    if (!hasNext) {
+        const startCurrentOpacity = readRenderedOpacity(bgCurrentEl.value, bgCurrentOpacity.value);
+        const startPrevOpacity = readRenderedOpacity(bgPrevEl.value, bgPrevOpacity.value);
+
+        if (!bgCurrentUrl.value && !bgPrevUrl.value) {
+            bgCurrentOpacity.value = 0;
+            bgPrevOpacity.value = 0;
+            return;
+        }
+
+        bgCurrentTransitionMs.value = 0;
+        bgCurrentOpacity.value = startCurrentOpacity;
+        bgPrevOpacity.value = startPrevOpacity;
+
+        onNextPaint(() => {
+            if (token !== bgFadeToken) return;
+            bgCurrentTransitionMs.value = ANCIENT_BG_FADE_MS;
+            if (bgCurrentUrl.value) bgCurrentOpacity.value = 0;
+            if (bgPrevUrl.value) bgPrevOpacity.value = 0;
+        });
+
+        bgFadeTimer = setTimeout(() => {
+            if (token !== bgFadeToken) return;
+            bgCurrentUrl.value = null;
+            bgCurrentOpacity.value = 0;
+            bgCurrentTransitionMs.value = ANCIENT_BG_FADE_MS;
+            bgPrevUrl.value = null;
+            bgPrevOpacity.value = 0;
+            bgFadeTimer = null;
+        }, ANCIENT_BG_FADE_MS + 120);
+        return;
+    }
+
+    if (hasNext) {
+        await preloadBackground(next);
+        if (token !== bgFadeToken) return;
+    }
+
+    const outgoingUrl = bgCurrentUrl.value || bgPrevUrl.value || prev || null;
+    let outgoingOpacity = 1;
+    if (outgoingUrl && bgCurrentUrl.value === outgoingUrl) {
+        outgoingOpacity = readRenderedOpacity(bgCurrentEl.value, bgCurrentOpacity.value);
+    } else if (outgoingUrl && bgPrevUrl.value === outgoingUrl) {
+        outgoingOpacity = readRenderedOpacity(bgPrevEl.value, bgPrevOpacity.value);
+    }
+    const clampedOutgoingOpacity = clampOpacity(outgoingOpacity);
+    const hadPrev = Boolean(outgoingUrl);
+
+    if (hadPrev) {
+        bgPrevUrl.value = outgoingUrl;
+        bgPrevOpacity.value = clampedOutgoingOpacity;
+    } else {
+        bgPrevUrl.value = null;
+        bgPrevOpacity.value = 0;
+    }
+
+    bgCurrentUrl.value = next;
+    bgCurrentTransitionMs.value = 0;
+    bgCurrentOpacity.value = 0;
+
+    onNextPaint(() => {
+        if (token !== bgFadeToken) return;
+        bgCurrentTransitionMs.value = ANCIENT_BG_FADE_MS;
+        bgCurrentOpacity.value = 1;
+        if (hadPrev) bgPrevOpacity.value = 0;
+    });
+
+    bgFadeTimer = setTimeout(() => {
+        if (token !== bgFadeToken) return;
+        bgPrevUrl.value = null;
+        bgPrevOpacity.value = 0;
+        bgFadeTimer = null;
+    }, ANCIENT_BG_FADE_MS + 120);
+}, { flush: 'post' });
+
 watch(preloadImageUrls, (urls) => {
     warmImageCacheOncePerSession(urls);
 });
@@ -153,16 +312,33 @@ watch(preloadImageUrls, (urls) => {
             content area only.
         -->
         <div
-            v-if="bgUrl"
-            class="fixed inset-x-0 bottom-0 -z-20 bg-cover bg-center"
-            :style="{
-                top: 'var(--header-h, 0px)',
-                backgroundImage: `url('${bgUrl}')`,
-            }"
+            v-if="hasAnyBg"
+            class="fixed inset-x-0 bottom-0 -z-20"
+            :style="{ top: 'var(--header-h, 0px)', backgroundColor: '#0a0a0a' }"
             aria-hidden="true"
-        ></div>
+        >
+            <div
+                v-if="bgPrevUrl"
+                ref="bgPrevEl"
+                class="absolute inset-0 bg-cover bg-center transition-opacity duration-[3000ms] ease-linear"
+                :style="{
+                    backgroundImage: `url('${bgPrevUrl}')`,
+                    opacity: String(bgPrevOpacity),
+                }"
+            ></div>
+            <div
+                v-if="bgCurrentUrl"
+                ref="bgCurrentEl"
+                class="absolute inset-0 bg-cover bg-center"
+                :style="{
+                    backgroundImage: `url('${bgCurrentUrl}')`,
+                    opacity: String(bgCurrentOpacity),
+                    transition: `opacity ${bgCurrentTransitionMs}ms linear`,
+                }"
+            ></div>
+        </div>
         <div
-            v-if="bgUrl && overlayClass"
+            v-if="hasAnyBg && overlayClass"
             class="fixed inset-x-0 bottom-0 -z-10"
             :class="overlayClass"
             :style="{ top: 'var(--header-h, 0px)' }"
@@ -173,13 +349,17 @@ watch(preloadImageUrls, (urls) => {
             <AppHeader />
         </div>
 
-        <HomeButton v-if="!isHome" />
-        <BackButton v-if="!isHome" />
+        <HomeButton :class="cornerControlClass" />
+        <BackButton :class="cornerControlClass" />
         <PauseToggleButton />
         <VolumeSlider />
 
         <main :class="mainClass">
-            <slot />
+            <Transition name="ui-page-fade" mode="out-in">
+                <div :key="$page.url" class="min-h-full">
+                    <slot />
+                </div>
+            </Transition>
         </main>
 
         <div
