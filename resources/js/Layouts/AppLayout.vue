@@ -5,7 +5,7 @@ import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
 import VolumeSlider from '@/Components/App/VolumeSlider.vue';
 import { warmImageCache } from '@/composables/useImageCacheWarmup';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const page = usePage();
@@ -57,6 +57,10 @@ let bgFadeTimer = null;
 let bgFadeRafA = null;
 let bgFadeRafB = null;
 let bgFadeToken = 0;
+let gameStateReloadInFlight = false;
+let suppressHistoryBgTimer = null;
+const suppressHistoryBgSnapshot = ref(false);
+let pendingSuppressedBgUrl = undefined;
 
 function syncHeaderHeight() {
     if (!rootEl.value || !headerWrapEl.value) return;
@@ -157,6 +161,75 @@ function readRenderedOpacity(el, fallback = 0) {
     return Number.isFinite(parsed) ? clampOpacity(parsed) : clampOpacity(fallback);
 }
 
+function startSuppressHistoryBgSnapshot() {
+    suppressHistoryBgSnapshot.value = true;
+    if (suppressHistoryBgTimer) {
+        clearTimeout(suppressHistoryBgTimer);
+        suppressHistoryBgTimer = null;
+    }
+    suppressHistoryBgTimer = setTimeout(() => {
+        suppressHistoryBgTimer = null;
+        suppressHistoryBgSnapshot.value = false;
+        pendingSuppressedBgUrl = undefined;
+    }, 2500);
+}
+
+function stopSuppressHistoryBgSnapshot() {
+    if (suppressHistoryBgTimer) {
+        clearTimeout(suppressHistoryBgTimer);
+        suppressHistoryBgTimer = null;
+    }
+    suppressHistoryBgSnapshot.value = false;
+}
+
+function shouldSyncGameStateForPath(routePath) {
+    return (
+        routePath === '/'
+        || routePath.startsWith('/encounters')
+        || routePath.startsWith('/other')
+    );
+}
+
+function reloadGameStateAfterHistoryNav() {
+    if (gameStateReloadInFlight) return;
+    if (!shouldSyncGameStateForPath(path.value)) {
+        stopSuppressHistoryBgSnapshot();
+        pendingSuppressedBgUrl = undefined;
+        return;
+    }
+
+    gameStateReloadInFlight = true;
+    router.reload({
+        only: ['gameState'],
+        preserveState: true,
+        preserveScroll: true,
+        onFinish: () => {
+            gameStateReloadInFlight = false;
+            stopSuppressHistoryBgSnapshot();
+            if (pendingSuppressedBgUrl !== undefined) {
+                const pendingUrl = pendingSuppressedBgUrl;
+                pendingSuppressedBgUrl = undefined;
+                const visibleUrl = bgCurrentUrl.value || null;
+                if (pendingUrl !== visibleUrl || bgPrevUrl.value) {
+                    applyBgTransition(pendingUrl, bgUrl.value, true);
+                }
+            }
+        },
+    });
+}
+
+function onHistoryPopState() {
+    startSuppressHistoryBgSnapshot();
+    // Popstate fires before Inertia fully settles restored page state.
+    // Next macrotask gives us final route, then we sync freshest gameState.
+    setTimeout(reloadGameStateAfterHistoryNav, 0);
+}
+
+function onBeforeHistoryBackNav() {
+    // Fired by round Back button before window.history.back().
+    startSuppressHistoryBgSnapshot();
+}
+
 onMounted(() => {
     syncHeaderHeight();
     syncUiScale();
@@ -170,6 +243,8 @@ onMounted(() => {
     window.addEventListener('resize', syncUiScale);
     window.addEventListener('resize', syncRotateLandscapePrompt);
     window.addEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.addEventListener('eh:before-history-back', onBeforeHistoryBackNav);
+    window.addEventListener('popstate', onHistoryPopState);
 });
 
 onBeforeUnmount(() => {
@@ -178,6 +253,9 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', syncUiScale);
     window.removeEventListener('resize', syncRotateLandscapePrompt);
     window.removeEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.removeEventListener('eh:before-history-back', onBeforeHistoryBackNav);
+    window.removeEventListener('popstate', onHistoryPopState);
+    stopSuppressHistoryBgSnapshot();
     clearBgFadeWork();
 });
 
@@ -216,8 +294,8 @@ onMounted(() => {
     });
 });
 
-watch(bgUrl, async (next, prev) => {
-    if (next === prev) return;
+async function applyBgTransition(next, prev, force = false) {
+    if (!force && next === prev) return;
     const token = ++bgFadeToken;
     clearBgFadeWork();
 
@@ -296,6 +374,15 @@ watch(bgUrl, async (next, prev) => {
         bgPrevOpacity.value = 0;
         bgFadeTimer = null;
     }, ANCIENT_BG_FADE_MS + 120);
+}
+
+watch(bgUrl, (next, prev) => {
+    if (suppressHistoryBgSnapshot.value) {
+        pendingSuppressedBgUrl = next;
+        return;
+    }
+    pendingSuppressedBgUrl = undefined;
+    applyBgTransition(next, prev);
 }, { flush: 'post' });
 
 watch(preloadImageUrls, (urls) => {

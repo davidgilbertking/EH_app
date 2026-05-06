@@ -1,5 +1,9 @@
 <script setup>
 function goBack() {
+    // Let layout freeze stale history snapshot visuals before browser back
+    // restores an old Inertia entry.
+    window.dispatchEvent(new CustomEvent('eh:before-history-back'));
+
     if (window.history.length > 1) window.history.back();
     else window.location.href = '/';
 }
