@@ -113,6 +113,9 @@ function playBlob(b) {
             </button>
         </div>
 
-        <ClearAllButton :disabled="!blobs.length" v-if="blobs.length" />
+        <ClearAllButton
+            :disabled="!blobs.length"
+            :class="blobs.length ? '!opacity-100 ui-fade-500' : '!opacity-0 pointer-events-none ui-fade-500'"
+        />
     </div>
 </template>

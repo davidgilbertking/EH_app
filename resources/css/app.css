@@ -286,6 +286,49 @@ body {
         outline-offset: 2px;
     }
 
+    .ui-fade-500 {
+        transition:
+            opacity 0.5s ease,
+            background-color 0.15s ease,
+            border-color 0.15s ease,
+            transform 0.15s ease !important;
+    }
+
+    .ui-page-fade-enter-active,
+    .ui-page-fade-leave-active {
+        transition: opacity 0.075s ease;
+    }
+
+    .ui-page-fade-enter-from,
+    .ui-page-fade-leave-to {
+        opacity: 0;
+    }
+
+    .ui-corner-fade-enter-active,
+    .ui-corner-fade-leave-active {
+        transition: opacity 0.5s ease;
+    }
+
+    .ui-corner-fade-enter-from,
+    .ui-corner-fade-leave-to {
+        opacity: 0;
+    }
+
+    .ui-ancient-bg-fade-enter-active,
+    .ui-ancient-bg-fade-leave-active {
+        transition: opacity 3s ease;
+    }
+
+    .ui-ancient-bg-fade-enter-from,
+    .ui-ancient-bg-fade-leave-to {
+        opacity: 0;
+    }
+
+    .ui-ancient-bg-fade-leave-active {
+        position: absolute;
+        inset: 0;
+    }
+
     .paused-amber-dash {
         position: relative;
     }
@@ -298,4 +341,15 @@ body {
         border: 2px dashed rgb(251 191 36 / 1);
         pointer-events: none;
     }
+}
+
+/* Keep outside @layer so Tailwind JIT never drops Vue runtime transition classes. */
+.ui-page-fade-enter-active,
+.ui-page-fade-leave-active {
+    transition: opacity 0.075s ease;
+}
+
+.ui-page-fade-enter-from,
+.ui-page-fade-leave-to {
+    opacity: 0;
 }
