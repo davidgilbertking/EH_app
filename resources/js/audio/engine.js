@@ -379,7 +379,10 @@ class AudioEngine {
     }) {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
-        const useHtml5Streaming = true;
+        // iPhone Safari often ignores runtime volume changes for HTML5 audio.
+        // On phone-like devices, prefer WebAudio path so master volume control
+        // remains effective.
+        const useHtml5Streaming = !this._isPhoneLikeDevice();
         const randomStartSec = useRandomPos
             ? this._pickRandomStartSec(durationSec)
             : null;
