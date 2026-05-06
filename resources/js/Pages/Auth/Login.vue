@@ -67,7 +67,7 @@ const submit = () => {
             <div class="mt-1 flex items-center justify-center">
                 <button
                     type="submit"
-                    class="inline-flex h-11 w-24 -translate-y-1 items-center justify-center rounded-xl border border-[#f2c94c] bg-[#f2c94c] text-[#2a2a2a] transition hover:bg-[#f6d66c]"
+                    class="inline-flex h-11 w-24 translate-y-1 items-center justify-center rounded-xl border border-[#f2c94c] bg-[#f2c94c] text-[#2a2a2a] transition hover:bg-[#f6d66c]"
                     :class="[
                         form.processing ? 'opacity-25' : '',
                     ]"
