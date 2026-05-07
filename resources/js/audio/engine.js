@@ -57,6 +57,7 @@ class AudioEngine {
         this._masterVolumeApplied = DEFAULT_MASTER_VOLUME;
         this._masterVolumeRaf = null;
         this._pendingMobileFadeCleanup = new WeakMap();
+        this._pendingFadeOutCleanup = new WeakMap();
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -434,6 +435,16 @@ class AudioEngine {
                     requestToken !== this._playRequestToken
                     || this.current?.howl !== howl
                 ) {
+                    // Request was superseded by a newer play(). If this track was
+                    // supposed to crossfade an older one, still retire that older
+                    // howl so we don't end up with layered leftovers.
+                    if (prevHowlForCrossfade) {
+                        this._fadeOutAndUnload(
+                            prevHowlForCrossfade.howl,
+                            prevHowlForCrossfade.soundId ?? null,
+                        );
+                        prevHowlForCrossfade = null;
+                    }
                     try { howl.stop(id); } catch (_) { /* ignore */ }
                     this._safeUnload(howl);
                     return;
@@ -624,19 +635,27 @@ class AudioEngine {
 
     _safeUnload(howl) {
         this._clearPendingMobileFade(howl);
+        this._clearPendingFadeOut(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
+    }
+
+    _clearPendingFadeOut(howl) {
+        const cleanup = this._pendingFadeOutCleanup.get(howl);
+        if (!cleanup) return;
+        this._pendingFadeOutCleanup.delete(howl);
+        try { cleanup(); } catch (_) { /* ignore */ }
     }
 
     _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
+        this._clearPendingFadeOut(howl);
         try {
-            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
-            if (soundId != null) {
-                howl.fade(startVol, 0, fadeOutMs, soundId);
-            } else {
-                howl.fade(startVol, 0, fadeOutMs);
-            }
-            setTimeout(() => {
+            let finished = false;
+            let fallbackTimer = null;
+            const stopAndUnload = () => {
+                if (finished) return;
+                finished = true;
+                this._clearPendingFadeOut(howl);
                 try {
                     if (soundId != null) {
                         howl.stop(soundId);
@@ -644,8 +663,42 @@ class AudioEngine {
                         howl.stop();
                     }
                     howl.unload();
-                } catch (_) { /* already unloaded */ }
-            }, fadeOutMs + 200);
+                } catch (_) {
+                    try { howl.unload(); } catch (__) { /* ignore */ }
+                }
+            };
+
+            const onFade = (fadedId) => {
+                if (soundId != null && typeof fadedId === 'number' && fadedId !== soundId) {
+                    return;
+                }
+                stopAndUnload();
+            };
+
+            const cleanup = () => {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                try {
+                    if (soundId != null) {
+                        howl.off('fade', onFade, soundId);
+                    } else {
+                        howl.off('fade', onFade);
+                    }
+                } catch (_) { /* ignore */ }
+            };
+
+            this._pendingFadeOutCleanup.set(howl, cleanup);
+            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
+            if (soundId != null) {
+                howl.once('fade', onFade, soundId);
+                howl.fade(startVol, 0, fadeOutMs, soundId);
+            } else {
+                howl.once('fade', onFade);
+                howl.fade(startVol, 0, fadeOutMs);
+            }
+            fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }
@@ -761,99 +814,7 @@ class AudioEngine {
             } catch (_) { /* ignore */ }
         };
 
-        if (!this._isPhoneLikeDevice()) {
-            runNativeFade(soundId ?? null);
-            return;
-        }
-
-        const sound = (typeof howl._soundById === 'function' && soundId != null)
-            ? howl._soundById(soundId)
-            : null;
-        const node = sound?._node;
-        if (!node || typeof node.addEventListener !== 'function') {
-            runNativeFade(soundId ?? null);
-            return;
-        }
-
-        this._clearPendingMobileFade(howl);
-        let started = false;
-        let fallbackTimer = null;
-        let rampTimer = null;
-
-        const getActiveId = () => (this.current?.howl === howl
-            ? (this.current.soundId ?? soundId ?? null)
-            : (soundId ?? null));
-
-        const applyVolume = (id, value) => {
-            try {
-                if (id != null) {
-                    howl.volume(value, id);
-                } else {
-                    howl.volume(value);
-                }
-            } catch (_) { /* ignore */ }
-        };
-
-        const tearDown = () => {
-            try { node.removeEventListener('timeupdate', onTimeUpdate); } catch (_) { /* ignore */ }
-            if (fallbackTimer) {
-                clearTimeout(fallbackTimer);
-                fallbackTimer = null;
-            }
-            if (rampTimer) {
-                clearInterval(rampTimer);
-                rampTimer = null;
-            }
-        };
-
-        const finish = () => {
-            tearDown();
-            this._pendingMobileFadeCleanup.delete(howl);
-        };
-
-        const startManualFade = () => {
-            if (started) return;
-            started = true;
-            if (!this.current || this.current.howl !== howl) {
-                finish();
-                return;
-            }
-            const activeId = getActiveId();
-            applyVolume(activeId, 0);
-            const startedAt = Date.now();
-            rampTimer = setInterval(() => {
-                if (!this.current || this.current.howl !== howl) {
-                    finish();
-                    return;
-                }
-                const id = getActiveId();
-                const elapsed = Date.now() - startedAt;
-                const nextVol = Math.min(1, Math.max(0, elapsed / durationMs));
-                applyVolume(id, nextVol);
-                if (nextVol >= 1) {
-                    finish();
-                }
-            }, MOBILE_FADE_INTERVAL_MS);
-        };
-
-        const startFade = () => {
-            if (!this.current || this.current.howl !== howl) return;
-            startManualFade();
-        };
-
-        const onTimeUpdate = () => {
-            startFade();
-        };
-
-        try {
-            node.addEventListener('timeupdate', onTimeUpdate, { once: true });
-        } catch (_) {
-            runNativeFade(soundId ?? null);
-            return;
-        }
-
-        fallbackTimer = setTimeout(startFade, MOBILE_FADE_START_FALLBACK_MS);
-        this._pendingMobileFadeCleanup.set(howl, tearDown);
+        runNativeFade(soundId ?? null);
     }
 }
 
