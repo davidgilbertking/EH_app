@@ -41,6 +41,7 @@ function makeBindings(h, pulseKey) {
                 folderSlug: h.folderSlug,
                 mode: h.mode || null,
                 label: h.label,
+                crossfade: true,
             });
         },
         onLongPress: () => {

@@ -26,9 +26,9 @@ import { reactive } from 'vue';
 // tail of the old track and the start of the new one stays minimal — the
 // new track still needs ~500-1500ms to fetch metadata + buffer over HTTP,
 // so by the time it actually starts, the old one is already mostly gone.
-const FADE_OUT_MS = 1800;
+const FADE_OUT_MS = 2800;
 const FADE_IN_MS = 1800;
-const HARD_SWITCH_FADE_OUT_MS = 1800;
+const HARD_SWITCH_FADE_OUT_MS = 2400;
 const HARD_SWITCH_FADE_IN_MS = 1800;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
