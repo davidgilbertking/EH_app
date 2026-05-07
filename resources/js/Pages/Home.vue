@@ -70,6 +70,7 @@ function playBlob(b) {
         folderSlug: b.folderSlug,
         mode: b.mode || null,
         label: b.label,
+        crossfade: true,
     });
 }
 </script>

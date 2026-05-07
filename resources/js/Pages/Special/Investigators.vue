@@ -66,7 +66,11 @@ function makeBindings(item) {
                 engine.stop();
                 return;
             }
-            engine.play({ folderSlug: item.folderSlug, label: item.name });
+            engine.play({
+                folderSlug: item.folderSlug,
+                label: item.name,
+                crossfade: true,
+            });
         },
         onLongPress: () => {
             const current = page.props.gameState?.blobs ?? [];

@@ -36,6 +36,7 @@ const MOBILE_FADE_START_FALLBACK_MS = 1500;
 const MOBILE_FADE_INTERVAL_MS = 50;
 const RANDOM_FRAGMENT_SETTLE_CHECK_MS = 120;
 const RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC = 2.5;
+const APPLE_MOBILE_FADE_SETTLE_MS = 80;
 const DEFAULT_MASTER_VOLUME = 1;
 const MASTER_VOLUME_STORAGE_KEY = 'eh:master-volume:v1';
 const MASTER_VOLUME_SMOOTHING_FACTOR = 0.16;
@@ -57,6 +58,11 @@ class AudioEngine {
         this._masterVolumeApplied = DEFAULT_MASTER_VOLUME;
         this._masterVolumeRaf = null;
         this._pendingMobileFadeCleanup = new WeakMap();
+        this._pendingFadeOutCleanup = new WeakMap();
+        this._appleMobileContext = null;
+        this._appleMobileMasterGain = null;
+        this._appleMobileGraphByNode = new WeakMap();
+        this._appleMobileGraphByHowl = new WeakMap();
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -247,37 +253,40 @@ class AudioEngine {
         this.state.pausedLabel = this.current.label;
 
         try {
-            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
-            if (soundId != null) {
-                howl.fade(startVol, 0, PAUSE_TOGGLE_FADE_MS, soundId);
-            } else {
-                howl.fade(startVol, 0, PAUSE_TOGGLE_FADE_MS);
-            }
-            this._pauseFadeTimer = setTimeout(() => {
+            const startVol = this._getTrackVolume(howl, soundId);
+            const finalizePause = () => {
                 if (opToken !== this._pauseOpToken) return;
                 try {
                     if (soundId != null) {
                         howl.pause(soundId);
-                        // Keep at 0 so resume can fade in from silence.
-                        howl.volume(0, soundId);
                     } else {
                         howl.pause();
-                        // Keep at 0 so resume can fade in from silence.
-                        howl.volume(0);
                     }
+                    // Keep at 0 so resume can fade in from silence.
+                    this._setTrackVolumeImmediate(howl, soundId, 0);
                 } catch (_) { /* ignore */ }
                 this._pauseFadeTimer = null;
-            }, PAUSE_TOGGLE_FADE_MS + 30);
+            };
+            const fadeStarted = this._fadeTrackVolume(
+                howl,
+                soundId,
+                startVol,
+                0,
+                PAUSE_TOGGLE_FADE_MS,
+                finalizePause,
+            );
+            if (!fadeStarted) {
+                finalizePause();
+            }
             return true;
         } catch (_) {
             try {
                 if (soundId != null) {
                     howl.pause(soundId);
-                    howl.volume(0, soundId);
                 } else {
                     howl.pause();
-                    howl.volume(0);
                 }
+                this._setTrackVolumeImmediate(howl, soundId, 0);
                 return true;
             } catch (__) {
                 // Revert UI markers if pause could not be applied.
@@ -302,21 +311,15 @@ class AudioEngine {
         try {
             // Pause uses fade-out. If user resumes quickly, kill unfinished fade
             // first, otherwise stale interval can fight with resumed volume.
-            if (soundId != null && typeof howl._stopFade === 'function') {
-                howl._stopFade(soundId);
-            }
+            this._stopTrackFade(howl, soundId);
 
             const fadeIn = (idHint = null) => {
                 try {
                     if (!this.current || this.current.howl !== howl) return;
                     const id = this.current.soundId ?? idHint ?? null;
-                    const startVol = id != null ? howl.volume(id) : howl.volume();
+                    const startVol = this._getTrackVolume(howl, id);
                     if (startVol >= 1) return;
-                    if (id != null) {
-                        howl.fade(startVol, 1, PAUSE_TOGGLE_FADE_MS, id);
-                    } else {
-                        howl.fade(startVol, 1, PAUSE_TOGGLE_FADE_MS);
-                    }
+                    this._fadeTrackVolume(howl, id, startVol, 1, PAUSE_TOGGLE_FADE_MS);
                 } catch (_) { /* ignore */ }
             };
 
@@ -437,6 +440,16 @@ class AudioEngine {
                     requestToken !== this._playRequestToken
                     || this.current?.howl !== howl
                 ) {
+                    // Request was superseded by a newer play(). If this track was
+                    // supposed to crossfade an older one, still retire that older
+                    // howl so we don't end up with layered leftovers.
+                    if (prevHowlForCrossfade) {
+                        this._fadeOutAndUnload(
+                            prevHowlForCrossfade.howl,
+                            prevHowlForCrossfade.soundId ?? null,
+                        );
+                        prevHowlForCrossfade = null;
+                    }
                     try { howl.stop(id); } catch (_) { /* ignore */ }
                     this._safeUnload(howl);
                     return;
@@ -472,7 +485,7 @@ class AudioEngine {
                 const activeId = this.current?.howl === howl
                     ? (this.current.soundId ?? null)
                     : null;
-                const currentVol = activeId != null ? howl.volume(activeId) : howl.volume();
+                const currentVol = this._getTrackVolume(howl, activeId);
                 const fadeId = activeId ?? (typeof id === 'number' ? id : null);
                 const makeAudibleNow = () => {
                     if (
@@ -481,17 +494,12 @@ class AudioEngine {
                     ) {
                         return;
                     }
-                    if (!useFadeIn && hardSwitchGateMs > 0 && currentVol < 1) {
-                        try {
-                            if (fadeId != null) {
-                                howl.volume(1, fadeId);
-                            } else {
-                                howl.volume(1);
-                            }
-                        } catch (_) { /* ignore */ }
-                    }
-                    if (useFadeIn && currentVol < 1) {
+                    const shouldFadeIn = useFadeIn || Boolean(prevHowlForCrossfade);
+                    if (shouldFadeIn) {
+                        this._setTrackVolumeImmediate(howl, fadeId, 0);
                         this._fadeInWhenPlaybackStabilizes(howl, fadeId, fadeInMs);
+                    } else if (hardSwitchGateMs > 0 && currentVol < 1) {
+                        this._setTrackVolumeImmediate(howl, fadeId, 1);
                     }
                     // Crossfade: only NOW (when the new track is actually audible)
                     // do we start fading the previous one. Guarantees no silent
@@ -627,19 +635,29 @@ class AudioEngine {
 
     _safeUnload(howl) {
         this._clearPendingMobileFade(howl);
+        this._clearPendingFadeOut(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
+    }
+
+    _clearPendingFadeOut(howl) {
+        const cleanup = this._pendingFadeOutCleanup.get(howl);
+        if (!cleanup) return;
+        this._pendingFadeOutCleanup.delete(howl);
+        try { cleanup(); } catch (_) { /* ignore */ }
     }
 
     _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
+        this._clearPendingFadeOut(howl);
         try {
-            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
-            if (soundId != null) {
-                howl.fade(startVol, 0, fadeOutMs, soundId);
-            } else {
-                howl.fade(startVol, 0, fadeOutMs);
-            }
-            setTimeout(() => {
+            let finished = false;
+            let fallbackTimer = null;
+            let waitForReadyTimer = null;
+            const stopAndUnload = () => {
+                if (finished) return;
+                finished = true;
+                this._clearPendingMobileFade(howl);
+                this._clearPendingFadeOut(howl);
                 try {
                     if (soundId != null) {
                         howl.stop(soundId);
@@ -647,8 +665,80 @@ class AudioEngine {
                         howl.stop();
                     }
                     howl.unload();
-                } catch (_) { /* already unloaded */ }
-            }, fadeOutMs + 200);
+                } catch (_) {
+                    try { howl.unload(); } catch (__) { /* ignore */ }
+                }
+            };
+
+            const onFade = (fadedId) => {
+                if (soundId != null && typeof fadedId === 'number' && fadedId !== soundId) {
+                    return;
+                }
+                stopAndUnload();
+            };
+
+            const cleanup = () => {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                if (waitForReadyTimer) {
+                    clearTimeout(waitForReadyTimer);
+                    waitForReadyTimer = null;
+                }
+                try {
+                    if (soundId != null) {
+                        howl.off('fade', onFade, soundId);
+                    } else {
+                        howl.off('fade', onFade);
+                    }
+                } catch (_) { /* ignore */ }
+            };
+
+            this._pendingFadeOutCleanup.set(howl, cleanup);
+            const canStartFadeNow = () => {
+                if (finished) return false;
+                const state = typeof howl.state === 'function' ? howl.state() : 'loaded';
+                const isLoaded = state === 'loaded';
+                // Howler can queue fade() while playback Promise lock is active.
+                // On mobile this queue delay is noticeable; stopping by absolute
+                // timer then cuts audio abruptly. Wait until lock clears first.
+                const isPlayLocked = Boolean(howl._playLock);
+                return isLoaded && !isPlayLocked;
+            };
+
+            const startFade = () => {
+                const startVol = this._getTrackVolume(howl, soundId);
+                const fadeStarted = this._fadeTrackVolume(
+                    howl,
+                    soundId,
+                    startVol,
+                    0,
+                    fadeOutMs,
+                    () => onFade(soundId),
+                );
+                if (!fadeStarted) {
+                    stopAndUnload();
+                    return;
+                }
+                fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
+            };
+
+            const readyDeadline = Date.now() + Math.max(2600, fadeOutMs + 900);
+            const waitUntilReady = () => {
+                if (finished) return;
+                if (canStartFadeNow()) {
+                    startFade();
+                    return;
+                }
+                if (Date.now() >= readyDeadline) {
+                    stopAndUnload();
+                    return;
+                }
+                waitForReadyTimer = setTimeout(waitUntilReady, 80);
+            };
+
+            waitUntilReady();
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }
@@ -656,6 +746,9 @@ class AudioEngine {
 
     _cancelPauseTransition() {
         this._pauseOpToken += 1;
+        if (this.current?.howl) {
+            this._clearPendingMobileFade(this.current.howl);
+        }
         if (this._pauseFadeTimer) {
             clearTimeout(this._pauseFadeTimer);
             this._pauseFadeTimer = null;
@@ -699,6 +792,14 @@ class AudioEngine {
         try {
             Howler.volume(next);
         } catch (_) { /* ignore */ }
+        if (this._appleMobileMasterGain) {
+            try {
+                const ctx = this._appleMobileMasterGain.context;
+                const now = ctx.currentTime;
+                this._appleMobileMasterGain.gain.cancelScheduledValues(now);
+                this._appleMobileMasterGain.gain.setValueAtTime(next, now);
+            } catch (_) { /* ignore */ }
+        }
     }
 
     _persistMasterVolume(volume) {
@@ -726,21 +827,117 @@ class AudioEngine {
         return Math.min(1, Math.max(0, n));
     }
 
-    _isPhoneLikeDevice() {
-        if (typeof window === 'undefined') return false;
+    _isAppleMobileDevice() {
+        if (typeof navigator === 'undefined') return false;
         try {
-            const isTouchPrimary = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-            const isNarrowTouch = isTouchPrimary
-                && (window.matchMedia?.('(max-width: 900px)').matches ?? false);
-            const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '';
-            const looksLikeMobileUa = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+            const ua = navigator.userAgent || '';
+            const isIphoneFamily = /iPhone|iPod/i.test(ua);
             const isIpad = /iPad/i.test(ua)
-                || (
-                    typeof navigator !== 'undefined'
-                    && navigator.platform === 'MacIntel'
-                    && navigator.maxTouchPoints > 1
-                );
-            return isNarrowTouch || (looksLikeMobileUa && !isIpad);
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            return isIphoneFamily || isIpad;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    _shouldUseAppleMobileGainPath(howl) {
+        return Boolean(
+            howl
+            && this._isAppleMobileDevice()
+            && howl._webAudio === false,
+        );
+    }
+
+    _ensureAppleMobileAudioContext() {
+        if (this._appleMobileContext && this._appleMobileMasterGain) {
+            return this._appleMobileContext;
+        }
+        if (typeof window === 'undefined') return null;
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        try {
+            const ctx = this._appleMobileContext || new Ctx();
+            const master = this._appleMobileMasterGain || ctx.createGain();
+            if (!this._appleMobileMasterGain) {
+                master.connect(ctx.destination);
+            }
+            master.gain.setValueAtTime(this._masterVolumeApplied, ctx.currentTime);
+            this._appleMobileContext = ctx;
+            this._appleMobileMasterGain = master;
+            return ctx;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    _resumeAppleMobileAudioContext() {
+        const ctx = this._appleMobileContext || this._ensureAppleMobileAudioContext();
+        if (!ctx || typeof ctx.resume !== 'function') return;
+        if (ctx.state === 'running') return;
+        try {
+            const resumed = ctx.resume();
+            if (resumed && typeof resumed.catch === 'function') {
+                resumed.catch(() => {});
+            }
+        } catch (_) { /* ignore */ }
+    }
+
+    _resolveHowlSoundNode(howl, soundId = null) {
+        if (!howl) return null;
+        try {
+            if (soundId != null && typeof howl._soundById === 'function') {
+                const sound = howl._soundById(soundId);
+                if (sound?._node) return sound._node;
+            }
+            if (Array.isArray(howl._sounds) && howl._sounds.length) {
+                const first = howl._sounds.find((s) => s && s._node) || howl._sounds[0];
+                if (first?._node) return first._node;
+            }
+        } catch (_) { /* ignore */ }
+        return null;
+    }
+
+    _ensureAppleMobileGraph(howl, soundId = null) {
+        if (!this._shouldUseAppleMobileGainPath(howl)) return null;
+        const ctx = this._ensureAppleMobileAudioContext();
+        if (!ctx) return null;
+        const node = this._resolveHowlSoundNode(howl, soundId);
+        if (!node) return null;
+
+        let graph = this._appleMobileGraphByNode.get(node);
+        if (!graph) {
+            try {
+                const source = ctx.createMediaElementSource(node);
+                const gain = ctx.createGain();
+                source.connect(gain);
+                if (this._appleMobileMasterGain) {
+                    gain.connect(this._appleMobileMasterGain);
+                } else {
+                    gain.connect(ctx.destination);
+                }
+                gain.gain.setValueAtTime(1, ctx.currentTime);
+                graph = { node, source, gain };
+                this._appleMobileGraphByNode.set(node, graph);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        this._appleMobileGraphByHowl.set(howl, graph);
+        try { node.volume = 1; } catch (_) { /* ignore */ }
+        this._resumeAppleMobileAudioContext();
+        return graph;
+    }
+
+    _setAppleMobileGain(howl, soundId = null, value = 1) {
+        const graph = this._ensureAppleMobileGraph(howl, soundId);
+        if (!graph) return false;
+        const v = this._clampVolume(value);
+        try {
+            const now = graph.gain.context.currentTime;
+            graph.gain.gain.cancelScheduledValues(now);
+            graph.gain.gain.setValueAtTime(v, now);
+            return true;
         } catch (_) {
             return false;
         }
@@ -753,110 +950,143 @@ class AudioEngine {
         try { cleanup(); } catch (_) { /* ignore */ }
     }
 
-    _fadeInWhenPlaybackStabilizes(howl, soundId, durationMs) {
-        const runNativeFade = (id = null) => {
+    _getTrackVolume(howl, soundId = null) {
+        const graph = this._appleMobileGraphByHowl.get(howl)
+            || this._ensureAppleMobileGraph(howl, soundId);
+        if (graph) {
             try {
-                if (id != null) {
-                    howl.fade(0, 1, durationMs, id);
-                } else {
-                    howl.fade(0, 1, durationMs);
-                }
+                return this._clampVolume(graph.gain.gain.value);
             } catch (_) { /* ignore */ }
-        };
-
-        if (!this._isPhoneLikeDevice()) {
-            runNativeFade(soundId ?? null);
-            return;
         }
-
-        const sound = (typeof howl._soundById === 'function' && soundId != null)
-            ? howl._soundById(soundId)
-            : null;
-        const node = sound?._node;
-        if (!node || typeof node.addEventListener !== 'function') {
-            runNativeFade(soundId ?? null);
-            return;
+        try {
+            return this._clampVolume(soundId != null ? howl.volume(soundId) : howl.volume());
+        } catch (_) {
+            return 1;
         }
+    }
 
+    _setTrackVolumeImmediate(howl, soundId = null, value = 1) {
+        const v = this._clampVolume(value);
+        if (this._setAppleMobileGain(howl, soundId, v)) {
+            return true;
+        }
+        try {
+            if (soundId != null) {
+                howl.volume(v, soundId);
+            } else {
+                howl.volume(v);
+            }
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    _stopTrackFade(howl, soundId = null) {
         this._clearPendingMobileFade(howl);
-        let started = false;
-        let fallbackTimer = null;
-        let rampTimer = null;
+        try {
+            if (soundId != null && typeof howl._stopFade === 'function') {
+                howl._stopFade(soundId);
+            }
+        } catch (_) { /* ignore */ }
+    }
 
-        const getActiveId = () => (this.current?.howl === howl
-            ? (this.current.soundId ?? soundId ?? null)
-            : (soundId ?? null));
+    _fadeTrackVolume(howl, soundId = null, from, to, durationMs, onComplete = null) {
+        const start = this._clampVolume(from);
+        const end = this._clampVolume(to);
+        const duration = Math.max(0, Number(durationMs) || 0);
+        this._stopTrackFade(howl, soundId);
 
-        const applyVolume = (id, value) => {
+        const graph = this._ensureAppleMobileGraph(howl, soundId);
+        if (graph) {
+            let completionTimer = null;
+            const cleanup = () => {
+                if (completionTimer) {
+                    clearTimeout(completionTimer);
+                    completionTimer = null;
+                }
+            };
+            this._pendingMobileFadeCleanup.set(howl, cleanup);
             try {
-                if (id != null) {
-                    howl.volume(value, id);
+                const now = graph.gain.context.currentTime;
+                graph.gain.gain.cancelScheduledValues(now);
+                graph.gain.gain.setValueAtTime(start, now);
+                graph.gain.gain.linearRampToValueAtTime(end, now + (duration / 1000));
+            } catch (_) {
+                this._clearPendingMobileFade(howl);
+                return false;
+            }
+            completionTimer = setTimeout(() => {
+                const activeCleanup = this._pendingMobileFadeCleanup.get(howl);
+                if (activeCleanup !== cleanup) return;
+                try {
+                    const now = graph.gain.context.currentTime;
+                    graph.gain.gain.cancelScheduledValues(now);
+                    graph.gain.gain.setValueAtTime(end, now);
+                } catch (_) { /* ignore */ }
+                this._clearPendingMobileFade(howl);
+                if (typeof onComplete === 'function') {
+                    onComplete();
+                }
+            }, duration + APPLE_MOBILE_FADE_SETTLE_MS);
+            return true;
+        }
+
+        let completionTimer = null;
+        let onFade = null;
+        const cleanup = () => {
+            if (completionTimer) {
+                clearTimeout(completionTimer);
+                completionTimer = null;
+            }
+            if (!onFade) return;
+            try {
+                if (soundId != null) {
+                    howl.off('fade', onFade, soundId);
                 } else {
-                    howl.volume(value);
+                    howl.off('fade', onFade);
                 }
             } catch (_) { /* ignore */ }
         };
-
-        const tearDown = () => {
-            try { node.removeEventListener('timeupdate', onTimeUpdate); } catch (_) { /* ignore */ }
-            if (fallbackTimer) {
-                clearTimeout(fallbackTimer);
-                fallbackTimer = null;
-            }
-            if (rampTimer) {
-                clearInterval(rampTimer);
-                rampTimer = null;
-            }
-        };
-
-        const finish = () => {
-            tearDown();
-            this._pendingMobileFadeCleanup.delete(howl);
-        };
-
-        const startManualFade = () => {
-            if (started) return;
-            started = true;
-            if (!this.current || this.current.howl !== howl) {
-                finish();
-                return;
-            }
-            const activeId = getActiveId();
-            applyVolume(activeId, 0);
-            const startedAt = Date.now();
-            rampTimer = setInterval(() => {
-                if (!this.current || this.current.howl !== howl) {
-                    finish();
+        if (typeof onComplete === 'function') {
+            onFade = (fadedId) => {
+                if (soundId != null && typeof fadedId === 'number' && fadedId !== soundId) {
                     return;
                 }
-                const id = getActiveId();
-                const elapsed = Date.now() - startedAt;
-                const nextVol = Math.min(1, Math.max(0, elapsed / durationMs));
-                applyVolume(id, nextVol);
-                if (nextVol >= 1) {
-                    finish();
+                this._clearPendingMobileFade(howl);
+                onComplete();
+            };
+            this._pendingMobileFadeCleanup.set(howl, cleanup);
+            try {
+                if (soundId != null) {
+                    howl.once('fade', onFade, soundId);
+                } else {
+                    howl.once('fade', onFade);
                 }
-            }, MOBILE_FADE_INTERVAL_MS);
-        };
-
-        const startFade = () => {
-            if (!this.current || this.current.howl !== howl) return;
-            startManualFade();
-        };
-
-        const onTimeUpdate = () => {
-            startFade();
-        };
-
-        try {
-            node.addEventListener('timeupdate', onTimeUpdate, { once: true });
-        } catch (_) {
-            runNativeFade(soundId ?? null);
-            return;
+            } catch (_) { /* ignore */ }
+            completionTimer = setTimeout(() => {
+                const activeCleanup = this._pendingMobileFadeCleanup.get(howl);
+                if (activeCleanup !== cleanup) return;
+                this._clearPendingMobileFade(howl);
+                onComplete();
+            }, Math.max(MOBILE_FADE_START_FALLBACK_MS, duration + APPLE_MOBILE_FADE_SETTLE_MS));
         }
 
-        fallbackTimer = setTimeout(startFade, MOBILE_FADE_START_FALLBACK_MS);
-        this._pendingMobileFadeCleanup.set(howl, tearDown);
+        try {
+            if (soundId != null) {
+                howl.fade(start, end, duration, soundId);
+            } else {
+                howl.fade(start, end, duration);
+            }
+            return true;
+        } catch (_) {
+            this._clearPendingMobileFade(howl);
+            return false;
+        }
+    }
+
+    _fadeInWhenPlaybackStabilizes(howl, soundId, durationMs) {
+        this._fadeTrackVolume(howl, soundId ?? null, 0, 1, durationMs);
     }
 }
 

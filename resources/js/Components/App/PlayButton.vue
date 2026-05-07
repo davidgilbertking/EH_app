@@ -104,7 +104,12 @@ function tap() {
         engine.stop();
         return;
     }
-    engine.play({ folderSlug: props.folderSlug, mode: props.mode, label: props.label });
+    engine.play({
+        folderSlug: props.folderSlug,
+        mode: props.mode,
+        label: props.label,
+        crossfade: true,
+    });
 }
 
 function longPress() {
