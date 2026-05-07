@@ -26,9 +26,9 @@ import { reactive } from 'vue';
 // tail of the old track and the start of the new one stays minimal — the
 // new track still needs ~500-1500ms to fetch metadata + buffer over HTTP,
 // so by the time it actually starts, the old one is already mostly gone.
-const FADE_OUT_MS = 2800;
+const FADE_OUT_MS = 1800;
 const FADE_IN_MS = 1800;
-const HARD_SWITCH_FADE_OUT_MS = 2400;
+const HARD_SWITCH_FADE_OUT_MS = 1800;
 const HARD_SWITCH_FADE_IN_MS = 1800;
 const PAUSE_TOGGLE_FADE_MS = 1250;
 const RANDOM_POS_MAX_FRACTION = 0.6;
@@ -498,7 +498,8 @@ class AudioEngine {
                             }
                         } catch (_) { /* ignore */ }
                     }
-                    if (useFadeIn && currentVol < 1) {
+                    const shouldFadeIn = useFadeIn || Boolean(prevHowlForCrossfade);
+                    if (shouldFadeIn && currentVol < 1) {
                         this._fadeInWhenPlaybackStabilizes(howl, fadeId, fadeInMs);
                     }
                     // Crossfade: only NOW (when the new track is actually audible)
@@ -652,6 +653,7 @@ class AudioEngine {
         try {
             let finished = false;
             let fallbackTimer = null;
+            let waitForReadyTimer = null;
             const stopAndUnload = () => {
                 if (finished) return;
                 finished = true;
@@ -680,6 +682,10 @@ class AudioEngine {
                     clearTimeout(fallbackTimer);
                     fallbackTimer = null;
                 }
+                if (waitForReadyTimer) {
+                    clearTimeout(waitForReadyTimer);
+                    waitForReadyTimer = null;
+                }
                 try {
                     if (soundId != null) {
                         howl.off('fade', onFade, soundId);
@@ -690,15 +696,44 @@ class AudioEngine {
             };
 
             this._pendingFadeOutCleanup.set(howl, cleanup);
-            const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
-            if (soundId != null) {
-                howl.once('fade', onFade, soundId);
-                howl.fade(startVol, 0, fadeOutMs, soundId);
-            } else {
-                howl.once('fade', onFade);
-                howl.fade(startVol, 0, fadeOutMs);
-            }
-            fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
+            const canStartFadeNow = () => {
+                if (finished) return false;
+                const state = typeof howl.state === 'function' ? howl.state() : 'loaded';
+                const isLoaded = state === 'loaded';
+                // Howler can queue fade() while playback Promise lock is active.
+                // On mobile this queue delay is noticeable; stopping by absolute
+                // timer then cuts audio abruptly. Wait until lock clears first.
+                const isPlayLocked = Boolean(howl._playLock);
+                return isLoaded && !isPlayLocked;
+            };
+
+            const startFade = () => {
+                const startVol = soundId != null ? howl.volume(soundId) : howl.volume();
+                if (soundId != null) {
+                    howl.once('fade', onFade, soundId);
+                    howl.fade(startVol, 0, fadeOutMs, soundId);
+                } else {
+                    howl.once('fade', onFade);
+                    howl.fade(startVol, 0, fadeOutMs);
+                }
+                fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
+            };
+
+            const readyDeadline = Date.now() + Math.max(2600, fadeOutMs + 900);
+            const waitUntilReady = () => {
+                if (finished) return;
+                if (canStartFadeNow()) {
+                    startFade();
+                    return;
+                }
+                if (Date.now() >= readyDeadline) {
+                    stopAndUnload();
+                    return;
+                }
+                waitForReadyTimer = setTimeout(waitUntilReady, 80);
+            };
+
+            waitUntilReady();
         } catch (_) {
             try { howl.unload(); } catch (__) { /* ignore */ }
         }
