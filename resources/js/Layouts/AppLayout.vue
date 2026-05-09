@@ -175,12 +175,17 @@ function unlockIpadBodyScroll() {
 
 function onDocumentTouchMove(e) {
     if (!isIpadDevice.value) return;
+    const target = e.target;
+    if (target instanceof Element) {
+        const allowTouchMove = target.closest('[data-ios-touchmove-allow="1"]');
+        if (allowTouchMove) return;
+    }
+
     if (!isIpadScrollableRoute.value) {
         if (e.cancelable) e.preventDefault();
         return;
     }
 
-    const target = e.target;
     if (!(target instanceof Node) || !mainEl.value?.contains(target)) {
         if (e.cancelable) e.preventDefault();
     }
