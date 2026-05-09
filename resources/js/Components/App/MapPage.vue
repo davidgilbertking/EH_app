@@ -74,6 +74,8 @@ function createMapBindings(h, pulseKey) {
     let startX = 0;
     let startY = 0;
     let touchId = null;
+    let activePointerId = null;
+    const hasPointerApi = typeof window !== 'undefined' && 'PointerEvent' in window;
 
     const clear = () => {
         if (timer) {
@@ -119,20 +121,39 @@ function createMapBindings(h, pulseKey) {
 
     return {
         onPointerdown: (e) => {
-            if (e.pointerType === 'touch') return;
+            if (e.isPrimary === false) return;
+            activePointerId = e.pointerId ?? null;
+            if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
+            if (activePointerId != null) {
+                e.currentTarget?.setPointerCapture?.(activePointerId);
+            }
             start(e.clientX ?? 0, e.clientY ?? 0);
         },
         onPointermove: (e) => {
-            if (e.pointerType === 'touch') return;
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
             move(e.clientX ?? 0, e.clientY ?? 0);
         },
         onPointerup: (e) => {
-            if (e.pointerType === 'touch') return;
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
+            if (activePointerId != null) {
+                e.currentTarget?.releasePointerCapture?.(activePointerId);
+            }
+            activePointerId = null;
             end();
         },
-        onPointercancel: clear,
-        onPointerleave: clear,
+        onPointercancel: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            activePointerId = null;
+            clear();
+        },
+        onPointerleave: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            // Keep touch/pen gestures alive outside bounds while pressed.
+            if (e.pointerType === 'mouse') clear();
+        },
         onTouchstart: (e) => {
+            if (hasPointerApi) return;
             const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
             if (!t) return;
             touchId = t.identifier;
@@ -140,12 +161,14 @@ function createMapBindings(h, pulseKey) {
             start(t.clientX ?? 0, t.clientY ?? 0);
         },
         onTouchmove: (e) => {
+            if (hasPointerApi) return;
             const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
             if (!t) return;
             if (e.cancelable) e.preventDefault();
             move(t.clientX ?? 0, t.clientY ?? 0);
         },
         onTouchend: (e) => {
+            if (hasPointerApi) return;
             const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
             if (!t) return;
             if (e.cancelable) e.preventDefault();
@@ -153,6 +176,7 @@ function createMapBindings(h, pulseKey) {
             end();
         },
         onTouchcancel: () => {
+            if (hasPointerApi) return;
             touchId = null;
             clear();
         },
