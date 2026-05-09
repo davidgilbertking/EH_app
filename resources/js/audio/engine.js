@@ -383,6 +383,7 @@ class AudioEngine {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
         const useHtml5Streaming = true;
+        const isIpadDevice = this._isIpadDevice();
         const randomStartSec = useRandomPos
             ? this._pickRandomStartSec(durationSec)
             : null;
@@ -391,6 +392,9 @@ class AudioEngine {
             && useRandomPos
             && Number.isFinite(randomStartSec)
             && randomStartSec > 0
+            // iPad Safari can terminate long playback shortly after start when
+            // media fragment offsets are used on streamed tracks.
+            && !isIpadDevice
         );
         const streamSrc = useRandomStartFragment
             ? `${streamUrl}#t=${randomStartSec.toFixed(3)}`
@@ -825,13 +829,25 @@ class AudioEngine {
     }
 
     _isAppleMobileDevice() {
+        return this._isIphoneFamilyDevice() || this._isIpadDevice();
+    }
+
+    _isIphoneFamilyDevice() {
         if (typeof navigator === 'undefined') return false;
         try {
             const ua = navigator.userAgent || '';
-            const isIphoneFamily = /iPhone|iPod/i.test(ua);
-            const isIpad = /iPad/i.test(ua)
+            return /iPhone|iPod/i.test(ua);
+        } catch (_) {
+            return false;
+        }
+    }
+
+    _isIpadDevice() {
+        if (typeof navigator === 'undefined') return false;
+        try {
+            const ua = navigator.userAgent || '';
+            return /iPad/i.test(ua)
                 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            return isIphoneFamily || isIpad;
         } catch (_) {
             return false;
         }
@@ -840,7 +856,9 @@ class AudioEngine {
     _shouldUseAppleMobileGainPath(howl) {
         return Boolean(
             howl
-            && this._isAppleMobileDevice()
+            // iPad Safari has shown instability with createMediaElementSource
+            // on long streamed tracks. Keep native Howler fade path there.
+            && this._isIphoneFamilyDevice()
             && howl._webAudio === false,
         );
     }
