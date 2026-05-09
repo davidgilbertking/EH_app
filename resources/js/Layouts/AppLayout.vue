@@ -31,6 +31,15 @@ const imageWarmupSessionKey = computed(() => {
 });
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
 const isOtherWorldRoute = computed(() => path.value.startsWith('/encounters/other-world'));
+const isIpadDevice = ref(false);
+const isIpadScrollableRoute = computed(() =>
+    isInvestigatorsRoute.value || isOtherWorldRoute.value
+);
+const rootClass = computed(() =>
+    isIpadDevice.value
+        ? 'h-[100dvh] min-h-0 overflow-x-clip overflow-y-hidden overscroll-none text-neutral-100 select-none'
+        : 'h-[100dvh] min-h-0 overflow-x-clip text-neutral-100 select-none'
+);
 const cornerControlClass = computed(() => (
     isHome.value
         ? 'opacity-0 pointer-events-none ui-fade-500'
@@ -40,7 +49,13 @@ const showRotateLandscapePrompt = ref(false);
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
 const mainClass = computed(() =>
-    isInvestigatorsRoute.value
+    isIpadDevice.value
+        ? (isIpadScrollableRoute.value
+            ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden [overscroll-behavior-y:contain] [overscroll-behavior-x:none]'
+            : (isHome.value
+                ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.1rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden [overscroll-behavior:none]'
+                : 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden [overscroll-behavior:none]'))
+        : isInvestigatorsRoute.value
         ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
         : isOtherWorldRoute.value
             ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
@@ -92,6 +107,16 @@ function syncRotateLandscapePrompt() {
     const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches;
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     showRotateLandscapePrompt.value = isPhone && isTouchPrimary && isPortrait;
+}
+
+function syncIpadDeviceFlag() {
+    if (typeof navigator === 'undefined') {
+        isIpadDevice.value = false;
+        return;
+    }
+    const ua = navigator.userAgent || '';
+    isIpadDevice.value = /iPad/i.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 function warmImageCacheOncePerSession(urls) {
@@ -234,6 +259,7 @@ function onBeforeHistoryBackNav() {
 }
 
 onMounted(() => {
+    syncIpadDeviceFlag();
     syncHeaderHeight();
     syncUiScale();
     syncRotateLandscapePrompt();
@@ -245,7 +271,9 @@ onMounted(() => {
     window.addEventListener('resize', syncHeaderHeight);
     window.addEventListener('resize', syncUiScale);
     window.addEventListener('resize', syncRotateLandscapePrompt);
+    window.addEventListener('resize', syncIpadDeviceFlag);
     window.addEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.addEventListener('orientationchange', syncIpadDeviceFlag);
     window.addEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.addEventListener('popstate', onHistoryPopState);
 });
@@ -255,7 +283,9 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', syncHeaderHeight);
     window.removeEventListener('resize', syncUiScale);
     window.removeEventListener('resize', syncRotateLandscapePrompt);
+    window.removeEventListener('resize', syncIpadDeviceFlag);
     window.removeEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.removeEventListener('orientationchange', syncIpadDeviceFlag);
     window.removeEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.removeEventListener('popstate', onHistoryPopState);
     stopSuppressHistoryBgSnapshot();
@@ -394,7 +424,7 @@ watch(preloadImageUrls, (urls) => {
 </script>
 
 <template>
-    <div ref="rootEl" class="h-[100dvh] min-h-0 overflow-x-clip text-neutral-100 select-none">
+    <div ref="rootEl" :class="rootClass">
         <!--
             Ancient-One background + dim overlay.
             Both layers start BELOW the header (top: var(--header-h)) so the
