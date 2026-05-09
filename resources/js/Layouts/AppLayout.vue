@@ -30,6 +30,7 @@ const imageWarmupSessionKey = computed(() => {
     return `eh:image-warmup:v1:user:${userId}`;
 });
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
+const isOtherWorldRoute = computed(() => path.value.startsWith('/encounters/other-world'));
 const cornerControlClass = computed(() => (
     isHome.value
         ? 'opacity-0 pointer-events-none ui-fade-500'
@@ -41,6 +42,8 @@ const BASE_HEIGHT = 982;
 const mainClass = computed(() =>
     isInvestigatorsRoute.value
         ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
+        : isOtherWorldRoute.value
+            ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
         : (isHome.value
             ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.1rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden'
             : 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden')
