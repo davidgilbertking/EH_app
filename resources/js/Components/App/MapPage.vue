@@ -1,6 +1,5 @@
 <script setup>
 import { engine } from '@/audio/engine';
-import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -21,6 +20,9 @@ const props = defineProps({
 
 const page = usePage();
 const pulseByKey = reactive({});
+const MAP_LONG_PRESS_MS = 450;
+const MAP_MOVE_TOLERANCE_PX = 24;
+const bindingsCache = new Map();
 
 function pulseBlobSaved(key) {
     if (!key) return;
@@ -30,46 +32,151 @@ function pulseBlobSaved(key) {
     }, 360);
 }
 
-function makeBindings(h, pulseKey) {
-    return useLongPress({
-        onTap: () => {
-            if (engine.state.playingFolder === h.folderSlug) {
-                engine.stop();
-                return;
-            }
-            engine.play({
-                folderSlug: h.folderSlug,
-                mode: h.mode || null,
-                label: h.label,
-                crossfade: true,
-            });
-        },
-        onLongPress: () => {
-            const current = page.props.gameState?.blobs ?? [];
-            if (current.find((b) => b.folderSlug === h.folderSlug)) return;
-            const updated = [...current, {
-                id: makeBlobId(),
-                label: h.label,
-                folderSlug: h.folderSlug,
-                mode: h.mode || null,
-                tone: h.tone || null,
-                imageUrl: h.imageUrl || null,
-            }];
-            router.post(
-                '/state/blobs',
-                { blobs: updated },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    only: ['gameState'],
-                    onSuccess: () => pulseBlobSaved(pulseKey),
-                }
-            );
-        },
-        threshold: 450,
-        touchAction: 'none',
-        preventDefaultOnStart: true,
+function playHotspot(h) {
+    if (engine.state.playingFolder === h.folderSlug) {
+        engine.stop();
+        return;
+    }
+    engine.play({
+        folderSlug: h.folderSlug,
+        mode: h.mode || null,
+        label: h.label,
+        crossfade: true,
     });
+}
+
+function addHotspotBlob(h, pulseKey) {
+    const current = page.props.gameState?.blobs ?? [];
+    if (current.find((b) => b.folderSlug === h.folderSlug)) return;
+    const updated = [...current, {
+        id: makeBlobId(),
+        label: h.label,
+        folderSlug: h.folderSlug,
+        mode: h.mode || null,
+        tone: h.tone || null,
+        imageUrl: h.imageUrl || null,
+    }];
+    router.post(
+        '/state/blobs',
+        { blobs: updated },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['gameState'],
+            onSuccess: () => pulseBlobSaved(pulseKey),
+        }
+    );
+}
+
+function createMapBindings(h, pulseKey) {
+    let timer = null;
+    let firedLong = false;
+    let startX = 0;
+    let startY = 0;
+    let touchId = null;
+
+    const clear = () => {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+    };
+
+    const start = (x, y) => {
+        firedLong = false;
+        startX = x;
+        startY = y;
+        clear();
+        timer = setTimeout(() => {
+            firedLong = true;
+            timer = null;
+            addHotspotBlob(h, pulseKey);
+        }, MAP_LONG_PRESS_MS);
+    };
+
+    const move = (x, y) => {
+        if (!timer) return;
+        if (Math.hypot(x - startX, y - startY) > MAP_MOVE_TOLERANCE_PX) {
+            clear();
+        }
+    };
+
+    const end = () => {
+        const wasTimerActive = Boolean(timer);
+        clear();
+        if (firedLong) return;
+        if (wasTimerActive) playHotspot(h);
+    };
+
+    const findTrackedTouch = (touchList) => {
+        if (!touchList) return null;
+        for (let i = 0; i < touchList.length; i += 1) {
+            const t = touchList[i];
+            if (touchId == null || t.identifier === touchId) return t;
+        }
+        return null;
+    };
+
+    return {
+        onPointerdown: (e) => {
+            if (e.pointerType === 'touch') return;
+            start(e.clientX ?? 0, e.clientY ?? 0);
+        },
+        onPointermove: (e) => {
+            if (e.pointerType === 'touch') return;
+            move(e.clientX ?? 0, e.clientY ?? 0);
+        },
+        onPointerup: (e) => {
+            if (e.pointerType === 'touch') return;
+            end();
+        },
+        onPointercancel: clear,
+        onPointerleave: clear,
+        onTouchstart: (e) => {
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            touchId = t.identifier;
+            if (e.cancelable) e.preventDefault();
+            start(t.clientX ?? 0, t.clientY ?? 0);
+        },
+        onTouchmove: (e) => {
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            if (e.cancelable) e.preventDefault();
+            move(t.clientX ?? 0, t.clientY ?? 0);
+        },
+        onTouchend: (e) => {
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            if (e.cancelable) e.preventDefault();
+            touchId = null;
+            end();
+        },
+        onTouchcancel: () => {
+            touchId = null;
+            clear();
+        },
+        onContextmenu: (e) => {
+            e.preventDefault();
+        },
+        onDragstart: (e) => {
+            e.preventDefault();
+        },
+        style: {
+            WebkitTouchCallout: 'none',
+            userSelect: 'none',
+            touchAction: 'none',
+        },
+    };
+}
+
+function makeBindings(h, pulseKey) {
+    const key = String(pulseKey ?? h.folderSlug ?? '');
+    const cached = bindingsCache.get(key);
+    if (cached) return cached;
+    const created = createMapBindings(h, pulseKey);
+    bindingsCache.set(key, created);
+    return created;
 }
 
 function hotspotSizing(h) {

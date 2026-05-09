@@ -23,10 +23,6 @@ export function useLongPress({
     let firedLong = false;
     let startX = 0;
     let startY = 0;
-    let pointerActive = false;
-    let touchActive = false;
-    let touchId = null;
-    let suppressPointerUntilTs = 0;
 
     const clear = () => {
         if (timer) {
@@ -35,101 +31,38 @@ export function useLongPress({
         }
     };
 
-    const startPress = (x, y, event) => {
+    const onPointerDown = (e) => {
+        if (preventDefaultOnStart && e.cancelable) e.preventDefault();
         firedLong = false;
-        startX = x ?? 0;
-        startY = y ?? 0;
+        startX = e.clientX ?? 0;
+        startY = e.clientY ?? 0;
         clear();
         timer = setTimeout(() => {
             firedLong = true;
             timer = null;
-            onLongPress?.(event);
+            onLongPress?.(e);
         }, threshold);
     };
 
-    const movePress = (x, y) => {
+    const onPointerMove = (e) => {
         if (!timer) return;
-        const dx = (x ?? 0) - startX;
-        const dy = (y ?? 0) - startY;
+        const dx = (e.clientX ?? 0) - startX;
+        const dy = (e.clientY ?? 0) - startY;
         if (Math.hypot(dx, dy) > moveTolerance) clear();
     };
 
-    const endPress = (event) => {
+    const onPointerUp = (e) => {
         const wasTimerActive = !!timer;
         clear();
         if (firedLong) return;
-        if (wasTimerActive) onTap?.(event);
-    };
-
-    const onPointerDown = (e) => {
-        if (touchActive || Date.now() < suppressPointerUntilTs) return;
-        if (preventDefaultOnStart && e.cancelable) e.preventDefault();
-        pointerActive = true;
-        startPress(e.clientX, e.clientY, e);
-    };
-
-    const onPointerMove = (e) => {
-        if (!pointerActive || touchActive || Date.now() < suppressPointerUntilTs) return;
-        movePress(e.clientX, e.clientY);
-    };
-
-    const onPointerUp = (e) => {
-        if (!pointerActive) return;
-        pointerActive = false;
-        endPress(e);
+        if (wasTimerActive) onTap?.(e);
     };
 
     const onPointerCancel = () => {
-        pointerActive = false;
         clear();
     };
 
     const onPointerLeave = () => {
-        pointerActive = false;
-        clear();
-    };
-
-    const findTouch = (touchList) => {
-        if (!touchList) return null;
-        for (let i = 0; i < touchList.length; i += 1) {
-            const t = touchList[i];
-            if (touchId == null || t.identifier === touchId) return t;
-        }
-        return null;
-    };
-
-    const onTouchStart = (e) => {
-        if (touchActive) return;
-        const t = findTouch(e.changedTouches) || findTouch(e.touches);
-        if (!t) return;
-        if (preventDefaultOnStart && e.cancelable) e.preventDefault();
-        touchActive = true;
-        touchId = t.identifier;
-        pointerActive = false;
-        suppressPointerUntilTs = Date.now() + 700;
-        startPress(t.clientX, t.clientY, e);
-    };
-
-    const onTouchMove = (e) => {
-        if (!touchActive) return;
-        const t = findTouch(e.changedTouches) || findTouch(e.touches);
-        if (!t) return;
-        if (preventDefaultOnStart && e.cancelable) e.preventDefault();
-        movePress(t.clientX, t.clientY);
-    };
-
-    const onTouchEnd = (e) => {
-        if (!touchActive) return;
-        const t = findTouch(e.changedTouches) || findTouch(e.touches);
-        if (!t) return;
-        touchActive = false;
-        touchId = null;
-        endPress(e);
-    };
-
-    const onTouchCancel = () => {
-        touchActive = false;
-        touchId = null;
         clear();
     };
 
@@ -140,10 +73,9 @@ export function useLongPress({
 
     return {
         onPointerdown: onPointerDown,
-        onTouchstart: onTouchStart,
-        onTouchmove: onTouchMove,
-        onTouchend: onTouchEnd,
-        onTouchcancel: onTouchCancel,
+        onTouchstart: (e) => {
+            if (preventDefaultOnStart && e.cancelable) e.preventDefault();
+        },
         onDragstart: (e) => {
             e.preventDefault();
         },
