@@ -66,8 +66,9 @@ function makeBindings(h, pulseKey) {
                 }
             );
         },
-        threshold: 1000,
+        threshold: 450,
         touchAction: 'none',
+        preventDefaultOnStart: true,
     });
 }
 

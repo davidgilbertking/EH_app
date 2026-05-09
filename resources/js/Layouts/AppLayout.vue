@@ -75,6 +75,7 @@ const mainClass = computed(() =>
 // pixel offsets that break when the header wraps onto two lines.
 const rootEl = ref(null);
 const headerWrapEl = ref(null);
+const mainEl = ref(null);
 let resizeObserver = null;
 let ipadBodyLockSnapshot = null;
 let bgFadeTimer = null;
@@ -170,6 +171,19 @@ function unlockIpadBodyScroll() {
     body.style.overscrollBehavior = snapshot.bodyOverscrollBehavior;
 
     window.scrollTo(0, snapshot.scrollY || 0);
+}
+
+function onDocumentTouchMove(e) {
+    if (!isIpadDevice.value) return;
+    if (!isIpadScrollableRoute.value) {
+        if (e.cancelable) e.preventDefault();
+        return;
+    }
+
+    const target = e.target;
+    if (!(target instanceof Node) || !mainEl.value?.contains(target)) {
+        if (e.cancelable) e.preventDefault();
+    }
 }
 
 function warmImageCacheOncePerSession(urls) {
@@ -330,6 +344,7 @@ onMounted(() => {
     window.addEventListener('orientationchange', syncIpadDeviceFlag);
     window.addEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.addEventListener('popstate', onHistoryPopState);
+    document.addEventListener('touchmove', onDocumentTouchMove, { passive: false });
 });
 
 onBeforeUnmount(() => {
@@ -342,6 +357,7 @@ onBeforeUnmount(() => {
     window.removeEventListener('orientationchange', syncIpadDeviceFlag);
     window.removeEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.removeEventListener('popstate', onHistoryPopState);
+    document.removeEventListener('touchmove', onDocumentTouchMove);
     unlockIpadBodyScroll();
     stopSuppressHistoryBgSnapshot();
     clearBgFadeWork();
@@ -529,7 +545,7 @@ watch(preloadImageUrls, (urls) => {
         ></div>
 
         <div ref="headerWrapEl" :class="headerWrapClass">
-            <AppHeader />
+            <AppHeader :static-position="isIpadDevice" />
         </div>
         <div v-if="isIpadDevice" :style="{ height: 'var(--header-h, 0px)' }"></div>
 
@@ -538,7 +554,7 @@ watch(preloadImageUrls, (urls) => {
         <PauseToggleButton />
         <VolumeSlider />
 
-        <main :class="mainClass">
+        <main ref="mainEl" :class="mainClass">
             <Transition name="ui-page-fade" mode="out-in">
                 <div :key="$page.url" class="min-h-full">
                     <slot />

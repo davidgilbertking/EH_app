@@ -17,6 +17,7 @@ export function useLongPress({
     threshold = 600,
     moveTolerance = 28,
     touchAction = 'manipulation',
+    preventDefaultOnStart = false,
 }) {
     let timer = null;
     let firedLong = false;
@@ -31,6 +32,7 @@ export function useLongPress({
     };
 
     const onPointerDown = (e) => {
+        if (preventDefaultOnStart && e.cancelable) e.preventDefault();
         firedLong = false;
         startX = e.clientX ?? 0;
         startY = e.clientY ?? 0;
@@ -71,6 +73,12 @@ export function useLongPress({
 
     return {
         onPointerdown: onPointerDown,
+        onTouchstart: (e) => {
+            if (preventDefaultOnStart && e.cancelable) e.preventDefault();
+        },
+        onDragstart: (e) => {
+            e.preventDefault();
+        },
         onPointermove: onPointerMove,
         onPointerup: onPointerUp,
         onPointercancel: onPointerCancel,
