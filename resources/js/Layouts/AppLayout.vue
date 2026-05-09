@@ -76,6 +76,7 @@ const mainClass = computed(() =>
 const rootEl = ref(null);
 const headerWrapEl = ref(null);
 let resizeObserver = null;
+let ipadBodyLockSnapshot = null;
 let bgFadeTimer = null;
 let bgFadeRafA = null;
 let bgFadeRafB = null;
@@ -122,6 +123,53 @@ function syncIpadDeviceFlag() {
     const ua = navigator.userAgent || '';
     isIpadDevice.value = /iPad/i.test(ua)
         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function lockIpadBodyScroll() {
+    if (typeof window === 'undefined' || !isIpadDevice.value || ipadBodyLockSnapshot) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    ipadBodyLockSnapshot = {
+        scrollY,
+        htmlOverflow: html.style.overflow,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyRight: body.style.right,
+        bodyWidth: body.style.width,
+        bodyOverflow: body.style.overflow,
+        bodyOverscrollBehavior: body.style.overscrollBehavior,
+    };
+
+    html.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+}
+
+function unlockIpadBodyScroll() {
+    if (typeof window === 'undefined' || !ipadBodyLockSnapshot) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const snapshot = ipadBodyLockSnapshot;
+    ipadBodyLockSnapshot = null;
+
+    html.style.overflow = snapshot.htmlOverflow;
+    body.style.position = snapshot.bodyPosition;
+    body.style.top = snapshot.bodyTop;
+    body.style.left = snapshot.bodyLeft;
+    body.style.right = snapshot.bodyRight;
+    body.style.width = snapshot.bodyWidth;
+    body.style.overflow = snapshot.bodyOverflow;
+    body.style.overscrollBehavior = snapshot.bodyOverscrollBehavior;
+
+    window.scrollTo(0, snapshot.scrollY || 0);
 }
 
 function warmImageCacheOncePerSession(urls) {
@@ -265,6 +313,7 @@ function onBeforeHistoryBackNav() {
 
 onMounted(() => {
     syncIpadDeviceFlag();
+    lockIpadBodyScroll();
     syncHeaderHeight();
     syncUiScale();
     syncRotateLandscapePrompt();
@@ -293,8 +342,17 @@ onBeforeUnmount(() => {
     window.removeEventListener('orientationchange', syncIpadDeviceFlag);
     window.removeEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.removeEventListener('popstate', onHistoryPopState);
+    unlockIpadBodyScroll();
     stopSuppressHistoryBgSnapshot();
     clearBgFadeWork();
+});
+
+watch(isIpadDevice, (next) => {
+    if (next) {
+        lockIpadBodyScroll();
+    } else {
+        unlockIpadBodyScroll();
+    }
 });
 
 // Route-dependent overlay:

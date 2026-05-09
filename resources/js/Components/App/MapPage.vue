@@ -67,6 +67,7 @@ function makeBindings(h, pulseKey) {
             );
         },
         threshold: 1000,
+        touchAction: 'none',
     });
 }
 
@@ -84,8 +85,9 @@ function hotspotSizing(h) {
                 v-if="backgroundUrl"
                 :src="backgroundUrl"
                 alt=""
-                class="block w-auto rounded-2xl border border-neutral-800 shadow-inner"
-                style="max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem); object-fit: contain"
+                class="pointer-events-none block w-auto select-none rounded-2xl border border-neutral-800 shadow-inner"
+                draggable="false"
+                style="-webkit-touch-callout: none; max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem); object-fit: contain"
             />
             <div
                 v-else
@@ -118,8 +120,10 @@ function hotspotSizing(h) {
                     v-if="h.imageUrl"
                     :src="h.imageUrl"
                     :alt="h.label"
-                    class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    class="pointer-events-none h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none select-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
                     :class="h.hideLabelOnPhone ? 'map-hotspot-icon-only-phone-img' : ''"
+                    draggable="false"
+                    style="-webkit-touch-callout: none;"
                 />
                 <span
                     class="min-w-0 flex-1 truncate leading-tight"
