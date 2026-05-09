@@ -40,6 +40,11 @@ const rootClass = computed(() =>
         ? 'h-[100dvh] min-h-0 overflow-x-clip overflow-y-hidden overscroll-none text-neutral-100 select-none'
         : 'h-[100dvh] min-h-0 overflow-x-clip text-neutral-100 select-none'
 );
+const headerWrapClass = computed(() =>
+    isIpadDevice.value
+        ? 'fixed inset-x-0 top-0 z-30'
+        : ''
+);
 const cornerControlClass = computed(() => (
     isHome.value
         ? 'opacity-0 pointer-events-none ui-fade-500'
@@ -465,9 +470,10 @@ watch(preloadImageUrls, (urls) => {
             aria-hidden="true"
         ></div>
 
-        <div ref="headerWrapEl">
+        <div ref="headerWrapEl" :class="headerWrapClass">
             <AppHeader />
         </div>
+        <div v-if="isIpadDevice" :style="{ height: 'var(--header-h, 0px)' }"></div>
 
         <HomeButton :class="cornerControlClass" />
         <BackButton :class="cornerControlClass" />
