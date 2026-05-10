@@ -508,7 +508,7 @@ watch(preloadImageUrls, (urls) => {
 </script>
 
 <template>
-    <div ref="rootEl" :class="rootClass">
+    <div ref="rootEl" :class="[rootClass, isIpadDevice ? 'ui-ipad' : '']">
         <!--
             Ancient-One background + dim overlay.
             Both layers start BELOW the header (top: var(--header-h)) so the

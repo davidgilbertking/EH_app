@@ -132,14 +132,29 @@ body {
         height: var(--corner-size);
     }
 
+    .ui-ipad .ui-corner-btn {
+        width: calc(var(--corner-size) * 1.5);
+        height: calc(var(--corner-size) * 1.5);
+    }
+
     .ui-corner-icon {
         width: var(--corner-icon-size);
         height: var(--corner-icon-size);
     }
 
+    .ui-ipad .ui-corner-icon {
+        width: calc(var(--corner-icon-size) * 1.5);
+        height: calc(var(--corner-icon-size) * 1.5);
+    }
+
     .ui-corner-play-icon {
         width: var(--corner-play-icon-size);
         height: var(--corner-play-icon-size);
+    }
+
+    .ui-ipad .ui-corner-play-icon {
+        width: calc(var(--corner-play-icon-size) * 1.5);
+        height: calc(var(--corner-play-icon-size) * 1.5);
     }
 
     .ui-header-btn {
@@ -224,10 +239,16 @@ body {
         );
         --ui-volume-inset: calc(var(--ui-volume-span) * 0.165);
         --ui-volume-track-w: calc(var(--corner-size) * 0.5);
-        --ui-volume-thumb-d: calc(var(--ui-volume-track-w) * 1.25);
+        --ui-volume-thumb-base-d: calc(var(--ui-volume-track-w) * 1.25);
+        --ui-volume-thumb-scale: 1;
+        --ui-volume-thumb-d: calc(var(--ui-volume-thumb-base-d) * var(--ui-volume-thumb-scale));
         width: var(--corner-size);
         min-height: calc(var(--corner-size) * 1.45);
         overflow: visible;
+    }
+
+    .ui-ipad .ui-volume-wrap {
+        --ui-volume-thumb-scale: 1.5;
     }
 
     .ui-volume-range {
