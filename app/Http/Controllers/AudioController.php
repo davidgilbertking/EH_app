@@ -63,7 +63,10 @@ class AudioController extends Controller
 
         return response()->json([
             'trackId' => $track->id,
-            'streamUrl' => route('audio.stream', ['track' => $track->id]),
+            // Use relative URL so host always matches current page origin.
+            // This avoids media-element CORS silencing in WebAudio graph mode
+            // when APP_URL host differs (e.g. localhost vs 127.0.0.1).
+            'streamUrl' => route('audio.stream', ['track' => $track->id], false),
             'durationSec' => $track->duration_seconds,
             'mode' => $folder->mode,
             'folderSlug' => $folder->slug,

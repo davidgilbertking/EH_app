@@ -963,12 +963,26 @@ class AudioEngine {
         return null;
     }
 
+    _canUseMediaElementGraph(node) {
+        if (!node || typeof window === 'undefined') return false;
+        try {
+            const src = String(node.currentSrc || node.src || '').trim();
+            if (!src) return true;
+            if (src.startsWith('blob:') || src.startsWith('data:')) return true;
+            const parsed = new URL(src, window.location.href);
+            return parsed.origin === window.location.origin;
+        } catch (_) {
+            return false;
+        }
+    }
+
     _ensureAppleMobileGraph(howl, soundId = null) {
         if (!this._shouldUseAppleMobileGainPath(howl)) return null;
         const ctx = this._ensureAppleMobileAudioContext();
         if (!ctx) return null;
         const node = this._resolveHowlSoundNode(howl, soundId);
         if (!node) return null;
+        if (!this._canUseMediaElementGraph(node)) return null;
 
         let graph = this._appleMobileGraphByNode.get(node);
         if (!graph) {
