@@ -902,9 +902,10 @@ class AudioEngine {
     }
 
     _shouldUseWebAudioMasterGain() {
-        // Keep iPad on native Howler master volume due historical instability
-        // with media-element source graphs on long streamed tracks.
-        return !this._isIpadDevice();
+        // Use dedicated WebAudio master-gain only on iPhone/iPod.
+        // Desktop/iPad use native Howler master volume so live slider moves
+        // affect an already-playing track immediately.
+        return this._isIphoneFamilyDevice();
     }
 
     _shouldUseAppleMobileGainPath(howl) {
