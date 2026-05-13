@@ -118,6 +118,9 @@ class AudioEngine {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
+        // Ensure custom media-element graph context is resumed inside the
+        // user gesture call stack (important for autoplay policy compliance).
+        this._resumeAppleMobileAudioContext();
         let hardSwitchUntilTs = null;
         let startupFadeInMs = FADE_IN_MS;
 
@@ -909,7 +912,9 @@ class AudioEngine {
             howl
             // iPad Safari has shown instability with createMediaElementSource
             // on long streamed tracks. Keep native Howler fade path there.
-            && !this._isIpadDevice()
+            // Keep graph path only on iPhone/iPod where it solves html5 fade
+            // quirks; desktop and iPad stay on native Howler volume path.
+            && this._isIphoneFamilyDevice()
             && howl._webAudio === false,
         );
     }
