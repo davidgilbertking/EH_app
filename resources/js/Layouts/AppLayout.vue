@@ -31,6 +31,20 @@ const imageWarmupSessionKey = computed(() => {
 });
 const isInvestigatorsRoute = computed(() => path.value === '/other/investigators');
 const isOtherWorldRoute = computed(() => path.value.startsWith('/encounters/other-world'));
+const isIpadDevice = ref(false);
+const isIpadScrollableRoute = computed(() =>
+    isInvestigatorsRoute.value || isOtherWorldRoute.value
+);
+const rootClass = computed(() =>
+    isIpadDevice.value
+        ? 'h-[100dvh] min-h-0 overflow-x-clip overflow-y-hidden overscroll-none text-neutral-100 select-none'
+        : 'h-[100dvh] min-h-0 overflow-x-clip text-neutral-100 select-none'
+);
+const headerWrapClass = computed(() =>
+    isIpadDevice.value
+        ? 'fixed inset-x-0 top-0 z-30'
+        : ''
+);
 const cornerControlClass = computed(() => (
     isHome.value
         ? 'opacity-0 pointer-events-none ui-fade-500'
@@ -40,7 +54,13 @@ const showRotateLandscapePrompt = ref(false);
 const BASE_WIDTH = 1512;
 const BASE_HEIGHT = 982;
 const mainClass = computed(() =>
-    isInvestigatorsRoute.value
+    isIpadDevice.value
+        ? (isIpadScrollableRoute.value
+            ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden [overscroll-behavior-y:contain] [overscroll-behavior-x:none]'
+            : (isHome.value
+                ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.1rem,calc(0.5rem*var(--ui-scale)),0.5rem)] pb-[clamp(0.2rem,calc(1rem*var(--ui-scale)),1rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden [overscroll-behavior:none]'
+                : 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-hidden [overscroll-behavior:none]'))
+        : isInvestigatorsRoute.value
         ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
         : isOtherWorldRoute.value
             ? 'box-border px-[clamp(0.45rem,calc(1rem*var(--ui-scale)),1rem)] pt-[clamp(0.2rem,calc(0.75rem*var(--ui-scale)),0.75rem)] pb-[clamp(0.35rem,calc(1.5rem*var(--ui-scale)),1.5rem)] h-[calc(100dvh-var(--header-h,0px))] overflow-y-auto overflow-x-hidden'
@@ -55,7 +75,9 @@ const mainClass = computed(() =>
 // pixel offsets that break when the header wraps onto two lines.
 const rootEl = ref(null);
 const headerWrapEl = ref(null);
+const mainEl = ref(null);
 let resizeObserver = null;
+let ipadBodyLockSnapshot = null;
 let bgFadeTimer = null;
 let bgFadeRafA = null;
 let bgFadeRafB = null;
@@ -92,6 +114,81 @@ function syncRotateLandscapePrompt() {
     const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches;
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     showRotateLandscapePrompt.value = isPhone && isTouchPrimary && isPortrait;
+}
+
+function syncIpadDeviceFlag() {
+    if (typeof navigator === 'undefined') {
+        isIpadDevice.value = false;
+        return;
+    }
+    const ua = navigator.userAgent || '';
+    isIpadDevice.value = /iPad/i.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function lockIpadBodyScroll() {
+    if (typeof window === 'undefined' || !isIpadDevice.value || ipadBodyLockSnapshot) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    ipadBodyLockSnapshot = {
+        scrollY,
+        htmlOverflow: html.style.overflow,
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyRight: body.style.right,
+        bodyWidth: body.style.width,
+        bodyOverflow: body.style.overflow,
+        bodyOverscrollBehavior: body.style.overscrollBehavior,
+    };
+
+    html.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+}
+
+function unlockIpadBodyScroll() {
+    if (typeof window === 'undefined' || !ipadBodyLockSnapshot) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const snapshot = ipadBodyLockSnapshot;
+    ipadBodyLockSnapshot = null;
+
+    html.style.overflow = snapshot.htmlOverflow;
+    body.style.position = snapshot.bodyPosition;
+    body.style.top = snapshot.bodyTop;
+    body.style.left = snapshot.bodyLeft;
+    body.style.right = snapshot.bodyRight;
+    body.style.width = snapshot.bodyWidth;
+    body.style.overflow = snapshot.bodyOverflow;
+    body.style.overscrollBehavior = snapshot.bodyOverscrollBehavior;
+
+    window.scrollTo(0, snapshot.scrollY || 0);
+}
+
+function onDocumentTouchMove(e) {
+    if (!isIpadDevice.value) return;
+    const target = e.target;
+    if (target instanceof Element) {
+        const allowTouchMove = target.closest('[data-ios-touchmove-allow="1"]');
+        if (allowTouchMove) return;
+    }
+
+    if (!isIpadScrollableRoute.value) {
+        if (e.cancelable) e.preventDefault();
+        return;
+    }
+
+    if (!(target instanceof Node) || !mainEl.value?.contains(target)) {
+        if (e.cancelable) e.preventDefault();
+    }
 }
 
 function warmImageCacheOncePerSession(urls) {
@@ -234,6 +331,8 @@ function onBeforeHistoryBackNav() {
 }
 
 onMounted(() => {
+    syncIpadDeviceFlag();
+    lockIpadBodyScroll();
     syncHeaderHeight();
     syncUiScale();
     syncRotateLandscapePrompt();
@@ -245,9 +344,12 @@ onMounted(() => {
     window.addEventListener('resize', syncHeaderHeight);
     window.addEventListener('resize', syncUiScale);
     window.addEventListener('resize', syncRotateLandscapePrompt);
+    window.addEventListener('resize', syncIpadDeviceFlag);
     window.addEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.addEventListener('orientationchange', syncIpadDeviceFlag);
     window.addEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.addEventListener('popstate', onHistoryPopState);
+    document.addEventListener('touchmove', onDocumentTouchMove, { passive: false });
 });
 
 onBeforeUnmount(() => {
@@ -255,11 +357,23 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', syncHeaderHeight);
     window.removeEventListener('resize', syncUiScale);
     window.removeEventListener('resize', syncRotateLandscapePrompt);
+    window.removeEventListener('resize', syncIpadDeviceFlag);
     window.removeEventListener('orientationchange', syncRotateLandscapePrompt);
+    window.removeEventListener('orientationchange', syncIpadDeviceFlag);
     window.removeEventListener('eh:before-history-back', onBeforeHistoryBackNav);
     window.removeEventListener('popstate', onHistoryPopState);
+    document.removeEventListener('touchmove', onDocumentTouchMove);
+    unlockIpadBodyScroll();
     stopSuppressHistoryBgSnapshot();
     clearBgFadeWork();
+});
+
+watch(isIpadDevice, (next) => {
+    if (next) {
+        lockIpadBodyScroll();
+    } else {
+        unlockIpadBodyScroll();
+    }
 });
 
 // Route-dependent overlay:
@@ -394,7 +508,7 @@ watch(preloadImageUrls, (urls) => {
 </script>
 
 <template>
-    <div ref="rootEl" class="h-[100dvh] min-h-0 overflow-x-clip text-neutral-100 select-none">
+    <div ref="rootEl" :class="[rootClass, isIpadDevice ? 'ui-ipad' : '']">
         <!--
             Ancient-One background + dim overlay.
             Both layers start BELOW the header (top: var(--header-h)) so the
@@ -435,16 +549,17 @@ watch(preloadImageUrls, (urls) => {
             aria-hidden="true"
         ></div>
 
-        <div ref="headerWrapEl">
-            <AppHeader />
+        <div ref="headerWrapEl" :class="headerWrapClass">
+            <AppHeader :static-position="isIpadDevice" />
         </div>
+        <div v-if="isIpadDevice" :style="{ height: 'var(--header-h, 0px)' }"></div>
 
         <HomeButton :class="cornerControlClass" />
         <BackButton :class="cornerControlClass" />
         <PauseToggleButton />
         <VolumeSlider />
 
-        <main :class="mainClass">
+        <main ref="mainEl" :class="mainClass">
             <Transition name="ui-page-fade" mode="out-in">
                 <div :key="$page.url" class="min-h-full">
                     <slot />

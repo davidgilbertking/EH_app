@@ -5,6 +5,10 @@ import { useLongPress } from '@/composables/useLongPress';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
+const props = defineProps({
+    staticPosition: { type: Boolean, default: false },
+});
+
 const page = usePage();
 const url = computed(() => page.url || '/');
 const playingFolder = computed(() => engine.state.playingFolder);
@@ -54,6 +58,10 @@ const isCombatPaused = computed(() =>
 const isMythosPaused = computed(() =>
     engine.state.isPaused && engine.state.pausedFolder === 'mythos'
 );
+const headerClass = computed(() => [
+    props.staticPosition ? 'relative' : 'sticky top-0 z-30',
+    'flex flex-wrap gap-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] border-b border-neutral-800 bg-neutral-950/90 px-[clamp(0.35rem,calc(0.75rem*var(--ui-scale)),0.75rem)] py-[clamp(0.25rem,calc(0.75rem*var(--ui-scale)),0.75rem)] backdrop-blur',
+]);
 
 // Tap toggles: second tap on currently-playing folder fades it out.
 // For phase trio (Action/Combat/Mythos), use crossfade so old track remains
@@ -109,9 +117,7 @@ const mythosBindings = useLongPress({
 </script>
 
 <template>
-    <header
-        class="sticky top-0 z-30 flex flex-wrap gap-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] border-b border-neutral-800 bg-neutral-950/90 px-[clamp(0.35rem,calc(0.75rem*var(--ui-scale)),0.75rem)] py-[clamp(0.25rem,calc(0.75rem*var(--ui-scale)),0.75rem)] backdrop-blur"
-    >
+    <header :class="headerClass">
         <button
             type="button"
             class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn whitespace-normal break-words leading-tight"

@@ -19,6 +19,7 @@ function onVolumeInput(event) {
 
 <template>
     <div
+        data-ios-touchmove-allow="1"
         class="ui-fade-500 ui-volume-wrap fixed right-[var(--ui-corner-edge-gap)] z-40 rounded-full border border-[#4d4d4d] bg-[#252525]/95 px-[clamp(0.14rem,calc(0.35rem*var(--ui-scale)),0.35rem)] py-[clamp(0.28rem,calc(0.8rem*var(--ui-scale)),0.8rem)] shadow-2xl backdrop-blur"
         :class="visibilityClass"
         style="
@@ -27,6 +28,7 @@ function onVolumeInput(event) {
         "
     >
         <input
+            data-ios-touchmove-allow="1"
             type="range"
             min="0"
             max="100"

@@ -1,6 +1,5 @@
 <script setup>
 import { engine } from '@/audio/engine';
-import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -21,6 +20,9 @@ const props = defineProps({
 
 const page = usePage();
 const pulseByKey = reactive({});
+const MAP_LONG_PRESS_MS = 450;
+const MAP_MOVE_TOLERANCE_PX = 24;
+const bindingsCache = new Map();
 
 function pulseBlobSaved(key) {
     if (!key) return;
@@ -30,44 +32,175 @@ function pulseBlobSaved(key) {
     }, 360);
 }
 
-function makeBindings(h, pulseKey) {
-    return useLongPress({
-        onTap: () => {
-            if (engine.state.playingFolder === h.folderSlug) {
-                engine.stop();
-                return;
-            }
-            engine.play({
-                folderSlug: h.folderSlug,
-                mode: h.mode || null,
-                label: h.label,
-                crossfade: true,
-            });
-        },
-        onLongPress: () => {
-            const current = page.props.gameState?.blobs ?? [];
-            if (current.find((b) => b.folderSlug === h.folderSlug)) return;
-            const updated = [...current, {
-                id: makeBlobId(),
-                label: h.label,
-                folderSlug: h.folderSlug,
-                mode: h.mode || null,
-                tone: h.tone || null,
-                imageUrl: h.imageUrl || null,
-            }];
-            router.post(
-                '/state/blobs',
-                { blobs: updated },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    only: ['gameState'],
-                    onSuccess: () => pulseBlobSaved(pulseKey),
-                }
-            );
-        },
-        threshold: 1000,
+function playHotspot(h) {
+    if (engine.state.playingFolder === h.folderSlug) {
+        engine.stop();
+        return;
+    }
+    engine.play({
+        folderSlug: h.folderSlug,
+        mode: h.mode || null,
+        label: h.label,
+        crossfade: true,
     });
+}
+
+function addHotspotBlob(h, pulseKey) {
+    const current = page.props.gameState?.blobs ?? [];
+    if (current.find((b) => b.folderSlug === h.folderSlug)) return;
+    const updated = [...current, {
+        id: makeBlobId(),
+        label: h.label,
+        folderSlug: h.folderSlug,
+        mode: h.mode || null,
+        tone: h.tone || null,
+        imageUrl: h.imageUrl || null,
+    }];
+    router.post(
+        '/state/blobs',
+        { blobs: updated },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['gameState'],
+            onSuccess: () => pulseBlobSaved(pulseKey),
+        }
+    );
+}
+
+function createMapBindings(h, pulseKey) {
+    let timer = null;
+    let firedLong = false;
+    let startX = 0;
+    let startY = 0;
+    let touchId = null;
+    let activePointerId = null;
+    const hasPointerApi = typeof window !== 'undefined' && 'PointerEvent' in window;
+
+    const clear = () => {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+    };
+
+    const start = (x, y) => {
+        firedLong = false;
+        startX = x;
+        startY = y;
+        clear();
+        timer = setTimeout(() => {
+            firedLong = true;
+            timer = null;
+            addHotspotBlob(h, pulseKey);
+        }, MAP_LONG_PRESS_MS);
+    };
+
+    const move = (x, y) => {
+        if (!timer) return;
+        if (Math.hypot(x - startX, y - startY) > MAP_MOVE_TOLERANCE_PX) {
+            clear();
+        }
+    };
+
+    const end = () => {
+        const wasTimerActive = Boolean(timer);
+        clear();
+        if (firedLong) return;
+        if (wasTimerActive) playHotspot(h);
+    };
+
+    const findTrackedTouch = (touchList) => {
+        if (!touchList) return null;
+        for (let i = 0; i < touchList.length; i += 1) {
+            const t = touchList[i];
+            if (touchId == null || t.identifier === touchId) return t;
+        }
+        return null;
+    };
+
+    return {
+        onPointerdown: (e) => {
+            if (e.isPrimary === false) return;
+            activePointerId = e.pointerId ?? null;
+            if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
+            if (activePointerId != null) {
+                e.currentTarget?.setPointerCapture?.(activePointerId);
+            }
+            start(e.clientX ?? 0, e.clientY ?? 0);
+        },
+        onPointermove: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            move(e.clientX ?? 0, e.clientY ?? 0);
+        },
+        onPointerup: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            if (e.pointerType === 'touch' && e.cancelable) e.preventDefault();
+            if (activePointerId != null) {
+                e.currentTarget?.releasePointerCapture?.(activePointerId);
+            }
+            activePointerId = null;
+            end();
+        },
+        onPointercancel: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            activePointerId = null;
+            clear();
+        },
+        onPointerleave: (e) => {
+            if (activePointerId != null && e.pointerId !== activePointerId) return;
+            // Keep touch/pen gestures alive outside bounds while pressed.
+            if (e.pointerType === 'mouse') clear();
+        },
+        onTouchstart: (e) => {
+            if (hasPointerApi) return;
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            touchId = t.identifier;
+            if (e.cancelable) e.preventDefault();
+            start(t.clientX ?? 0, t.clientY ?? 0);
+        },
+        onTouchmove: (e) => {
+            if (hasPointerApi) return;
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            if (e.cancelable) e.preventDefault();
+            move(t.clientX ?? 0, t.clientY ?? 0);
+        },
+        onTouchend: (e) => {
+            if (hasPointerApi) return;
+            const t = findTrackedTouch(e.changedTouches) || findTrackedTouch(e.touches);
+            if (!t) return;
+            if (e.cancelable) e.preventDefault();
+            touchId = null;
+            end();
+        },
+        onTouchcancel: () => {
+            if (hasPointerApi) return;
+            touchId = null;
+            clear();
+        },
+        onContextmenu: (e) => {
+            e.preventDefault();
+        },
+        onDragstart: (e) => {
+            e.preventDefault();
+        },
+        style: {
+            WebkitTouchCallout: 'none',
+            userSelect: 'none',
+            touchAction: 'none',
+        },
+    };
+}
+
+function makeBindings(h, pulseKey) {
+    const key = String(pulseKey ?? h.folderSlug ?? '');
+    const cached = bindingsCache.get(key);
+    if (cached) return cached;
+    const created = createMapBindings(h, pulseKey);
+    bindingsCache.set(key, created);
+    return created;
 }
 
 function hotspotSizing(h) {
@@ -84,8 +217,9 @@ function hotspotSizing(h) {
                 v-if="backgroundUrl"
                 :src="backgroundUrl"
                 alt=""
-                class="block w-auto rounded-2xl border border-neutral-800 shadow-inner"
-                style="max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem); object-fit: contain"
+                class="pointer-events-none block w-auto select-none rounded-2xl border border-neutral-800 shadow-inner"
+                draggable="false"
+                style="-webkit-touch-callout: none; max-height: calc(100dvh - var(--header-h, 0px) - 2.75rem); object-fit: contain"
             />
             <div
                 v-else
@@ -118,8 +252,10 @@ function hotspotSizing(h) {
                     v-if="h.imageUrl"
                     :src="h.imageUrl"
                     :alt="h.label"
-                    class="h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    class="pointer-events-none h-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] w-[clamp(1rem,calc(2rem*var(--ui-scale)),2rem)] flex-none select-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
                     :class="h.hideLabelOnPhone ? 'map-hotspot-icon-only-phone-img' : ''"
+                    draggable="false"
+                    style="-webkit-touch-callout: none;"
                 />
                 <span
                     class="min-w-0 flex-1 truncate leading-tight"
