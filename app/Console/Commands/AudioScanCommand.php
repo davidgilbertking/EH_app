@@ -8,16 +8,32 @@ use App\Models\SoundFolder;
 use App\Models\SoundTrack;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 
-#[Signature('audio:scan {--folder= : Limit to a specific folder slug}')]
+#[Signature('audio:scan
+    {--folder= : Limit to a specific folder slug}
+    {--skip-loudness : Skip LUFS/peak analysis and only refresh file index}
+    {--recompute-loudness : Recalculate loudness even when already stored}
+')]
 #[Description('Walk storage/app/private/audio/<slug>/ for each sound_folder and refresh sound_tracks rows.')]
 class AudioScanCommand extends Command
 {
+    private const LOUDNORM_FILTER = 'loudnorm=I=-16:TP=-1.0:LRA=11:print_format=json';
+    private const LOUDNESS_ANALYSIS_TIMEOUT_SEC = 180;
+
     public function handle(): int
     {
         $audioRoot = config('eh.audio_root', 'audio');
         $disk = Storage::disk('local');
         $only = $this->option('folder');
+        $skipLoudness = (bool) $this->option('skip-loudness');
+        $recomputeLoudness = (bool) $this->option('recompute-loudness');
+        $analyzeLoudness = ! $skipLoudness;
+
+        if ($analyzeLoudness && ! $this->ffmpegAvailable()) {
+            $this->warn('ffmpeg is not available in PATH. Loudness analysis skipped.');
+            $analyzeLoudness = false;
+        }
 
         $folders = SoundFolder::query()
             ->when($only, fn ($q) => $q->where('slug', $only))
@@ -33,6 +49,9 @@ class AudioScanCommand extends Command
 
         $totalFound = 0;
         $totalIndexed = 0;
+        $totalLoudnessAnalyzed = 0;
+        $totalLoudnessFailed = 0;
+        $totalLoudnessSkipped = 0;
         $missingFolders = [];
 
         foreach ($folders as $folder) {
@@ -52,9 +71,10 @@ class AudioScanCommand extends Command
             $totalFound += $files->count();
 
             // Reconcile DB rows: insert new, drop missing.
-            $existing = SoundTrack::where('sound_folder_id', $folder->id)
-                ->pluck('file_path')
-                ->all();
+            $existingTracks = SoundTrack::where('sound_folder_id', $folder->id)
+                ->get()
+                ->keyBy('file_path');
+            $existing = $existingTracks->keys()->all();
             $relativePaths = $files->map(fn ($p) => $folder->slug.'/'.$p)->all();
 
             $stale = array_diff($existing, $relativePaths);
@@ -71,10 +91,28 @@ class AudioScanCommand extends Command
                     $info = @$getID3->analyze($absFile);
                     $dur = $info['playtime_seconds'] ?? null;
                 }
-                SoundTrack::updateOrCreate(
-                    ['sound_folder_id' => $folder->id, 'file_path' => $folder->slug.'/'.$relName],
+                $dbPath = $folder->slug.'/'.$relName;
+                $track = SoundTrack::updateOrCreate(
+                    ['sound_folder_id' => $folder->id, 'file_path' => $dbPath],
                     ['duration_seconds' => $dur ? round((float) $dur, 3) : null],
                 );
+
+                if ($analyzeLoudness) {
+                    $existingTrack = $existingTracks->get($dbPath);
+                    $alreadyAnalyzed = $existingTrack && $this->hasLoudnessAnalysis($existingTrack);
+                    if (! $recomputeLoudness && $alreadyAnalyzed) {
+                        $totalLoudnessSkipped++;
+                    } else {
+                        $analysis = $this->analyzeTrackLoudness($absFile);
+                        if ($analysis) {
+                            $track->fill($analysis)->save();
+                            $totalLoudnessAnalyzed++;
+                        } else {
+                            $totalLoudnessFailed++;
+                        }
+                    }
+                }
+
                 $totalIndexed++;
             }
         }
@@ -85,6 +123,14 @@ class AudioScanCommand extends Command
             $totalFound,
             $totalIndexed,
         ));
+        if ($analyzeLoudness) {
+            $this->line(sprintf(
+                'Loudness analyzed: %d, skipped(existing): %d, failed: %d.',
+                $totalLoudnessAnalyzed,
+                $totalLoudnessSkipped,
+                $totalLoudnessFailed,
+            ));
+        }
 
         if ($missingFolders) {
             $this->warn(count($missingFolders).' folders missing on disk:');
@@ -97,5 +143,128 @@ class AudioScanCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function ffmpegAvailable(): bool
+    {
+        try {
+            $probe = new Process(['ffmpeg', '-version']);
+            $probe->setTimeout(8);
+            $probe->run();
+            return $probe->isSuccessful();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function hasLoudnessAnalysis(SoundTrack $track): bool
+    {
+        return $track->integrated_lufs !== null
+            && $track->normalization_gain_db !== null;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function analyzeTrackLoudness(string $absoluteFilePath): ?array
+    {
+        try {
+            $process = new Process([
+                'ffmpeg',
+                '-hide_banner',
+                '-nostats',
+                '-i',
+                $absoluteFilePath,
+                '-map',
+                '0:a:0',
+                '-af',
+                self::LOUDNORM_FILTER,
+                '-f',
+                'null',
+                '-',
+            ]);
+            $process->setTimeout(self::LOUDNESS_ANALYSIS_TIMEOUT_SEC);
+            $process->run();
+            $output = $process->getErrorOutput()."\n".$process->getOutput();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $payload = $this->extractLoudnormPayload($output);
+        if (! $payload) {
+            return null;
+        }
+
+        $integratedLufs = $this->toFiniteFloat($payload['input_i'] ?? null);
+        if ($integratedLufs === null) {
+            return null;
+        }
+        $truePeakDbtp = $this->toFiniteFloat($payload['input_tp'] ?? null);
+        $normalizationGainDb = $this->calculateNormalizationGainDb($integratedLufs, $truePeakDbtp);
+
+        return [
+            'integrated_lufs' => round($integratedLufs, 3),
+            'true_peak_dbtp' => $truePeakDbtp !== null ? round($truePeakDbtp, 3) : null,
+            'normalization_gain_db' => $normalizationGainDb,
+            'loudness_analyzed_at' => now(),
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function extractLoudnormPayload(string $output): ?array
+    {
+        $start = strrpos($output, '{');
+        $end = strrpos($output, '}');
+        if ($start === false || $end === false || $end <= $start) {
+            return null;
+        }
+
+        $json = substr($output, $start, $end - $start + 1);
+        if (! is_string($json) || trim($json) === '') {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function toFiniteFloat(mixed $value): ?float
+    {
+        if ($value === null) return null;
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '' || strcasecmp($trimmed, 'inf') === 0 || strcasecmp($trimmed, '-inf') === 0) {
+                return null;
+            }
+            if (! is_numeric($trimmed)) {
+                return null;
+            }
+            $n = (float) $trimmed;
+            return is_finite($n) ? $n : null;
+        }
+        if (! is_numeric($value)) {
+            return null;
+        }
+        $n = (float) $value;
+        return is_finite($n) ? $n : null;
+    }
+
+    private function calculateNormalizationGainDb(float $integratedLufs, ?float $truePeakDbtp): float
+    {
+        $targetLufs = (float) config('eh.audio_loudness_target_lufs', -18.0);
+        $peakCeilingDbtp = (float) config('eh.audio_loudness_peak_ceiling_dbtp', -1.0);
+        $maxBoostDb = max(0.0, (float) config('eh.audio_loudness_max_boost_db', 12.0));
+        $maxCutDb = max(0.0, (float) config('eh.audio_loudness_max_cut_db', 24.0));
+
+        $desiredGainDb = $targetLufs - $integratedLufs;
+        $gainDb = $desiredGainDb;
+
+        if ($truePeakDbtp !== null) {
+            $peakLimitedGainDb = $peakCeilingDbtp - $truePeakDbtp;
+            $gainDb = min($gainDb, $peakLimitedGainDb);
+        }
+
+        $gainDb = min($gainDb, $maxBoostDb);
+        $gainDb = max($gainDb, -$maxCutDb);
+
+        return round($gainDb, 3);
     }
 }

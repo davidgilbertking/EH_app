@@ -7,10 +7,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SoundTrack extends Model
 {
-    protected $fillable = ['sound_folder_id', 'file_path', 'duration_seconds'];
+    protected $fillable = [
+        'sound_folder_id',
+        'file_path',
+        'duration_seconds',
+        'integrated_lufs',
+        'true_peak_dbtp',
+        'normalization_gain_db',
+        'loudness_analyzed_at',
+    ];
 
     protected $casts = [
         'duration_seconds' => 'float',
+        'integrated_lufs' => 'float',
+        'true_peak_dbtp' => 'float',
+        'normalization_gain_db' => 'float',
+        'loudness_analyzed_at' => 'datetime',
     ];
 
     public function folder(): BelongsTo

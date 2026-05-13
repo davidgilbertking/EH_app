@@ -37,6 +37,9 @@ const MOBILE_FADE_INTERVAL_MS = 50;
 const RANDOM_FRAGMENT_SETTLE_CHECK_MS = 120;
 const RANDOM_FRAGMENT_SEEK_TOLERANCE_SEC = 2.5;
 const APPLE_MOBILE_FADE_SETTLE_MS = 80;
+const DEFAULT_TRACK_NORMALIZATION_GAIN = 1;
+const MIN_TRACK_NORMALIZATION_GAIN = 0.05;
+const MAX_TRACK_NORMALIZATION_GAIN = 4;
 const DEFAULT_MASTER_VOLUME = 1;
 const MASTER_VOLUME_STORAGE_KEY = 'eh:master-volume:v1';
 const MASTER_VOLUME_SMOOTHING_FACTOR = 0.16;
@@ -63,6 +66,7 @@ class AudioEngine {
         this._appleMobileMasterGain = null;
         this._appleMobileGraphByNode = new WeakMap();
         this._appleMobileGraphByHowl = new WeakMap();
+        this._trackNormalizationGainByHowl = new WeakMap();
         // Reactive surface for Vue components to bind to.
         this.state = reactive({
             playingFolder: null, // folder slug currently active (or null)
@@ -194,6 +198,7 @@ class AudioEngine {
                 folderSlug,
                 label: label || pick.folderName || folderSlug,
                 format: pick.format || null,
+                normalizationGain: pick.normalizationGain ?? DEFAULT_TRACK_NORMALIZATION_GAIN,
                 prevHowlForCrossfade,
                 requestToken,
                 hardSwitchUntilTs,
@@ -375,6 +380,7 @@ class AudioEngine {
         folderSlug,
         label,
         format,
+        normalizationGain = DEFAULT_TRACK_NORMALIZATION_GAIN,
         prevHowlForCrossfade = null,
         requestToken,
         hardSwitchUntilTs = null,
@@ -383,6 +389,7 @@ class AudioEngine {
         const useFadeIn = mode !== MODE_FROM_START_NO_FADE;
         const useRandomPos = mode !== MODE_FROM_START_NO_FADE;
         const useHtml5Streaming = true;
+        const trackNormalizationGain = this._clampTrackNormalizationGain(normalizationGain);
         const isIpadDevice = this._isIpadDevice();
         const randomStartSec = useRandomPos
             ? this._pickRandomStartSec(durationSec)
@@ -501,6 +508,10 @@ class AudioEngine {
                         this._fadeInWhenPlaybackStabilizes(howl, fadeId, fadeInMs);
                     } else if (hardSwitchGateMs > 0 && currentVol < 1) {
                         this._setTrackVolumeImmediate(howl, fadeId, 1);
+                    } else {
+                        // Still force-apply volume once so per-track normalization
+                        // is active even on immediate starts with no fade-in.
+                        this._setTrackVolumeImmediate(howl, fadeId, 1);
                     }
                     // Crossfade: only NOW (when the new track is actually audible)
                     // do we start fading the previous one. Guarantees no silent
@@ -598,9 +609,18 @@ class AudioEngine {
             },
         });
 
+        this._trackNormalizationGainByHowl.set(howl, trackNormalizationGain);
+
         // Any previous track was already faded out in play() before the fetch,
         // so we don't need to crossfade here.
-        this.current = { howl, soundId: null, folderSlug, label, mode };
+        this.current = {
+            howl,
+            soundId: null,
+            folderSlug,
+            label,
+            mode,
+            normalizationGain: trackNormalizationGain,
+        };
         this.state.playingFolder = folderSlug;
         this.state.playingLabel = label;
         this.state.isPaused = false;
@@ -637,6 +657,7 @@ class AudioEngine {
     _safeUnload(howl) {
         this._clearPendingMobileFade(howl);
         this._clearPendingFadeOut(howl);
+        this._trackNormalizationGainByHowl.delete(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
     }
 
@@ -790,8 +811,9 @@ class AudioEngine {
     _applyMasterVolume(volume) {
         const next = this._clampVolume(volume);
         this._masterVolumeApplied = next;
+        const useWebAudioMasterGain = this._shouldUseWebAudioMasterGain();
         try {
-            Howler.volume(next);
+            Howler.volume(useWebAudioMasterGain ? 1 : next);
         } catch (_) { /* ignore */ }
         if (this._appleMobileMasterGain) {
             try {
@@ -828,6 +850,29 @@ class AudioEngine {
         return Math.min(1, Math.max(0, n));
     }
 
+    _clampTrackNormalizationGain(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return DEFAULT_TRACK_NORMALIZATION_GAIN;
+        return Math.min(
+            MAX_TRACK_NORMALIZATION_GAIN,
+            Math.max(MIN_TRACK_NORMALIZATION_GAIN, n),
+        );
+    }
+
+    _getTrackNormalizationGain(howl) {
+        if (!howl) return DEFAULT_TRACK_NORMALIZATION_GAIN;
+        const stored = this._trackNormalizationGainByHowl.get(howl);
+        return this._clampTrackNormalizationGain(stored);
+    }
+
+    _resolveEffectiveTrackGain(howl, logicalVolume = 1) {
+        const baseVolume = this._clampVolume(logicalVolume);
+        const gain = this._getTrackNormalizationGain(howl);
+        const effective = baseVolume * gain;
+        if (!Number.isFinite(effective)) return baseVolume;
+        return Math.max(0, Math.min(MAX_TRACK_NORMALIZATION_GAIN, effective));
+    }
+
     _isAppleMobileDevice() {
         return this._isIphoneFamilyDevice() || this._isIpadDevice();
     }
@@ -853,12 +898,18 @@ class AudioEngine {
         }
     }
 
+    _shouldUseWebAudioMasterGain() {
+        // Keep iPad on native Howler master volume due historical instability
+        // with media-element source graphs on long streamed tracks.
+        return !this._isIpadDevice();
+    }
+
     _shouldUseAppleMobileGainPath(howl) {
         return Boolean(
             howl
             // iPad Safari has shown instability with createMediaElementSource
             // on long streamed tracks. Keep native Howler fade path there.
-            && this._isIphoneFamilyDevice()
+            && !this._isIpadDevice()
             && howl._webAudio === false,
         );
     }
@@ -947,7 +998,7 @@ class AudioEngine {
     _setAppleMobileGain(howl, soundId = null, value = 1) {
         const graph = this._ensureAppleMobileGraph(howl, soundId);
         if (!graph) return false;
-        const v = this._clampVolume(value);
+        const v = this._resolveEffectiveTrackGain(howl, value);
         try {
             const now = graph.gain.context.currentTime;
             graph.gain.gain.cancelScheduledValues(now);
@@ -965,16 +1016,36 @@ class AudioEngine {
         try { cleanup(); } catch (_) { /* ignore */ }
     }
 
+    _resolveHowlerNodeVolume(howl, logicalVolume = 1) {
+        const effectiveTrackGain = this._resolveEffectiveTrackGain(howl, logicalVolume);
+        const master = this._shouldUseWebAudioMasterGain()
+            ? this._masterVolumeApplied
+            : 1;
+        const combined = effectiveTrackGain * master;
+        if (!Number.isFinite(combined)) {
+            return this._clampVolume(logicalVolume);
+        }
+        return this._clampVolume(Math.min(1, Math.max(0, combined)));
+    }
+
     _getTrackVolume(howl, soundId = null) {
         const graph = this._appleMobileGraphByHowl.get(howl)
             || this._ensureAppleMobileGraph(howl, soundId);
         if (graph) {
             try {
-                return this._clampVolume(graph.gain.gain.value);
+                const gain = this._getTrackNormalizationGain(howl);
+                const raw = Number(graph.gain.gain.value);
+                if (!Number.isFinite(raw)) return this._clampVolume(1);
+                return this._clampVolume(raw / gain);
             } catch (_) { /* ignore */ }
         }
         try {
-            return this._clampVolume(soundId != null ? howl.volume(soundId) : howl.volume());
+            const raw = this._clampVolume(soundId != null ? howl.volume(soundId) : howl.volume());
+            const gain = this._getTrackNormalizationGain(howl);
+            const master = this._shouldUseWebAudioMasterGain()
+                ? Math.max(MASTER_VOLUME_EPSILON, this._masterVolumeApplied)
+                : 1;
+            return this._clampVolume(raw / (gain * master));
         } catch (_) {
             return 1;
         }
@@ -986,10 +1057,11 @@ class AudioEngine {
             return true;
         }
         try {
+            const fallbackVolume = this._resolveHowlerNodeVolume(howl, v);
             if (soundId != null) {
-                howl.volume(v, soundId);
+                howl.volume(fallbackVolume, soundId);
             } else {
-                howl.volume(v);
+                howl.volume(fallbackVolume);
             }
             return true;
         } catch (_) {
@@ -1023,10 +1095,12 @@ class AudioEngine {
             };
             this._pendingMobileFadeCleanup.set(howl, cleanup);
             try {
+                const startGain = this._resolveEffectiveTrackGain(howl, start);
+                const endGain = this._resolveEffectiveTrackGain(howl, end);
                 const now = graph.gain.context.currentTime;
                 graph.gain.gain.cancelScheduledValues(now);
-                graph.gain.gain.setValueAtTime(start, now);
-                graph.gain.gain.linearRampToValueAtTime(end, now + (duration / 1000));
+                graph.gain.gain.setValueAtTime(startGain, now);
+                graph.gain.gain.linearRampToValueAtTime(endGain, now + (duration / 1000));
             } catch (_) {
                 this._clearPendingMobileFade(howl);
                 return false;
@@ -1035,9 +1109,10 @@ class AudioEngine {
                 const activeCleanup = this._pendingMobileFadeCleanup.get(howl);
                 if (activeCleanup !== cleanup) return;
                 try {
+                    const endGain = this._resolveEffectiveTrackGain(howl, end);
                     const now = graph.gain.context.currentTime;
                     graph.gain.gain.cancelScheduledValues(now);
-                    graph.gain.gain.setValueAtTime(end, now);
+                    graph.gain.gain.setValueAtTime(endGain, now);
                 } catch (_) { /* ignore */ }
                 this._clearPendingMobileFade(howl);
                 if (typeof onComplete === 'function') {
@@ -1088,10 +1163,12 @@ class AudioEngine {
         }
 
         try {
+            const startFallback = this._resolveHowlerNodeVolume(howl, start);
+            const endFallback = this._resolveHowlerNodeVolume(howl, end);
             if (soundId != null) {
-                howl.fade(start, end, duration, soundId);
+                howl.fade(startFallback, endFallback, duration, soundId);
             } else {
-                howl.fade(start, end, duration);
+                howl.fade(startFallback, endFallback, duration);
             }
             return true;
         } catch (_) {

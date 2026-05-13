@@ -58,6 +58,9 @@ class AudioController extends Controller
         }
 
 
+        $normalizationGainDb = $track->normalization_gain_db;
+        $normalizationGain = $this->gainDbToLinear($normalizationGainDb);
+
         return response()->json([
             'trackId' => $track->id,
             'streamUrl' => route('audio.stream', ['track' => $track->id]),
@@ -65,6 +68,8 @@ class AudioController extends Controller
             'mode' => $folder->mode,
             'folderSlug' => $folder->slug,
             'folderName' => $folder->name,
+            'normalizationGain' => $normalizationGain,
+            'normalizationGainDb' => $normalizationGainDb,
             // The stream URL has no file extension (it's a numeric track id), so
             // browsers/Howler cannot sniff the codec. Send the original extension
             // so the client can pass `format: [ext]` to <audio>.
@@ -183,6 +188,17 @@ class AudioController extends Controller
             'flac' => 'audio/flac',
             default => 'application/octet-stream',
         };
+    }
+
+    private function gainDbToLinear(null|int|float $db): float
+    {
+        $n = is_numeric($db) ? (float) $db : 0.0;
+        $linear = pow(10, $n / 20);
+        if (! is_finite($linear) || $linear <= 0) {
+            return 1.0;
+        }
+        // Keep response bounded for client-side safety.
+        return min(6.0, max(0.01, $linear));
     }
 
     /** @return string[] */
