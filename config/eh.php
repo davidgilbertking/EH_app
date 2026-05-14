@@ -28,4 +28,7 @@ return [
     // Safety clamps for per-track gain (in dB).
     'audio_loudness_max_boost_db' => (float) env('EH_AUDIO_LOUDNESS_MAX_BOOST_DB', 12.0),
     'audio_loudness_max_cut_db' => (float) env('EH_AUDIO_LOUDNESS_MAX_CUT_DB', 24.0),
+
+    // Per-track ffmpeg loudness analysis timeout (seconds).
+    'audio_loudness_analysis_timeout_sec' => (int) env('EH_AUDIO_LOUDNESS_ANALYSIS_TIMEOUT_SEC', 180),
 ];

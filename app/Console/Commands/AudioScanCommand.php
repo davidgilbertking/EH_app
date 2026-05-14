@@ -14,12 +14,13 @@ use Symfony\Component\Process\Process;
     {--folder= : Limit to a specific folder slug}
     {--skip-loudness : Skip LUFS/peak analysis and only refresh file index}
     {--recompute-loudness : Recalculate loudness even when already stored}
+    {--loudness-timeout-sec= : ffmpeg timeout in seconds for loudness analysis}
 ')]
 #[Description('Walk storage/app/private/audio/<slug>/ for each sound_folder and refresh sound_tracks rows.')]
 class AudioScanCommand extends Command
 {
     private const LOUDNORM_FILTER = 'loudnorm=I=-16:TP=-1.0:LRA=11:print_format=json';
-    private const LOUDNESS_ANALYSIS_TIMEOUT_SEC = 180;
+    private const DEFAULT_LOUDNESS_ANALYSIS_TIMEOUT_SEC = 180;
 
     public function handle(): int
     {
@@ -29,6 +30,7 @@ class AudioScanCommand extends Command
         $skipLoudness = (bool) $this->option('skip-loudness');
         $recomputeLoudness = (bool) $this->option('recompute-loudness');
         $analyzeLoudness = ! $skipLoudness;
+        $loudnessTimeoutSec = $this->resolveLoudnessTimeoutSec();
 
         if ($analyzeLoudness && ! $this->ffmpegAvailable()) {
             $this->warn('ffmpeg is not available in PATH. Loudness analysis skipped.');
@@ -103,7 +105,7 @@ class AudioScanCommand extends Command
                     if (! $recomputeLoudness && $alreadyAnalyzed) {
                         $totalLoudnessSkipped++;
                     } else {
-                        $analysis = $this->analyzeTrackLoudness($absFile);
+                        $analysis = $this->analyzeTrackLoudness($absFile, $loudnessTimeoutSec);
                         if ($analysis) {
                             $track->fill($analysis)->save();
                             $totalLoudnessAnalyzed++;
@@ -164,7 +166,7 @@ class AudioScanCommand extends Command
     }
 
     /** @return array<string, mixed>|null */
-    private function analyzeTrackLoudness(string $absoluteFilePath): ?array
+    private function analyzeTrackLoudness(string $absoluteFilePath, int $timeoutSec): ?array
     {
         try {
             $process = new Process([
@@ -181,7 +183,7 @@ class AudioScanCommand extends Command
                 'null',
                 '-',
             ]);
-            $process->setTimeout(self::LOUDNESS_ANALYSIS_TIMEOUT_SEC);
+            $process->setTimeout($timeoutSec);
             $process->run();
             $output = $process->getErrorOutput()."\n".$process->getOutput();
         } catch (\Throwable) {
@@ -266,5 +268,23 @@ class AudioScanCommand extends Command
         $gainDb = max($gainDb, -$maxCutDb);
 
         return round($gainDb, 3);
+    }
+
+    private function resolveLoudnessTimeoutSec(): int
+    {
+        $fromOption = $this->option('loudness-timeout-sec');
+        if ($fromOption !== null && $fromOption !== '') {
+            $n = (int) $fromOption;
+            if ($n > 0) {
+                return $n;
+            }
+        }
+
+        $fromConfig = (int) config(
+            'eh.audio_loudness_analysis_timeout_sec',
+            self::DEFAULT_LOUDNESS_ANALYSIS_TIMEOUT_SEC
+        );
+
+        return max(1, $fromConfig);
     }
 }
