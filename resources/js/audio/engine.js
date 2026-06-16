@@ -244,6 +244,40 @@ class AudioEngine {
         this._clearActiveState();
     }
 
+    /** Fade out audible playback before a page teardown, such as logout reload. */
+    fadeOutCurrent(fadeOutMs = FADE_OUT_MS) {
+        this._playRequestToken += 1;
+        const wasPaused = this.state.isPaused;
+        const wasPauseFadeInProgress = Boolean(this._pauseFadeTimer);
+        this._cancelPauseTransition();
+        this.state.isLoading = false;
+
+        if (!this.current) {
+            this._clearActiveState();
+            return Promise.resolve();
+        }
+
+        const current = this.current;
+        this.current = null;
+        this._clearActiveState();
+
+        if (wasPaused && !wasPauseFadeInProgress) {
+            try {
+                if (current.soundId != null) {
+                    current.howl.stop(current.soundId);
+                } else {
+                    current.howl.stop();
+                }
+                current.howl.unload();
+            } catch (_) {
+                try { current.howl.unload(); } catch (__) { /* ignore */ }
+            }
+            return Promise.resolve();
+        }
+
+        return this._fadeOutAndUnload(current.howl, current.soundId ?? null, fadeOutMs);
+    }
+
     pause() {
         if (!this.current || this.state.isPaused) return false;
 
@@ -674,99 +708,107 @@ class AudioEngine {
     _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
         this._clearPendingFadeOut(howl);
-        try {
-            let finished = false;
-            let fallbackTimer = null;
-            let waitForReadyTimer = null;
-            const stopAndUnload = () => {
-                if (finished) return;
-                finished = true;
-                this._clearPendingMobileFade(howl);
-                this._clearPendingFadeOut(howl);
-                try {
-                    if (soundId != null) {
-                        howl.stop(soundId);
-                    } else {
-                        howl.stop();
+        return new Promise((resolve) => {
+            try {
+                let finished = false;
+                let fallbackTimer = null;
+                let waitForReadyTimer = null;
+                const stopAndUnload = () => {
+                    if (finished) return;
+                    finished = true;
+                    this._clearPendingMobileFade(howl);
+                    this._clearPendingFadeOut(howl);
+                    try {
+                        if (soundId != null) {
+                            howl.stop(soundId);
+                        } else {
+                            howl.stop();
+                        }
+                        howl.unload();
+                    } catch (_) {
+                        try { howl.unload(); } catch (__) { /* ignore */ }
                     }
-                    howl.unload();
-                } catch (_) {
-                    try { howl.unload(); } catch (__) { /* ignore */ }
-                }
-            };
+                    resolve();
+                };
 
-            const onFade = (fadedId) => {
-                if (soundId != null && typeof fadedId === 'number' && fadedId !== soundId) {
-                    return;
-                }
-                stopAndUnload();
-            };
-
-            const cleanup = () => {
-                if (fallbackTimer) {
-                    clearTimeout(fallbackTimer);
-                    fallbackTimer = null;
-                }
-                if (waitForReadyTimer) {
-                    clearTimeout(waitForReadyTimer);
-                    waitForReadyTimer = null;
-                }
-                try {
-                    if (soundId != null) {
-                        howl.off('fade', onFade, soundId);
-                    } else {
-                        howl.off('fade', onFade);
+                const onFade = (fadedId) => {
+                    if (soundId != null && typeof fadedId === 'number' && fadedId !== soundId) {
+                        return;
                     }
-                } catch (_) { /* ignore */ }
-            };
-
-            this._pendingFadeOutCleanup.set(howl, cleanup);
-            const canStartFadeNow = () => {
-                if (finished) return false;
-                const state = typeof howl.state === 'function' ? howl.state() : 'loaded';
-                const isLoaded = state === 'loaded';
-                // Howler can queue fade() while playback Promise lock is active.
-                // On mobile this queue delay is noticeable; stopping by absolute
-                // timer then cuts audio abruptly. Wait until lock clears first.
-                const isPlayLocked = Boolean(howl._playLock);
-                return isLoaded && !isPlayLocked;
-            };
-
-            const startFade = () => {
-                const startVol = this._getTrackVolume(howl, soundId);
-                const fadeStarted = this._fadeTrackVolume(
-                    howl,
-                    soundId,
-                    startVol,
-                    0,
-                    fadeOutMs,
-                    () => onFade(soundId),
-                );
-                if (!fadeStarted) {
                     stopAndUnload();
-                    return;
-                }
-                fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
-            };
+                };
 
-            const readyDeadline = Date.now() + Math.max(2600, fadeOutMs + 900);
-            const waitUntilReady = () => {
-                if (finished) return;
-                if (canStartFadeNow()) {
-                    startFade();
-                    return;
-                }
-                if (Date.now() >= readyDeadline) {
-                    stopAndUnload();
-                    return;
-                }
-                waitForReadyTimer = setTimeout(waitUntilReady, 80);
-            };
+                const cleanup = () => {
+                    if (fallbackTimer) {
+                        clearTimeout(fallbackTimer);
+                        fallbackTimer = null;
+                    }
+                    if (waitForReadyTimer) {
+                        clearTimeout(waitForReadyTimer);
+                        waitForReadyTimer = null;
+                    }
+                    try {
+                        if (soundId != null) {
+                            howl.off('fade', onFade, soundId);
+                        } else {
+                            howl.off('fade', onFade);
+                        }
+                    } catch (_) { /* ignore */ }
+                    if (!finished) {
+                        finished = true;
+                        resolve();
+                    }
+                };
 
-            waitUntilReady();
-        } catch (_) {
-            try { howl.unload(); } catch (__) { /* ignore */ }
-        }
+                this._pendingFadeOutCleanup.set(howl, cleanup);
+                const canStartFadeNow = () => {
+                    if (finished) return false;
+                    const state = typeof howl.state === 'function' ? howl.state() : 'loaded';
+                    const isLoaded = state === 'loaded';
+                    // Howler can queue fade() while playback Promise lock is active.
+                    // On mobile this queue delay is noticeable; stopping by absolute
+                    // timer then cuts audio abruptly. Wait until lock clears first.
+                    const isPlayLocked = Boolean(howl._playLock);
+                    return isLoaded && !isPlayLocked;
+                };
+
+                const startFade = () => {
+                    const startVol = this._getTrackVolume(howl, soundId);
+                    const fadeStarted = this._fadeTrackVolume(
+                        howl,
+                        soundId,
+                        startVol,
+                        0,
+                        fadeOutMs,
+                        () => onFade(soundId),
+                    );
+                    if (!fadeStarted) {
+                        stopAndUnload();
+                        return;
+                    }
+                    fallbackTimer = setTimeout(stopAndUnload, fadeOutMs + 320);
+                };
+
+                const readyDeadline = Date.now() + Math.max(2600, fadeOutMs + 900);
+                const waitUntilReady = () => {
+                    if (finished) return;
+                    if (canStartFadeNow()) {
+                        startFade();
+                        return;
+                    }
+                    if (Date.now() >= readyDeadline) {
+                        stopAndUnload();
+                        return;
+                    }
+                    waitForReadyTimer = setTimeout(waitUntilReady, 80);
+                };
+
+                waitUntilReady();
+            } catch (_) {
+                try { howl.unload(); } catch (__) { /* ignore */ }
+                resolve();
+            }
+        });
     }
 
     _cancelPauseTransition() {

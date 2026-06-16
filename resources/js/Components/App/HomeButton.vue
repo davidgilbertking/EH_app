@@ -1,17 +1,31 @@
 <script setup>
 import { useLongPress } from '@/composables/useLongPress';
+import { engine } from '@/audio/engine';
 import { router } from '@inertiajs/vue3';
 
-const HOLD_TO_LOGOUT_MS = 7000;
+const HOLD_TO_LOGOUT_MS = 3000;
+
+let isLoggingOut = false;
 
 function goHome() {
     router.get('/');
 }
 
 function logout() {
+    if (isLoggingOut) return;
+
+    isLoggingOut = true;
+    const fadePromise = engine.fadeOutCurrent();
+
     router.post('/logout', {}, {
         onSuccess: () => {
-            window.location.reload();
+            fadePromise.finally(() => window.location.reload());
+        },
+        onError: () => {
+            isLoggingOut = false;
+        },
+        onCancel: () => {
+            isLoggingOut = false;
         },
     });
 }
@@ -32,7 +46,7 @@ const homeBindings = useLongPress({
     <button
         type="button"
         aria-label="Home"
-        title="Hold 7s to log out"
+        title="Hold 3s to log out"
         class="ui-corner-btn fixed left-[var(--ui-corner-edge-gap)] bottom-[var(--ui-corner-edge-gap)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition hover:bg-neutral-700"
         @keyup.enter.prevent="goHome"
         @keyup.space.prevent="goHome"
