@@ -62,6 +62,7 @@ class AudioEngine {
         this._masterVolumeRaf = null;
         this._pendingMobileFadeCleanup = new WeakMap();
         this._pendingFadeOutCleanup = new WeakMap();
+        this._pendingCrossfadeRetirements = new Map();
         this._appleMobileContext = null;
         this._appleMobileMasterGain = null;
         this._appleMobileGraphByNode = new WeakMap();
@@ -151,10 +152,7 @@ class AudioEngine {
         let prevHowlForCrossfade = null;
         if (this.current) {
             if (crossfade) {
-                prevHowlForCrossfade = {
-                    howl: this.current.howl,
-                    soundId: this.current.soundId ?? null,
-                };
+                prevHowlForCrossfade = this._rememberPendingCrossfade(this.current);
             } else {
                 const prev = this.current;
                 this.current = null;
@@ -183,10 +181,8 @@ class AudioEngine {
                 // If we promised a crossfade and never started a new track,
                 // still kill the old one so we don't leak a Howl.
                 if (prevHowlForCrossfade) {
-                    this._fadeOutAndUnload(
-                        prevHowlForCrossfade.howl,
-                        prevHowlForCrossfade.soundId ?? null,
-                    );
+                    this._retirePendingCrossfade(prevHowlForCrossfade);
+                    prevHowlForCrossfade = null;
                 }
                 return;
             }
@@ -212,10 +208,8 @@ class AudioEngine {
             console.error('[engine] play error', e);
             this._clearActiveState();
             if (prevHowlForCrossfade) {
-                this._fadeOutAndUnload(
-                    prevHowlForCrossfade.howl,
-                    prevHowlForCrossfade.soundId ?? null,
-                );
+                this._retirePendingCrossfade(prevHowlForCrossfade);
+                prevHowlForCrossfade = null;
             }
         } finally {
             if (requestToken === this._playRequestToken) {
@@ -226,8 +220,14 @@ class AudioEngine {
 
     /** Stop the currently-playing track with fade-out. */
     stop() {
+        this._playRequestToken += 1;
         this._cancelPauseTransition();
-        if (!this.current) return;
+        this.state.isLoading = false;
+        if (!this.current) {
+            this._retirePendingCrossfades();
+            this._clearActiveState();
+            return;
+        }
         if (this.state.isPaused) {
             try {
                 if (this.current.soundId != null) {
@@ -240,6 +240,7 @@ class AudioEngine {
         } else {
             this._fadeOutAndUnload(this.current.howl, this.current.soundId ?? null);
         }
+        this._retirePendingCrossfades();
         this.current = null;
         this._clearActiveState();
     }
@@ -254,7 +255,7 @@ class AudioEngine {
 
         if (!this.current) {
             this._clearActiveState();
-            return Promise.resolve();
+            return this._retirePendingCrossfades(fadeOutMs);
         }
 
         const current = this.current;
@@ -272,10 +273,15 @@ class AudioEngine {
             } catch (_) {
                 try { current.howl.unload(); } catch (__) { /* ignore */ }
             }
+            this._retirePendingCrossfades();
             return Promise.resolve();
         }
 
-        return this._fadeOutAndUnload(current.howl, current.soundId ?? null, fadeOutMs);
+        const fadePromises = [
+            this._fadeOutAndUnload(current.howl, current.soundId ?? null, fadeOutMs),
+            this._retirePendingCrossfades(fadeOutMs),
+        ];
+        return Promise.allSettled(fadePromises).then(() => undefined);
     }
 
     pause() {
@@ -489,10 +495,7 @@ class AudioEngine {
                     // supposed to crossfade an older one, still retire that older
                     // howl so we don't end up with layered leftovers.
                     if (prevHowlForCrossfade) {
-                        this._fadeOutAndUnload(
-                            prevHowlForCrossfade.howl,
-                            prevHowlForCrossfade.soundId ?? null,
-                        );
+                        this._retirePendingCrossfade(prevHowlForCrossfade);
                         prevHowlForCrossfade = null;
                     }
                     try { howl.stop(id); } catch (_) { /* ignore */ }
@@ -554,10 +557,7 @@ class AudioEngine {
                     // do we start fading the previous one. Guarantees no silent
                     // gap when the user re-taps a blob or switches between blobs.
                     if (prevHowlForCrossfade) {
-                        this._fadeOutAndUnload(
-                            prevHowlForCrossfade.howl,
-                            prevHowlForCrossfade.soundId ?? null,
-                        );
+                        this._retirePendingCrossfade(prevHowlForCrossfade);
                         prevHowlForCrossfade = null;
                     }
                 };
@@ -694,8 +694,65 @@ class AudioEngine {
     _safeUnload(howl) {
         this._clearPendingMobileFade(howl);
         this._clearPendingFadeOut(howl);
+        this._forgetPendingCrossfade(howl);
         this._trackNormalizationGainByHowl.delete(howl);
         try { howl.unload(); } catch (_) { /* ignore */ }
+    }
+
+    _rememberPendingCrossfade(track) {
+        if (!track?.howl) return null;
+
+        const existing = this._pendingCrossfadeRetirements.get(track.howl);
+        if (existing) {
+            if (existing.soundId == null && track.soundId != null) {
+                existing.soundId = track.soundId;
+            }
+            return existing;
+        }
+
+        const entry = {
+            howl: track.howl,
+            soundId: track.soundId ?? null,
+        };
+        this._pendingCrossfadeRetirements.set(track.howl, entry);
+        return entry;
+    }
+
+    _forgetPendingCrossfade(howl) {
+        if (!howl) return;
+        this._pendingCrossfadeRetirements.delete(howl);
+    }
+
+    _retirePendingCrossfade(entry, fadeOutMs = FADE_OUT_MS) {
+        if (!entry?.howl) return Promise.resolve();
+
+        const activeEntry = this._pendingCrossfadeRetirements.get(entry.howl);
+        if (activeEntry === entry) {
+            this._pendingCrossfadeRetirements.delete(entry.howl);
+        }
+
+        return this._fadeOutAndUnload(
+            entry.howl,
+            entry.soundId ?? null,
+            fadeOutMs,
+        );
+    }
+
+    _retirePendingCrossfades(fadeOutMs = FADE_OUT_MS) {
+        const entries = Array.from(this._pendingCrossfadeRetirements.values());
+        this._pendingCrossfadeRetirements.clear();
+
+        if (!entries.length) {
+            return Promise.resolve();
+        }
+
+        return Promise.allSettled(
+            entries.map((entry) => this._fadeOutAndUnload(
+                entry.howl,
+                entry.soundId ?? null,
+                fadeOutMs,
+            )),
+        ).then(() => undefined);
     }
 
     _clearPendingFadeOut(howl) {
@@ -708,6 +765,7 @@ class AudioEngine {
     _fadeOutAndUnload(howl, soundId = null, fadeOutMs = FADE_OUT_MS) {
         this._clearPendingMobileFade(howl);
         this._clearPendingFadeOut(howl);
+        this._forgetPendingCrossfade(howl);
         return new Promise((resolve) => {
             try {
                 let finished = false;
