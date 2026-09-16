@@ -298,4 +298,167 @@ class TuyaCloudClientTest extends TestCase
         $this->assertFalse($error->writeOutcomeUnknown);
         Http::assertSentCount(2);
     }
+
+    private function nativeModel(array $property = []): array
+    {
+        return ['modelId' => 'fixture_model', 'services' => [['code' => '', 'properties' => [array_replace([
+            'abilityId' => 35, 'code' => 'switch_gradient', 'accessMode' => 'rw', 'typeSpec' => ['type' => 'raw', 'maxlen' => 255],
+        ], $property)]]]];
+    }
+
+    public function test_native_gradient_uses_selected_model_and_exact_seven_byte_base64_without_generic_property_access(): void
+    {
+        $requests = [];
+        $now = self::NOW;
+        Http::fake(function (Request $request) use (&$requests, &$now) {
+            $requests[] = $request;
+            if (str_contains($request->url(), '/token?')) {
+                $now += 1000;
+
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                $now += 500;
+
+                return Http::response(['success' => true, 'result' => ['model' => json_encode($this->nativeModel())]]);
+            }
+
+            return Http::response(['success' => true, 't' => $now + 20, 'result' => (object) []]);
+        });
+        $client = $this->client(clock: static function () use (&$now) {
+            return $now;
+        });
+        $this->assertSame($this->nativeModel(), $client->readModel());
+        $receipt = $client->sendSwitchGradient(800, 2000);
+        $this->assertSame(['sentAt' => self::NOW + 1500, 'acceptedAt' => self::NOW + 1520], $receipt);
+        $this->assertCount(3, $requests);
+        $this->assertSame(self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/model', $requests[1]->url());
+        $write = $requests[2];
+        $path = '/v2.0/cloud/thing/'.self::DEVICE.'/shadow/properties/issue';
+        $this->assertSame('POST', $write->method());
+        $this->assertSame(self::ENDPOINT.$path, $write->url());
+        $body = json_decode($write->body(), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame(['properties'], array_keys($body));
+        $this->assertIsString($body['properties']);
+        $value = json_decode($body['properties'], true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame(['switch_gradient'], array_keys($value));
+        $bytes = base64_decode($value['switch_gradient'], true);
+        $this->assertSame('000003200007d0', bin2hex($bytes));
+        $this->assertSame(7, strlen($bytes));
+        $signed = 'POST'."\n".hash('sha256', $write->body())."\n\n".$path;
+        $this->assertSame(strtoupper(hash_hmac('sha256', self::CLIENT.self::TOKEN.(self::NOW + 1500).self::NONCE.$signed, self::SECRET)), $write->header('sign')[0]);
+        // A second intentional setting/restoration reuses the validated model.
+        $client->sendSwitchGradient(0, 60000);
+        $this->assertCount(4, $requests);
+        $second = json_decode(json_decode($requests[3]->body(), true)['properties'], true);
+        $this->assertSame('0000000000ea60', bin2hex(base64_decode($second['switch_gradient'], true)));
+    }
+
+    public function test_invalid_native_gradient_durations_are_rejected_without_even_reading_model(): void
+    {
+        Http::fake();
+        foreach ([[-1, 0], [0, 60001], [60001, 0], [0, -1], ['800', 2000], [800, 2000.5], [true, 0], [null, 0]] as [$on, $off]) {
+            $this->assertSame('configuration_error', $this->failure(fn () => $this->client()->sendSwitchGradient($on, $off))->getMessage());
+        }
+        Http::assertNothingSent();
+    }
+
+    public static function invalidNativeProperties(): array
+    {
+        return [
+            'read only' => [['accessMode' => 'ro']],
+            'wrong id' => [['abilityId' => 34]],
+            'wrong code' => [['code' => 'another_property']],
+            'wrong type' => [['typeSpec' => ['type' => 'string', 'maxlen' => 255]]],
+            'too short' => [['typeSpec' => ['type' => 'raw', 'maxlen' => 6]]],
+            'invalid maximum type' => [['typeSpec' => ['type' => 'raw', 'maxlen' => '255']]],
+        ];
+    }
+
+    #[DataProvider('invalidNativeProperties')]
+    public function test_native_gradient_requires_the_exact_writable_raw_model_property_before_post(array $property): void
+    {
+        Http::fake([
+            self::ENDPOINT.'/v1.0/token?grant_type=1' => Http::response($this->token()),
+            self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/model' => Http::response([
+                'success' => true, 'result' => ['model' => json_encode($this->nativeModel($property))],
+            ]),
+        ]);
+        $error = $this->failure(fn () => $this->client()->sendSwitchGradient(800, 2000));
+        $this->assertSame('configuration_error', $error->getMessage());
+        $this->assertFalse($error->writeOutcomeUnknown);
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+    }
+
+    public function test_missing_ambiguous_namespaced_and_malformed_native_models_never_write(): void
+    {
+        $missing = $this->nativeModel();
+        $missing['services'][0]['properties'] = [];
+        $duplicate = $this->nativeModel();
+        $duplicate['services'][0]['properties'][] = $duplicate['services'][0]['properties'][0];
+        $namespaced = $this->nativeModel();
+        $namespaced['services'][0]['code'] = 'another_service';
+        foreach ([$missing, $duplicate, $namespaced, ['services' => 'invalid'], null] as $model) {
+            Http::fake([
+                self::ENDPOINT.'/v1.0/token?grant_type=1' => Http::response($this->token()),
+                self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/model' => Http::response([
+                    'success' => true, 'result' => ['model' => json_encode($model)],
+                ]),
+            ]);
+            $this->assertSame('configuration_error', $this->failure(fn () => $this->client()->sendSwitchGradient(800, 2000))->getMessage());
+            Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+        }
+    }
+
+    #[DataProvider('nativeWriteFailures')]
+    public function test_native_issue_write_uncertainty_never_retries_or_exposes_payloads(string $failure): void
+    {
+        $writes = 0;
+        Http::fake(function (Request $request) use (&$writes, $failure) {
+            if (str_contains($request->url(), '/token?')) {
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                return Http::response(['success' => true, 'result' => ['model' => json_encode($this->nativeModel())]]);
+            }
+            $writes++;
+            if ($failure === 'timeout') {
+                throw new ConnectionException(self::SECRET.self::TOKEN);
+            }
+
+            return Http::response($failure === 'expired' ? ['success' => false, 'code' => '1010', 'msg' => self::SECRET]
+                : ['success' => true, 'result' => self::SECRET]);
+        });
+        $error = $this->failure(fn () => $this->client()->sendSwitchGradient(800, 2000));
+        $this->assertSame(1, $writes);
+        $this->assertTrue($error->writeOutcomeUnknown);
+        $this->assertNull($error->getPrevious());
+        $this->assertSame($failure === 'expired' ? 'configuration_error' : 'transport_timeout', $error->getMessage());
+        $this->assertStringNotContainsString(self::SECRET, $error->getMessage());
+    }
+
+    public static function nativeWriteFailures(): array
+    {
+        return [['timeout'], ['expired'], ['unexpected result']];
+    }
+
+    public function test_failed_model_refresh_discards_previously_usable_schema_cache(): void
+    {
+        $models = 0;
+        Http::fake(function (Request $request) use (&$models) {
+            if (str_contains($request->url(), '/token?')) {
+                return Http::response($this->token());
+            }
+            $models++;
+
+            return Http::response(['success' => true, 'result' => ['model' => $models === 1 ? json_encode($this->nativeModel()) : '{invalid']]);
+        });
+        $client = $this->client();
+        $client->readModel();
+        $this->failure(fn () => $client->readModel());
+        $this->assertSame('configuration_error', $this->failure(fn () => $client->sendSwitchGradient(800, 2000))->getMessage());
+        $this->assertSame(3, $models);
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+    }
 }

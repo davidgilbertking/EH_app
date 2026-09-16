@@ -23,6 +23,8 @@ class TuyaCloudClient
 
     private bool $credentialsLoaded = false;
 
+    private ?array $model = null;
+
     private const ENDPOINTS = [
         'https://openapi.tuyaeu.com', 'https://openapi-weaz.tuyaeu.com',
         'https://openapi.tuyaus.com', 'https://openapi-ueaz.tuyaus.com',
@@ -65,6 +67,76 @@ class TuyaCloudClient
         }
 
         return ['properties' => $data['result']['properties'], 'serverTime' => $data['t']];
+    }
+
+    /** Refresh only the selected device's native model; never an account list. */
+    public function readModel(): array
+    {
+        $this->model = null;
+        $data = $this->request('GET', '/v2.0/cloud/thing/'.$this->deviceId().'/model');
+        $encoded = $data['result']['model'] ?? null;
+        if (! is_string($encoded)) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $model = CloudLightingFiles::object($encoded);
+        $services = $model['services'] ?? null;
+        if (! is_array($services) || ! array_is_list($services) || count($services) < 1 || count($services) > 64) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        foreach ($services as $service) {
+            if (! is_array($service) || ! is_string($service['code'] ?? null)
+                || ! is_array($service['properties'] ?? null) || ! array_is_list($service['properties'])) {
+                throw new TuyaCloudException('configuration_error');
+            }
+        }
+
+        return $this->model = $model;
+    }
+
+    /** Configure DP35 only. API acceptance does not prove any physical fade. */
+    public function sendSwitchGradient(mixed $onMs, mixed $offMs): array
+    {
+        if (! is_int($onMs) || ! is_int($offMs) || $onMs < 0 || $onMs > 60000 || $offMs < 0 || $offMs > 60000) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $deviceId = $this->deviceId();
+        $model = $this->model ?? $this->readModel();
+        $matches = 0;
+        foreach ($model['services'] as $service) {
+            foreach ($service['properties'] as $property) {
+                if (! is_array($property)) {
+                    throw new TuyaCloudException('configuration_error');
+                }
+                if (($property['abilityId'] ?? null) !== 35 && ($property['code'] ?? null) !== 'switch_gradient') {
+                    continue;
+                }
+                if ($service['code'] !== '' || ($property['abilityId'] ?? null) !== 35
+                    || ($property['code'] ?? null) !== 'switch_gradient' || ($property['accessMode'] ?? null) !== 'rw'
+                    || ($property['typeSpec']['type'] ?? null) !== 'raw'
+                    || ! is_int($property['typeSpec']['maxlen'] ?? null) || $property['typeSpec']['maxlen'] < 7) {
+                    throw new TuyaCloudException('configuration_error');
+                }
+                $matches++;
+            }
+        }
+        if ($matches !== 1) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        // Tuya DP35: version 00, then two unsigned big-endian 24-bit ms
+        // durations. Native raw properties use base64, not LAN hex strings.
+        // https://developer.tuya.com/cn/docs/iot/ceiling-light-function-definiton?id=K9tp11kysv22w
+        $raw = "\0".substr(pack('N', $onMs), 1).substr(pack('N', $offMs), 1);
+        $properties = json_encode(['switch_gradient' => base64_encode($raw)], JSON_THROW_ON_ERROR);
+        $this->accessToken();
+        $sentAt = ($this->clock)();
+        // /issue sends immediately; /desired would persist deferred commands.
+        // https://developer.tuya.com/en/docs/cloud/c057ad5cfd?id=Kcp2kxdzftp91
+        $data = $this->request('POST', '/v2.0/cloud/thing/'.$deviceId.'/shadow/properties/issue', ['properties' => $properties]);
+        if (($data['result'] ?? null) !== []) {
+            throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+        }
+
+        return ['sentAt' => $sentAt, 'acceptedAt' => $data['t'] ?? null];
     }
 
     /** One API write attempt. Even an expired token or timeout is never replayed. */
