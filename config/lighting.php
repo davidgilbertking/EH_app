@@ -11,7 +11,9 @@ return [
     'dark_hold_ms' => (int) env('LIGHTING_DARK_HOLD_MS', 150),
     'curve' => env('LIGHTING_CURVE', 'smoothstep'), // smoothstep | linear
     'tick_ms' => (int) env('LIGHTING_TICK_MS', 100),
-    'worker_timeout_ms' => 5000,
+    // Cloud ticks can include token refresh plus a device request. Native fade
+    // waits themselves run between ticks and never block the heartbeat.
+    'worker_timeout_ms' => env('LIGHTING_DRIVER', 'mock') === 'cloud' ? 15000 : 5000,
     'control_lease_ms' => (int) env('LIGHTING_CONTROL_LEASE_MS', 43200000),
     'observation_max_age_ms' => 10000,
     'history_limit' => 256,
@@ -20,6 +22,9 @@ return [
         'encounters' => ['brightnessPct' => 90, 'temperaturePct' => 20],
     ],
     'cloud' => [
+        'native_transitions' => (bool) env('LIGHTING_CLOUD_NATIVE_TRANSITIONS', false),
+        'native_interruptions' => (bool) env('LIGHTING_CLOUD_NATIVE_INTERRUPTS', false),
+        'settle_margin_ms' => 400,
         'device_id' => env('LIGHTING_CLOUD_DEVICE_ID'),
         'credentials_file' => env('LIGHTING_CLOUD_CREDENTIALS_FILE', storage_path('app/private/lighting/cloud-credentials.json')),
         'private_directory' => env('LIGHTING_CLOUD_PRIVATE_DIRECTORY', storage_path('app/private/lighting')),

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Lighting\LightingCoordinator;
+use App\Lighting\LightingExecutor;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +12,7 @@ class LightingWorkCommand extends Command
 
     protected $description = 'Run the single-host lighting mailbox executor for the configured driver';
 
-    public function handle(LightingCoordinator $coordinator): int
+    public function handle(LightingExecutor $coordinator): int
     {
         if (DB::connection()->getDriverName() === 'sqlite' && PHP_VERSION_ID < 80400) {
             $this->error('Lighting with SQLite requires PHP 8.4+ for IMMEDIATE transactions. Upgrade PHP before starting this worker.');

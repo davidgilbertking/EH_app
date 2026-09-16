@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /** One mailbox, no FIFO jobs, and no timers in the HTTP or browser processes. */
-class LightingCoordinator
+class LightingCoordinator implements LightingExecutor
 {
     public function __construct(private LightingStore $store, private LightingPlanner $planner, private LightingDriver $driver) {}
 

@@ -1,0 +1,21 @@
+[Unit]
+Description=The Yellow Sign lighting executor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/EH_app
+ExecStart=/usr/bin/php8.4 /var/www/EH_app/artisan lighting:work
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=20
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
