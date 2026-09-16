@@ -1,5 +1,6 @@
 <script setup>
 import { engine } from '@/audio/engine';
+import { gameFlow, resolveGameContext } from '@/gameFlow/controller';
 import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
@@ -18,6 +19,7 @@ const props = defineProps({
     imageUrl: { type: String, default: null },
     showImage: { type: Boolean, default: false },
     mode: { type: String, default: null },
+    gameContext: { type: String, default: null },
     variant: { type: String, default: 'default' }, // 'default'|'special'|'contacts'
     // Optional Tailwind class string that overrides `variant`. Used by pages
     // that need per-button colours (e.g. Past/Future contacts).
@@ -75,6 +77,7 @@ const cls = computed(() => props.tone || variantClasses[props.variant] || varian
 const hasVisual = computed(() => props.showImage && Boolean(props.imageUrl));
 
 const page = usePage();
+const gameContext = computed(() => resolveGameContext(props.folderSlug, props.gameContext, page.url));
 const playingFolder = computed(() => engine.state.playingFolder);
 const isPlaying = computed(() => playingFolder.value === props.folderSlug);
 const isPausedForResume = computed(() =>
@@ -97,19 +100,12 @@ onBeforeUnmount(() => {
 });
 
 function tap() {
-    // If the same folder is already playing, treat a second tap as "stop" so
-    // the user always has a way to silence the current track (there is no
-    // dedicated stop button on most pages).
-    if (isPlaying.value) {
-        engine.stop();
-        return;
-    }
-    engine.play({
+    gameFlow.playUserChoice({
         folderSlug: props.folderSlug,
         mode: props.mode,
         label: props.label,
         crossfade: true,
-    });
+    }, gameContext.value);
 }
 
 function longPress() {
@@ -122,6 +118,7 @@ function longPress() {
             label: props.label,
             folderSlug: props.folderSlug,
             mode: props.mode || null,
+            gameContext: gameContext.value,
             // Snapshot the button's current colour so the blob inherits it.
             tone: cls.value,
             imageUrl: props.imageUrl || null,

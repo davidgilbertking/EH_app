@@ -14,6 +14,7 @@ class PageRoutesTest extends TestCase
     {
         return [
             ['/'],
+            ['/mythos'],
             ['/encounters'],
             ['/encounters/general'],
             ['/encounters/general/city'],

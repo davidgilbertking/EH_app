@@ -14,6 +14,11 @@ class PageController extends Controller
         return Inertia::render('Home');
     }
 
+    public function mythos(): Response
+    {
+        return Inertia::render('Mythos/Index');
+    }
+
     // ---- Encounters tree ----
     public function contacts(): Response
     {

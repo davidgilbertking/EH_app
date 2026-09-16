@@ -28,30 +28,33 @@ defineProps({
             :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }"
         >
             <template v-for="(btn, colIdx) in row" :key="colIdx">
-                <div v-if="!btn" class="invisible" aria-hidden="true">&nbsp;</div>
-                <NavLinkButton
-                    v-else-if="btn.type === 'nav'"
-                    :href="btn.href"
-                    :label="btn.label"
-                    :label-class="btn.labelClass"
-                    :mobile-short-label="btn.mobileShortLabel"
-                    :variant="btn.variant"
-                    :tone="btn.tone"
-                    :image-url="btn.imageUrl"
-                    :show-image="Boolean(btn.showImage)"
-                />
-                <PlayButton
-                    v-else
-                    :folder-slug="btn.folderSlug"
-                    :label="btn.label"
-                    :label-class="btn.labelClass"
-                    :mobile-short-label="btn.mobileShortLabel"
-                    :mode="btn.mode"
-                    :variant="btn.variant"
-                    :tone="btn.tone"
-                    :image-url="btn.imageUrl"
-                    :show-image="Boolean(btn.showImage)"
-                />
+                <slot :button="btn" :row-index="rowIdx" :column-index="colIdx">
+                    <div v-if="!btn" class="invisible" aria-hidden="true">&nbsp;</div>
+                    <NavLinkButton
+                        v-else-if="btn.type === 'nav'"
+                        :href="btn.href"
+                        :label="btn.label"
+                        :label-class="btn.labelClass"
+                        :mobile-short-label="btn.mobileShortLabel"
+                        :variant="btn.variant"
+                        :tone="btn.tone"
+                        :image-url="btn.imageUrl"
+                        :show-image="Boolean(btn.showImage)"
+                    />
+                    <PlayButton
+                        v-else
+                        :folder-slug="btn.folderSlug"
+                        :game-context="btn.gameContext"
+                        :label="btn.label"
+                        :label-class="btn.labelClass"
+                        :mobile-short-label="btn.mobileShortLabel"
+                        :mode="btn.mode"
+                        :variant="btn.variant"
+                        :tone="btn.tone"
+                        :image-url="btn.imageUrl"
+                        :show-image="Boolean(btn.showImage)"
+                    />
+                </slot>
             </template>
         </div>
     </div>

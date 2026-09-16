@@ -1,6 +1,7 @@
 <script setup>
 import { getActiveFolder, isHrefBranchActive } from '@/audio/folderBranch';
 import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { useLongPress } from '@/composables/useLongPress';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -63,56 +64,22 @@ const headerClass = computed(() => [
     'flex flex-wrap gap-[clamp(0.2rem,calc(0.5rem*var(--ui-scale)),0.5rem)] border-b border-neutral-800 bg-neutral-950/90 px-[clamp(0.35rem,calc(0.75rem*var(--ui-scale)),0.75rem)] py-[clamp(0.25rem,calc(0.75rem*var(--ui-scale)),0.75rem)] backdrop-blur',
 ]);
 
-// Tap toggles: second tap on currently-playing folder fades it out.
-// For phase trio (Action/Combat/Mythos), use crossfade so old track remains
-// audible while new track buffers, reducing perceived silence on switches.
-function toggle(folderSlug, label) {
-    if (engine.state.playingFolder === folderSlug) {
-        engine.stop();
-        return;
-    }
-    engine.play({ folderSlug, label, crossfade: true });
-}
-
+// The coordinator accepts the gesture once for both music and light.
 const actionBindings = useLongPress({
-    onTap: () => {
-        if (playingFolder.value === 'action' || playingFolder.value === 'action-muted') {
-            engine.stop();
-            return;
-        }
-        toggle('action', 'Action');
-    },
-    onLongPress: () => {
-        if (playingFolder.value === 'action-muted') {
-            engine.stop();
-            return;
-        }
-        toggle('action-muted', 'Muted Action');
-    },
+    onTap: () => gameFlow.selectAction('action'),
+    onLongPress: () => gameFlow.selectAction('action-muted'),
     threshold: 900,
 });
 
 const combatBindings = useLongPress({
-    onTap: () => {
-        if (playingFolder.value === 'combat' || playingFolder.value === 'combat-epic') {
-            engine.stop();
-            return;
-        }
-        toggle('combat', 'Combat');
-    },
-    onLongPress: () => {
-        if (playingFolder.value === 'combat-epic') {
-            engine.stop();
-            return;
-        }
-        toggle('combat-epic', 'Epic Combat');
-    },
+    onTap: () => gameFlow.selectCombat('combat'),
+    onLongPress: () => gameFlow.selectCombat('combat-epic'),
     threshold: 900,
 });
 
 const mythosBindings = useLongPress({
-    onTap: () => toggle('mythos', 'Mythos'),
-    threshold: 5000, // effectively no long-press behaviour
+    onTap: () => gameFlow.enterMythos(),
+    threshold: 5000,
 });
 </script>
 
@@ -127,6 +94,7 @@ const mythosBindings = useLongPress({
                 isActionPaused ? 'paused-amber-dash' : '',
             ]"
             v-bind="actionBindings"
+            @click="($event.detail === 0) && gameFlow.selectAction('action')"
         >
             {{ actionLabel }}
             <span
@@ -146,6 +114,7 @@ const mythosBindings = useLongPress({
                 isCombatPaused ? 'paused-amber-dash' : '',
             ]"
             v-bind="combatBindings"
+            @click="($event.detail === 0) && gameFlow.selectCombat('combat')"
         >
             {{ combatLabel }}
             <span
@@ -156,8 +125,9 @@ const mythosBindings = useLongPress({
             </span>
         </button>
 
-        <Link
-            href="/encounters"
+        <button
+            type="button"
+            @click="gameFlow.enterEncounters()"
             class="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 isEncountersActive ? variantClasses.encountersActive : variantClasses.encounters,
@@ -166,19 +136,21 @@ const mythosBindings = useLongPress({
         >
             <span class="ui-header-nav-mobile-label min-w-0 whitespace-normal break-words text-center">Encounters</span>
             <span aria-hidden="true" class="max-[640px]:hidden">›</span>
-        </Link>
+        </button>
 
         <button
             type="button"
-            class="flex-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
+            class="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 variantClasses.mythos,
                 isMythosActive ? 'ring-2 ring-amber-400' : '',
                 isMythosPaused ? 'paused-amber-dash' : '',
             ]"
             v-bind="mythosBindings"
+            @click="($event.detail === 0) && gameFlow.enterMythos()"
         >
-            Mythos
+            <span class="ui-header-nav-mobile-label min-w-0 whitespace-normal break-words text-center">Mythos</span>
+            <span aria-hidden="true" class="max-[640px]:hidden">›</span>
         </button>
 
         <Link

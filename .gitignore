@@ -37,3 +37,16 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Private lighting diagnostics and TinyTuya credentials/snapshots.
+# An ignore rule does not remove an already tracked file from Git history.
+/cookies.txt
+devices.json
+tinytuya.json
+tuya-raw.json
+snapshot.json
+/lighting-diagnostics/
+/storage/app/private/lighting/
+/storage/framework/lighting-sender.lock
+/storage/framework/lighting-sender-*.lock
+/scripts/lighting/**/__pycache__/

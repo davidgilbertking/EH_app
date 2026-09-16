@@ -51,6 +51,8 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        app(\App\Lighting\LightingControl::class)->revokeSession($user->id, $request->session()->getId());
+
         Auth::logout();
 
         $user->delete();

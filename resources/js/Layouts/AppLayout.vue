@@ -4,6 +4,8 @@ import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
 import VolumeSlider from '@/Components/App/VolumeSlider.vue';
+import { gameFlow } from '@/gameFlow/controller';
+import { lighting } from '@/lighting/state';
 import { warmImageCache } from '@/composables/useImageCacheWarmup';
 import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
@@ -285,6 +287,7 @@ function stopSuppressHistoryBgSnapshot() {
 function shouldSyncGameStateForPath(routePath) {
     return (
         routePath === '/'
+        || routePath === '/mythos'
         || routePath.startsWith('/encounters')
         || routePath.startsWith('/other')
     );
@@ -330,7 +333,14 @@ function onBeforeHistoryBackNav() {
     startSuppressHistoryBgSnapshot();
 }
 
+let removeNavigationListener = null;
 onMounted(() => {
+    // Read-only status bootstrap. Only completed navigations may leave Mythos;
+    // mount, cancelled visits and partial prop refreshes never start a phase.
+    lighting.startPolling();
+    removeNavigationListener = router.on('navigate', (event) => {
+        gameFlow.observeNavigation(event.detail.page.url);
+    });
     syncIpadDeviceFlag();
     lockIpadBodyScroll();
     syncHeaderHeight();
@@ -353,6 +363,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    removeNavigationListener?.();
+    lighting.stopPolling();
     resizeObserver?.disconnect();
     window.removeEventListener('resize', syncHeaderHeight);
     window.removeEventListener('resize', syncUiScale);
@@ -388,7 +400,7 @@ const DIMMED = 'bg-[rgba(10,10,10,0.75)] backdrop-blur-md';
 const LIGHT_DIM = 'bg-[rgba(10,10,10,0.40)]';
 const overlayClass = computed(() => {
     if (isHome.value) return blobs.value.length ? DIMMED : LIGHT_DIM;
-    if (url.value.startsWith('/encounters') || url.value.startsWith('/other')) {
+    if (path.value === '/mythos' || url.value.startsWith('/encounters') || url.value.startsWith('/other')) {
         return DIMMED;
     }
     return null;

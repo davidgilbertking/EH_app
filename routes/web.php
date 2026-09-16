@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AudioController;
+use App\Http\Controllers\LightingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StateController;
@@ -24,6 +25,7 @@ Route::get('/debug/version', static function () {
     }
     $appAsset = $manifest['resources/js/app.js']['file'] ?? null;
     $appAssetPath = $appAsset ? public_path("build/{$appAsset}") : null;
+
     return response()->json([
         'git_head' => $head !== '' ? $head : null,
         'manifest_exists' => File::exists($manifestPath),
@@ -39,6 +41,13 @@ Route::get('/debug/version', static function () {
 Route::middleware('auth')->group(function () {
     // ---- Pages ----
     Route::get('/', [PageController::class, 'home'])->name('home');
+    Route::get('/mythos', [PageController::class, 'mythos'])->name('mythos');
+
+    Route::prefix('lighting')->name('lighting.')->group(function () {
+        Route::get('/status', [LightingController::class, 'status'])->middleware('throttle:180,1,lighting-status:')->name('status');
+        Route::post('/control', [LightingController::class, 'control'])->middleware('throttle:30,1,lighting-control:')->name('control');
+        Route::post('/intents', [LightingController::class, 'intent'])->middleware('throttle:120,1,lighting-intents:')->name('intents');
+    });
 
     Route::prefix('encounters')->name('encounters.')->group(function () {
         Route::get('/', [PageController::class, 'contacts'])->name('index');
@@ -74,16 +83,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/contacts/{path?}', static function (?string $path) {
         $target = '/encounters'.($path ? '/'.$path : '');
         $query = request()->getQueryString();
+
         return redirect($query ? "{$target}?{$query}" : $target);
     })->where('path', '.*');
     Route::get('/special/{path?}', static function (?string $path) {
         $target = '/other'.($path ? '/'.$path : '');
         $query = request()->getQueryString();
+
         return redirect($query ? "{$target}?{$query}" : $target);
     })->where('path', '.*');
     Route::get('/encounters/add-map/{path?}', static function (?string $path) {
         $target = '/encounters/side-boards'.($path ? '/'.$path : '');
         $query = request()->getQueryString();
+
         return redirect($query ? "{$target}?{$query}" : $target);
     })->where('path', '.*');
 

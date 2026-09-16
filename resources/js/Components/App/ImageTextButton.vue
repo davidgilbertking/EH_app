@@ -1,6 +1,7 @@
 <script setup>
 import { getActiveFolder, isFolderInBranches } from '@/audio/folderBranch';
 import { engine } from '@/audio/engine';
+import { gameFlow, resolveGameContext } from '@/gameFlow/controller';
 import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
 import { Link, router, usePage } from '@inertiajs/vue3';
@@ -12,12 +13,14 @@ const props = defineProps({
     imageUrl: { type: String, default: null },
     href: { type: String, default: null },
     mode: { type: String, default: null },
+    gameContext: { type: String, default: null },
     activeFolderPrefix: { type: String, default: null },
     // tailwind-class string for the button background/border
     tone: { type: String, default: 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-neutral-100' },
 });
 
 const page = usePage();
+const gameContext = computed(() => resolveGameContext(props.folderSlug, props.gameContext, page.url));
 const isPlaying = computed(() => engine.state.playingFolder === props.folderSlug);
 const isPausedForResume = computed(() =>
     engine.state.isPaused && engine.state.pausedFolder === props.folderSlug
@@ -45,16 +48,12 @@ onBeforeUnmount(() => {
 });
 
 function tap() {
-    if (isPlaying.value) {
-        engine.stop();
-        return;
-    }
-    engine.play({
+    gameFlow.playUserChoice({
         folderSlug: props.folderSlug,
         mode: props.mode,
         label: props.label,
         crossfade: true,
-    });
+    }, gameContext.value);
 }
 
 function longPress() {
@@ -67,6 +66,7 @@ function longPress() {
             label: props.label,
             folderSlug: props.folderSlug,
             mode: props.mode || null,
+            gameContext: gameContext.value,
             tone: props.tone,
         },
     ];

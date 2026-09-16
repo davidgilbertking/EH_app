@@ -1,5 +1,6 @@
 <script setup>
 import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { computed } from 'vue';
 
 const isVisible = computed(() => Boolean(engine.state.playingFolder || engine.state.canResume));
@@ -11,12 +12,9 @@ const visibilityClass = computed(() => (
 ));
 
 function togglePause() {
-    if (isPaused.value) {
-        engine.resume();
-    } else {
-        engine.pause();
-    }
+    gameFlow.togglePause();
 }
+
 </script>
 
 <template>

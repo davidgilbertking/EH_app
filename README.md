@@ -76,6 +76,15 @@ php artisan tinker
 Run `php artisan audio:init` to (re)create empty folders for every slug.
 Inspect `app/Domain/Pages.php` for the full slug catalogue.
 
+## Mythos lighting
+
+The Mythos header action opens a separate Green / Yellow / Blue card selector
+while music continues. Lighting defaults to **simulation**. A Cloud driver and
+bounded commissioning commands are available; physical scene exit still needs
+hardware validation before enabling the complete game flow.
+See [lighting setup and hardware handoff](docs/lighting.md) for
+the dedicated worker, transition policies, tests, and KOJIMA diagnostics.
+
 ## Adding images for Ancient Ones / Investigators
 
 1. Drop files into `storage/app/public/ancients/` and `storage/app/public/investigators/`.

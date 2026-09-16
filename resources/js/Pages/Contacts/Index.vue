@@ -25,6 +25,7 @@ const elderBtn = computed(() => {
     if (ancient.value) {
         return {
             type: 'play',
+            gameContext: 'encounters',
             folderSlug: `ancient/${ancient.value.slug}`,
             label: ancient.value.name,
             tone: 'bg-black hover:bg-neutral-900 text-red-500 border-neutral-700',

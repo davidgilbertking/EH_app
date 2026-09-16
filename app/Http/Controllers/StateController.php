@@ -50,6 +50,7 @@ class StateController extends Controller
             'blobs.*.label' => 'required|string',
             'blobs.*.folderSlug' => 'required|string',
             'blobs.*.mode' => 'nullable|string|in:random_pos_fade,from_start_no_fade',
+            'blobs.*.gameContext' => 'nullable|string|in:encounters,other,action,action-muted,combat,combat-epic,mythos',
             // Raw Tailwind class string captured from the source button at the
             // moment the blob was created. Pure presentation, ignored server-
             // side; persisted so the blob keeps its colour across reloads.

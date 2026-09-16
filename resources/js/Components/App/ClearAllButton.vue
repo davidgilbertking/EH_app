@@ -1,5 +1,6 @@
 <script setup>
 import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -21,7 +22,7 @@ function clearAll() {
     const blobs = page.props.gameState?.blobs ?? [];
     const activeOrPausedFolder = engine.state.playingFolder || engine.state.pausedFolder;
     if (activeOrPausedFolder && blobs.some((b) => b.folderSlug === activeOrPausedFolder)) {
-        engine.stop();
+        gameFlow.stopUserAudio();
     }
 
     router.delete('/state/blobs', {

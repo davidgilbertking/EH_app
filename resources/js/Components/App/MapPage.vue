@@ -1,5 +1,6 @@
 <script setup>
 import { engine } from '@/audio/engine';
+import { gameFlow, resolveGameContext } from '@/gameFlow/controller';
 import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -33,16 +34,12 @@ function pulseBlobSaved(key) {
 }
 
 function playHotspot(h) {
-    if (engine.state.playingFolder === h.folderSlug) {
-        engine.stop();
-        return;
-    }
-    engine.play({
+    gameFlow.playUserChoice({
         folderSlug: h.folderSlug,
         mode: h.mode || null,
         label: h.label,
         crossfade: true,
-    });
+    }, resolveGameContext(h.folderSlug, h.gameContext, page.url));
 }
 
 function addHotspotBlob(h, pulseKey) {
@@ -53,6 +50,7 @@ function addHotspotBlob(h, pulseKey) {
         label: h.label,
         folderSlug: h.folderSlug,
         mode: h.mode || null,
+        gameContext: resolveGameContext(h.folderSlug, h.gameContext, page.url),
         tone: h.tone || null,
         imageUrl: h.imageUrl || null,
     }];

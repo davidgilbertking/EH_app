@@ -41,6 +41,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        app(\App\Lighting\LightingControl::class)->revokeSession($request->user()->id, $request->session()->getId());
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

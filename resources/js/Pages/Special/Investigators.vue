@@ -2,6 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Breadcrumb from '@/Components/App/Breadcrumb.vue';
 import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { useLongPress } from '@/composables/useLongPress';
 import { makeBlobId } from '@/utils/blobId';
 import { router, usePage } from '@inertiajs/vue3';
@@ -62,15 +63,11 @@ function pulseBlobSaved(slug) {
 function makeBindings(item) {
     return useLongPress({
         onTap: () => {
-            if (engine.state.playingFolder === item.folderSlug) {
-                engine.stop();
-                return;
-            }
-            engine.play({
+            gameFlow.playUserChoice({
                 folderSlug: item.folderSlug,
                 label: item.name,
                 crossfade: true,
-            });
+            }, 'other');
         },
         onLongPress: () => {
             const current = page.props.gameState?.blobs ?? [];
@@ -82,6 +79,7 @@ function makeBindings(item) {
                     label: item.name,
                     folderSlug: item.folderSlug,
                     mode: null,
+                    gameContext: 'other',
                     tone: item.tone,
                     imageUrl: item.imageUrl || null,
                 },

@@ -1,6 +1,6 @@
 <script setup>
 import { useLongPress } from '@/composables/useLongPress';
-import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { router } from '@inertiajs/vue3';
 
 const HOLD_TO_LOGOUT_MS = 3000;
@@ -15,9 +15,10 @@ function logout() {
     if (isLoggingOut) return;
 
     isLoggingOut = true;
-    const fadePromise = engine.fadeOutCurrent();
+    const { fadePromise, releasePromise } = gameFlow.logout();
 
-    router.post('/logout', {}, {
+    // Close lighting control while the authenticated session still exists.
+    releasePromise.finally(() => router.post('/logout', {}, {
         onSuccess: () => {
             fadePromise.finally(() => window.location.reload());
         },
@@ -27,7 +28,7 @@ function logout() {
         onCancel: () => {
             isLoggingOut = false;
         },
-    });
+    }));
 }
 
 const homeBindings = useLongPress({

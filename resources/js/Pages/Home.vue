@@ -2,6 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ClearAllButton from '@/Components/App/ClearAllButton.vue';
 import { engine } from '@/audio/engine';
+import { gameFlow } from '@/gameFlow/controller';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -59,20 +60,14 @@ function blobImageClass(blob) {
 }
 
 function playBlob(b) {
-    // Universal rule across the whole app: tapping a button whose folder is
-    // already playing fades the track out (toggle-stop). Otherwise start a
-    // random track from this folder.
-    if (engine.state.playingFolder === b.folderSlug) {
-        engine.stop();
-        return;
-    }
-    engine.play({
+    gameFlow.playUserChoice({
         folderSlug: b.folderSlug,
         mode: b.mode || null,
         label: b.label,
         crossfade: true,
-    });
+    }, b.gameContext || null);
 }
+
 </script>
 
 <template>
