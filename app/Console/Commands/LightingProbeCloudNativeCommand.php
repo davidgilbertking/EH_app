@@ -15,10 +15,10 @@ use Throwable;
 class LightingProbeCloudNativeCommand extends Command
 {
     protected $signature = 'lighting:probe-cloud-native
-        {operation=status : status, dark, or white}
+        {operation=status : status, dark, white, or interrupt}
         {--expect-device-id= : Exact selected physical device ID}
-        {--duration-ms= : Native OFF duration for dark, ON duration for white; defaults 4000/8000}
-        {--off-ms=800 : Native OFF duration for the white experiment}';
+        {--duration-ms= : Native OFF duration for dark, ON duration for white/interrupt; defaults 4000/12000}
+        {--off-ms= : Native OFF duration; defaults white 800, interrupt 4000}';
 
     protected $description = 'Inspect or commission one bounded native cloud switch-gradient transition';
 
@@ -51,11 +51,12 @@ class LightingProbeCloudNativeCommand extends Command
     {
         $operation = $this->argument('operation');
         $expected = $this->option('expect-device-id');
-        $duration = $this->option('duration-ms') ?? ($operation === 'dark' ? '4000' : '8000');
-        $off = $this->option('off-ms');
-        if (! in_array($operation, ['status', 'dark', 'white'], true) || ! is_string($expected)
+        $duration = $this->option('duration-ms') ?? ($operation === 'dark' ? '4000' : '12000');
+        $off = $this->option('off-ms') ?? ($operation === 'interrupt' ? '4000' : '800');
+        if (! in_array($operation, ['status', 'dark', 'white', 'interrupt'], true) || ! is_string($expected)
             || ! preg_match('/\A[A-Za-z0-9_-]{6,128}\z/D', $expected)
-            || ! $this->validDuration($duration) || ! $this->validDuration($off)) {
+            || ! $this->validDuration($duration) || ! $this->validDuration($off)
+            || ($operation === 'interrupt' && ((int) $duration !== 12000 || (int) $off !== 4000))) {
             $this->line(json_encode(['ok' => false, 'error' => 'invalid_probe_arguments', 'commandsAttempted' => 0]));
 
             return self::INVALID;
@@ -80,6 +81,7 @@ class LightingProbeCloudNativeCommand extends Command
             }
             $this->guard();
             $model = $this->client->readModel();
+            $this->guard();
             $this->requireGradientModel($model);
             if ($operation !== 'status') {
                 $lock = $this->senderLock();
@@ -96,19 +98,9 @@ class LightingProbeCloudNativeCommand extends Command
                 $files = new CloudLightingFiles($this->directory, $expected);
                 $dark = $files->profiles['dark'];
                 $target = $operation === 'dark' ? $dark : $files->profiles['action'];
-                $source = [20 => true, 21 => $operation === 'dark' ? 'scene' : 'white'];
+                $source = [20 => true, 21 => 'white'];
                 if ($operation === 'dark') {
-                    $alias = null;
-                    foreach ($files->scenes as $name => $scene) {
-                        if (($state['values'][25] ?? null) === $scene['raw']) {
-                            $alias = $name;
-                        }
-                    }
-                    if ($alias === null) {
-                        throw new TuyaCloudException('unknown_scene');
-                    }
-                    $source[25] = $files->scenes[$alias]['raw'];
-                    $this->result['sourceAlias'] = $alias;
+                    $source = $this->darkSource($state, $files);
                 } else {
                     $source += [22 => $dark['brightness'], 23 => $dark['temperature']];
                 }
@@ -119,7 +111,9 @@ class LightingProbeCloudNativeCommand extends Command
                 $suffix = gmdate('Ymd\THis\Z').'-'.Str::uuid();
                 $backup = 'cloud-native-before-'.$suffix.'.json';
                 $this->save($backup, ['schema_version' => 1, 'device_id' => $expected,
-                    'operation' => $operation, 'original_switch_gradient' => $original]);
+                    'operation' => $operation, 'original_switch_gradient' => $original,
+                    'original_switch_gradient_raw_base64' => $state['gradientRawBase64'],
+                    'source_reported_values' => $state['values'], 'source_reported_times' => $state['times']]);
                 $this->result['backup'] = $backup;
                 $this->reportName = 'cloud-native-probe-'.$suffix.'.json';
                 $this->persist();
@@ -143,12 +137,38 @@ class LightingProbeCloudNativeCommand extends Command
                 $white[20] = true;
                 $state = $this->write('switch_on', $state, $white, [20],
                     fn () => $this->client->sendCommands([['code' => 'switch_led', 'value' => true]]));
+                if ($operation === 'interrupt') {
+                    $this->result['interruptAfterMs'] = 2000;
+                    $this->wait(2000);
+                    $state = $this->read();
+                    $this->requireOwnedState($state, $white);
+                    $white[20] = false;
+                    $state = $this->write('interrupt_switch_off', $state, $white, [20],
+                        fn () => $this->client->sendCommands([['code' => 'switch_led', 'value' => false]]));
+                    $this->wait($owned['offMs'] + 400);
+                    $state = $this->read();
+                    $this->requireOwnedState($state, $white);
+
+                    $white[22] = $dark['brightness'];
+                    $white[23] = $dark['temperature'];
+                    $state = $this->write('prepare_dark_while_off', $state, $white, [21, 22, 23],
+                        fn () => $this->client->sendCommands([
+                            ['code' => 'work_mode', 'value' => 'white'],
+                            ['code' => 'bright_value_v2', 'value' => $dark['brightness']],
+                            ['code' => 'temp_value_v2', 'value' => $dark['temperature']],
+                        ]));
+                    $owned = ['onMs' => $original['onMs'], 'offMs' => 4000];
+                    $white[35] = $owned;
+                    $this->result['recoveryGradient'] = $owned;
+                    $state = $this->write('configure_dark_gradient', $state, $white, [35],
+                        fn () => $this->client->sendSwitchGradient($owned['onMs'], $owned['offMs']));
+                    $white[20] = true;
+                    $state = $this->write('switch_on_dark', $state, $white, [20],
+                        fn () => $this->client->sendCommands([['code' => 'switch_led', 'value' => true]]));
+                }
                 $this->wait($owned['onMs'] + 400);
                 $state = $this->read();
-                if ($state['values'][35] !== $owned) {
-                    throw new TuyaCloudException('gradient_ownership_lost');
-                }
-                $this->requireState($state, $white);
+                $this->requireOwnedState($state, $white);
                 $white[35] = $original;
                 $state = $this->write('restore_gradient', $state, $white, [35],
                     fn () => $this->client->sendSwitchGradient($original['onMs'], $original['offMs']));
@@ -196,6 +216,32 @@ class LightingProbeCloudNativeCommand extends Command
         return is_string($value) && preg_match('/\A[0-9]{1,5}\z/D', $value) && (int) $value <= 60000;
     }
 
+    private function darkSource(array $state, CloudLightingFiles $files): array
+    {
+        if (($state['values'][21] ?? null) === 'white') {
+            foreach ($files->profiles as $name => $profile) {
+                if (($state['values'][22] ?? null) === $profile['brightness']
+                    && ($state['values'][23] ?? null) === $profile['temperature']) {
+                    $this->result['sourceProfile'] = $name;
+
+                    return [20 => true, 21 => 'white', 22 => $profile['brightness'], 23 => $profile['temperature']];
+                }
+            }
+            throw new TuyaCloudException('source_mismatch');
+        }
+        if (($state['values'][21] ?? null) === 'scene') {
+            foreach ($files->scenes as $alias => $scene) {
+                if (($state['values'][25] ?? null) === $scene['raw']) {
+                    $this->result['sourceAlias'] = $alias;
+
+                    return [20 => true, 21 => 'scene', 25 => $scene['raw']];
+                }
+            }
+            throw new TuyaCloudException('unknown_scene');
+        }
+        throw new TuyaCloudException('source_mismatch');
+    }
+
     private function guard(): void
     {
         if ($this->cancelled || ($this->externalCancellation)()) {
@@ -226,7 +272,9 @@ class LightingProbeCloudNativeCommand extends Command
     {
         $this->guard();
         $report = $this->client->readProperties();
+        $this->guard();
         $values = $times = [];
+        $gradientRawBase64 = null;
         foreach ($report['properties'] as $property) {
             $dp = $property['dp_id'] ?? $property['dpId'] ?? null;
             if (! is_int($dp) || ! in_array($dp, [20, 21, 22, 23, 25, 35], true)) {
@@ -237,6 +285,10 @@ class LightingProbeCloudNativeCommand extends Command
                 throw new TuyaCloudException('configuration_error');
             }
             $values[$dp] = $dp === 35 ? $this->gradient($property['value']) : $property['value'];
+            if ($dp === 35) {
+                $gradientRawBase64 = strlen($property['value']) === 7 && $property['value'][0] === "\0"
+                    ? base64_encode($property['value']) : $property['value'];
+            }
             $times[$dp] = $property['time'];
         }
         if (! is_bool($values[20] ?? null) || ! is_string($values[21] ?? null)
@@ -244,7 +296,7 @@ class LightingProbeCloudNativeCommand extends Command
             throw new TuyaCloudException('configuration_error');
         }
 
-        return ['values' => $values, 'times' => $times];
+        return ['values' => $values, 'times' => $times, 'gradientRawBase64' => $gradientRawBase64];
     }
 
     private function gradient(mixed $value): array
@@ -278,6 +330,11 @@ class LightingProbeCloudNativeCommand extends Command
     private function write(string $step, array $before, array $expected, array $freshFields, Closure $send): array
     {
         $this->guard();
+        // Reconcile ownership immediately before every side effect, especially
+        // ON and restoration after a native fade. Reads never trigger a retry.
+        $latest = $this->read();
+        $this->requireOwnedState($latest, $before['values']);
+        $before = $latest;
         $this->result['stage'] = $step;
         $this->result['commandsAttempted']++;
         $this->result['writeOutcomeUnknown'] = true;
@@ -302,7 +359,8 @@ class LightingProbeCloudNativeCommand extends Command
             if ($matches && $fresh) {
                 $this->result['writeOutcomeUnknown'] = false;
                 $this->result['stored'] = $this->summary($state);
-                $this->result['steps'][] = ['step' => $step, 'storedConfirmed' => true, 'sentAt' => $receipt['sentAt']];
+                $this->result['steps'][] = ['step' => $step, 'storedConfirmed' => true, 'sentAt' => $receipt['sentAt'],
+                    'elapsedMs' => (int) round((($this->clock)() - $this->started) * 1000)];
                 $this->persist();
 
                 return $state;
@@ -310,6 +368,14 @@ class LightingProbeCloudNativeCommand extends Command
             $this->wait(500);
         } while (($this->clock)() < $until);
         throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+    }
+
+    private function requireOwnedState(array $state, array $expected): void
+    {
+        if (($state['values'][35] ?? null) !== ($expected[35] ?? null)) {
+            throw new TuyaCloudException('gradient_ownership_lost');
+        }
+        $this->requireState($state, $expected);
     }
 
     private function wait(int $milliseconds): void

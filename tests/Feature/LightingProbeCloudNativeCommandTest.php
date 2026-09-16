@@ -8,6 +8,7 @@ use App\Lighting\Drivers\TuyaCloudException;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class LightingProbeCloudNativeCommandTest extends TestCase
@@ -34,17 +35,23 @@ class LightingProbeCloudNativeCommandTest extends TestCase
 
             public array $writes = [];
 
+            public array $writeTimes = [];
+
             public array $values = [20 => true, 21 => 'scene', 22 => 1000, 23 => 332, 25 => '0737370200c703e803e800000000'];
 
             public array $times = [];
 
             public ?int $failAt = null;
 
+            public ?int $staleAt = null;
+
             public bool $staleGradient = false;
 
             public bool $tamperAfterOn = false;
 
             public bool $cancelOnWait = false;
+
+            public ?int $cancelAfterWrites = null;
 
             public bool $cancelled = false;
 
@@ -100,6 +107,7 @@ class LightingProbeCloudNativeCommandTest extends TestCase
             private function mutate(array $changes): array
             {
                 $this->writes[] = $changes;
+                $this->writeTimes[] = $this->time;
                 if (count($this->writes) === $this->failAt) {
                     throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
                 }
@@ -107,7 +115,7 @@ class LightingProbeCloudNativeCommandTest extends TestCase
                 $this->lastWrite = $this->time;
                 foreach ($changes as $dp => $value) {
                     $this->values[$dp] = $value;
-                    if ($dp !== 35 || ! $this->staleGradient) {
+                    if (($dp !== 35 || ! $this->staleGradient) && count($this->writes) !== $this->staleAt) {
                         $this->times[$dp] = $this->wall();
                     }
                 }
@@ -128,6 +136,9 @@ class LightingProbeCloudNativeCommandTest extends TestCase
         $command = new LightingProbeCloudNativeCommand($this->client, pause: function (int $ms): void {
             $this->client->time += $ms / 1000;
             if ($this->client->cancelOnWait && count($this->client->writes) === 2) {
+                $this->client->cancelled = true;
+            }
+            if (count($this->client->writes) === $this->client->cancelAfterWrites) {
                 $this->client->cancelled = true;
             }
         }, clock: fn () => $this->client->time, cancelled: fn () => $this->client->cancelled);
@@ -212,18 +223,171 @@ class LightingProbeCloudNativeCommandTest extends TestCase
         $this->assertSame(['onMs' => 500, 'offMs' => 600], json_decode(file_get_contents($backup), true)['original_switch_gradient']);
     }
 
-    public function test_white_uses_8_second_on_and_800ms_off_from_exact_dark(): void
+    public function test_white_uses_12_second_on_and_800ms_off_from_exact_dark(): void
     {
         $this->client->values[21] = 'white';
         $this->client->values[22] = 10;
         $this->client->values[23] = 0;
         [$code, $result] = $this->runProbe('white');
         $this->assertSame(0, $code, json_encode($result));
-        $this->assertSame(['onMs' => 8000, 'offMs' => 800], $result['temporaryGradient']);
+        $this->assertSame(['onMs' => 12000, 'offMs' => 800], $result['temporaryGradient']);
         $this->assertSame([21 => 'white', 22 => 1000, 23 => 332], $this->client->writes[2]);
-        $this->assertGreaterThanOrEqual(9600, $result['elapsedMs']);
+        $this->assertGreaterThanOrEqual(13600, $result['elapsedMs']);
         $this->assertSame(1000, $result['stored']['brightness']);
         $this->assertTrue($result['gradientRestored']);
+    }
+
+    #[DataProvider('calibratedWhiteSources')]
+    public function test_dark_accepts_each_exact_calibrated_on_white_source(string $profile, int $brightness, int $temperature): void
+    {
+        $this->client->values[21] = 'white';
+        $this->client->values[22] = $brightness;
+        $this->client->values[23] = $temperature;
+        [$code, $result] = $this->runProbe('dark');
+
+        $this->assertSame(0, $code, json_encode($result));
+        $this->assertSame($profile, $result['sourceProfile']);
+        $this->assertCount(5, $this->client->writes);
+        $this->assertSame(10, $result['stored']['brightness']);
+        $this->assertSame(0, $result['stored']['temperature']);
+    }
+
+    public static function calibratedWhiteSources(): array
+    {
+        return [['dark', 10, 0], ['action', 1000, 332], ['encounters', 901, 197]];
+    }
+
+    public function test_uncalibrated_or_powered_off_white_is_rejected_before_any_write(): void
+    {
+        $this->client->values[21] = 'white';
+        $this->client->values[22] = 900;
+        $this->client->values[23] = 197;
+        [$code, $result] = $this->runProbe('dark');
+        $this->assertSame(1, $code);
+        $this->assertSame('source_mismatch', $result['error']);
+        $this->client->values[22] = 901;
+        $this->client->values[20] = false;
+        [$code, $result] = $this->runProbe('dark');
+        $this->assertSame(1, $code);
+        $this->assertSame('source_mismatch', $result['error']);
+        $this->assertSame([], $this->client->writes);
+    }
+
+    public function test_interrupt_stops_12_second_rise_after_two_seconds_and_restores_dark_in_nine_writes(): void
+    {
+        $this->setDark();
+        $original = $this->client->values[35];
+        [$code, $result] = $this->runProbe('interrupt');
+
+        $this->assertSame(0, $code, json_encode($result));
+        $this->assertCount(9, $this->client->writes);
+        $this->assertSame(['onMs' => 12000, 'offMs' => 4000], $result['temporaryGradient']);
+        $this->assertSame(['onMs' => 500, 'offMs' => 4000], $result['recoveryGradient']);
+        $this->assertSame([
+            'configure_gradient', 'switch_off', 'prepare_white_while_off', 'switch_on',
+            'interrupt_switch_off', 'prepare_dark_while_off', 'configure_dark_gradient', 'switch_on_dark', 'restore_gradient',
+        ], array_column($result['steps'], 'step'));
+        $this->assertSame([20 => false], $this->client->writes[1]);
+        $this->assertSame([21 => 'white', 22 => 1000, 23 => 332], $this->client->writes[2]);
+        $this->assertSame([20 => true], $this->client->writes[3]);
+        $this->assertSame([20 => false], $this->client->writes[4]);
+        $this->assertSame([21 => 'white', 22 => 10, 23 => 0], $this->client->writes[5]);
+        $this->assertSame([20 => true], $this->client->writes[7]);
+        $this->assertSame([35 => $original], $this->client->writes[8]);
+        $this->assertGreaterThanOrEqual(2, $this->client->writeTimes[4] - $this->client->writeTimes[3]);
+        $this->assertLessThan(2.5, $this->client->writeTimes[4] - $this->client->writeTimes[3]);
+        $this->assertGreaterThanOrEqual(4.4, $this->client->writeTimes[5] - $this->client->writeTimes[4]);
+        $this->assertTrue($result['stored']['on']);
+        $this->assertSame('white', $result['stored']['mode']);
+        $this->assertSame(10, $result['stored']['brightness']);
+        $this->assertSame(0, $result['stored']['temperature']);
+        $this->assertTrue($result['gradientRestored']);
+        $this->assertFalse($result['physicalConfirmed']);
+        $backup = json_decode(file_get_contents($this->directory.'/'.$result['backup']), true);
+        $this->assertSame($original, $backup['original_switch_gradient_raw_base64']);
+        $this->assertSame(10, $backup['source_reported_values'][22]);
+        $this->assertSame(['onMs' => 500, 'offMs' => 600], $backup['original_switch_gradient']);
+    }
+
+    #[DataProvider('interruptFailureStages')]
+    public function test_interruption_error_never_sends_an_additional_command_or_cleanup_on(int $failure): void
+    {
+        $this->setDark();
+        $this->client->failAt = $failure;
+        [$code, $result] = $this->runProbe('interrupt');
+
+        $this->assertSame(1, $code);
+        $this->assertSame('transport_timeout', $result['error']);
+        $this->assertCount($failure, $this->client->writes);
+        $this->assertSame($failure, $result['commandsAttempted']);
+        $this->assertTrue($result['writeOutcomeUnknown']);
+        $this->assertFalse($result['gradientRestored']);
+        if (in_array($failure, [3, 4, 6, 7, 8], true)) {
+            $this->assertFalse($this->client->values[20]);
+        }
+    }
+
+    public static function interruptFailureStages(): array
+    {
+        return array_map(static fn ($stage) => [$stage], range(1, 9));
+    }
+
+    public function test_interrupt_cancellation_during_rise_or_second_off_does_not_write_cleanup(): void
+    {
+        foreach ([4, 5] as $stage) {
+            $this->setDark();
+            $this->client->writes = [];
+            $this->client->cancelled = false;
+            $this->client->cancelAfterWrites = $stage;
+            [$code, $result] = $this->runProbe('interrupt');
+            $this->assertSame(1, $code);
+            $this->assertSame('probe_cancelled', $result['error']);
+            $this->assertCount($stage, $this->client->writes);
+            $this->assertFalse($result['gradientRestored']);
+        }
+    }
+
+    public function test_interrupt_requires_fresh_off_readback_before_dark_preparation_or_reactivation(): void
+    {
+        $this->setDark();
+        $this->client->staleAt = 5;
+        [$code, $result] = $this->runProbe('interrupt');
+        $this->assertSame(1, $code);
+        $this->assertSame('transport_timeout', $result['error']);
+        $this->assertCount(5, $this->client->writes);
+        $this->assertFalse($this->client->values[20]);
+    }
+
+    public function test_interrupt_rechecks_gradient_ownership_before_switching_off_or_restoring(): void
+    {
+        $this->setDark();
+        $this->client->tamperAfterOn = true;
+        [$code, $result] = $this->runProbe('interrupt');
+        $this->assertSame(1, $code);
+        $this->assertSame('gradient_ownership_lost', $result['error']);
+        $this->assertCount(4, $this->client->writes);
+    }
+
+    public function test_interrupt_rejects_other_source_and_different_experiment_timings(): void
+    {
+        [$code, $result] = $this->runProbe('interrupt');
+        $this->assertSame(1, $code);
+        $this->assertSame('source_mismatch', $result['error']);
+        $this->setDark();
+        foreach ([['--duration-ms' => '8000'], ['--off-ms' => '800']] as $options) {
+            [$code, $result] = $this->runProbe('interrupt', $options);
+            $this->assertSame(2, $code);
+            $this->assertSame('invalid_probe_arguments', $result['error']);
+        }
+        $this->assertSame([], $this->client->writes);
+    }
+
+    private function setDark(): void
+    {
+        $this->client->values[20] = true;
+        $this->client->values[21] = 'white';
+        $this->client->values[22] = 10;
+        $this->client->values[23] = 0;
     }
 
     public function test_unknown_scene_wrong_white_source_or_device_never_write(): void
