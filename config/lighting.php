@@ -10,6 +10,7 @@ return [
     'white_fade_down_ms' => (int) env('LIGHTING_WHITE_FADE_DOWN_MS', env('LIGHTING_WHITE_FADE_MS', 4000)),
     'white_fade_up_ms' => (int) env('LIGHTING_WHITE_FADE_UP_MS', env('LIGHTING_WHITE_FADE_MS', 4000)),
     'scene_fade_out_ms' => (int) env('LIGHTING_SCENE_FADE_OUT_MS', 2000),
+    'music_delay_multiplier' => (float) env('LIGHTING_MUSIC_DELAY_MULTIPLIER', 1.8),
     'scene_fade_in_ms' => (int) env('LIGHTING_SCENE_FADE_IN_MS', 4000),
     'dark_hold_ms' => (int) env('LIGHTING_DARK_HOLD_MS', 150),
     'curve' => env('LIGHTING_CURVE', 'smoothstep'), // smoothstep | linear

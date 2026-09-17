@@ -26,7 +26,7 @@ export function createGameFlowController({
     audio,
     lighting,
     canControlLighting = () => false,
-    getSceneFadeOutMs = () => 0,
+    getMusicDelayMs = () => 0,
     schedule = setTimeout,
     unschedule = clearTimeout,
     navigate = () => {},
@@ -119,8 +119,8 @@ export function createGameFlowController({
                 delay = Math.max(0, pendingMusic.deadline - now());
             } else if (pendingMusic || (state.selectedContext === 'mythos' && state.selectedMythosColor)) {
                 // Changing white profiles replans the lamp's color fade too.
-                const configured = Number(getSceneFadeOutMs());
-                delay = Number.isFinite(configured) ? Math.max(0, Math.min(30000, configured)) : 0;
+                const configured = Number(getMusicDelayMs());
+                delay = Number.isFinite(configured) ? Math.max(0, configured) : 0;
             }
         }
         cancelPendingMusic();

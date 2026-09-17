@@ -37,6 +37,8 @@ class HandleInertiaRequests extends Middleware
         $state = $user?->state()->with('ancientOne')->first();
         $ancient = $state?->ancientOne;
         $yellowSignSeed = $this->yellowSignSeed($request);
+        $sceneFadeOutMs = max(0, min(30000, (int) config('lighting.scene_fade_out_ms')));
+        $musicDelayMultiplier = max(0, (float) config('lighting.music_delay_multiplier', 1.8));
 
         return [
             ...parent::share($request),
@@ -45,7 +47,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'lighting' => [
                 'canControl' => Gate::allows('control-lighting'),
-                'sceneFadeOutMs' => max(0, min(30000, (int) config('lighting.scene_fade_out_ms'))),
+                'musicDelayMs' => (int) round($sceneFadeOutMs * $musicDelayMultiplier),
             ],
             'ui' => [
                 'yellowSignSeed' => $yellowSignSeed,

@@ -35,10 +35,11 @@ class LightingAccessTest extends TestCase
         $other = User::factory()->create();
         config()->set('lighting.allowed_user_ids', [(string) $owner->id]);
         config()->set('lighting.scene_fade_out_ms', 2750);
+        config()->set('lighting.music_delay_multiplier', 1.8);
 
         $this->actingAs($owner)->get('/mythos')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Mythos/Index')->where('lighting.canControl', true)
-            ->where('lighting.sceneFadeOutMs', 2750));
+            ->where('lighting.musicDelayMs', 4950));
         $this->getJson('/lighting/status')->assertOk();
 
         $this->actingAs($other)->get('/')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
@@ -46,6 +47,26 @@ class LightingAccessTest extends TestCase
         $this->get('/encounters')->assertOk();
         $this->get('/other')->assertOk();
         $this->get('/mythos')->assertRedirect('/');
+    }
+
+    public static function musicDelaySettings(): array
+    {
+        return [[2500, 1.8, 4500], [2500, 1.2, 3000], [2500, 0.0, 0], [30000, 1.8, 54000]];
+    }
+
+    #[DataProvider('musicDelaySettings')]
+    public function test_music_delay_uses_the_coefficient_without_changing_the_light_fade(int $fadeMs, float $multiplier, int $delayMs): void
+    {
+        $owner = User::factory()->create();
+        config()->set([
+            'lighting.allowed_user_ids' => [$owner->id],
+            'lighting.scene_fade_out_ms' => $fadeMs,
+            'lighting.music_delay_multiplier' => $multiplier,
+        ]);
+
+        $this->actingAs($owner)->get('/mythos')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('lighting.musicDelayMs', $delayMs));
+        $this->assertSame($fadeMs, config('lighting.scene_fade_out_ms'));
     }
 
     public function test_other_account_cannot_read_take_over_release_or_submit_an_intent(): void

@@ -9,7 +9,7 @@ const KNOWN_ERRORS = new Set([
 export function createLightingState() {
     return {
         canControl: false,
-        sceneFadeOutMs: 0,
+        musicDelayMs: 0,
         linked: false, remoteEnabled: false, controlPending: false,
         driver: 'mock', simulated: true, controlGeneration: null,
         revision: 0, appliedRevision: null, statusVersion: -1,

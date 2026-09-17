@@ -487,7 +487,7 @@ test('session identifiers satisfy the server UUID contract', () => {
 
 function setupColorExit(t, overrides = {}, color = 'blue') {
     t.mock.timers.enable({ apis: ['setTimeout'] });
-    const result = setup({ getSceneFadeOutMs: () => 2500, ...overrides });
+    const result = setup({ getMusicDelayMs: () => 2500, ...overrides });
     result.flow.enterMythos();
     result.flow.selectMythosColor(color, result.flow.state.mythosSessionId);
     result.events.length = 0;
@@ -535,7 +535,7 @@ for (const [folderSlug, choose, profile] of [
 }
 
 test('Mythos without a color and ordinary-to-ordinary choices have no music delay', () => {
-    const { flow, audio } = setup({ getSceneFadeOutMs: () => 2500 });
+    const { flow, audio } = setup({ getMusicDelayMs: () => 2500 });
     flow.enterMythos();
     flow.selectAction();
     assert.equal(audio.state.playingFolder, 'action');
@@ -556,7 +556,7 @@ test('users without lighting access never delay music even with stale color sele
 
 test('paused or stopped Mythos does not delay the next music choice', () => {
     for (const command of ['togglePause', 'stopUserAudio']) {
-        const { flow, audio } = setup({ getSceneFadeOutMs: () => 2500 });
+        const { flow, audio } = setup({ getMusicDelayMs: () => 2500 });
         flow.enterMythos();
         flow.selectMythosColor('blue', flow.state.mythosSessionId);
         flow[command]();
@@ -644,19 +644,19 @@ test('permission revocation before the deadline blocks deferred playback', (t) =
 
 test('delay reads the current config; unavailable lighting cannot stall audio forever', (t) => {
     let duration = 2500;
-    const { flow, audio, lighting, tick } = setupColorExit(t, { getSceneFadeOutMs: () => duration });
-    duration = 1200;
+    const { flow, audio, lighting, tick } = setupColorExit(t, { getMusicDelayMs: () => duration });
+    duration = 4500; // Server-calculated 2500 ms color fade multiplied by 1.8.
     lighting.requestTarget = () => new Promise(() => {});
     flow.selectAction();
-    tick(1199);
+    tick(4499);
     assert.equal(audio.state.playingFolder, 'mythos');
     tick(1);
     assert.equal(audio.state.playingFolder, 'action');
 });
 
-test('zero or invalid fade timings use immediate playback', () => {
+test('zero or invalid music delay timings use immediate playback', () => {
     for (const duration of [0, -10, NaN, undefined, Infinity]) {
-        const { flow, audio } = setup({ getSceneFadeOutMs: () => duration });
+        const { flow, audio } = setup({ getMusicDelayMs: () => duration });
         flow.enterMythos();
         flow.selectMythosColor('blue', flow.state.mythosSessionId);
         flow.selectAction();
