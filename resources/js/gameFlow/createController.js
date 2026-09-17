@@ -21,11 +21,14 @@ export function resolveGameContext(folderSlug, explicitContext = null, url = nul
     return 'other';
 }
 
-/** User actions only: no audio watchers, mount effects, or lamp fade timers. */
+/** User actions drive lighting; only the music handoff can wait for a color fade. */
 export function createGameFlowController({
     audio,
     lighting,
     canControlLighting = () => false,
+    getSceneFadeOutMs = () => 0,
+    schedule = setTimeout,
+    unschedule = clearTimeout,
     navigate = () => {},
     now = () => globalThis.performance.now(),
     uuid = createUuid,
@@ -39,11 +42,21 @@ export function createGameFlowController({
         selectedMythosColor: null,
         lastWhiteProfile: 'action',
         audioError: null,
+        pendingMusicFolder: null,
     });
     let lastCommand = null;
     let lastCommandAt = -Infinity;
     let audioOperation = 0;
     let currentPath = pathname(initialUrl);
+    let pendingMusic = null;
+
+    function cancelPendingMusic() {
+        const pending = pendingMusic;
+        pendingMusic = null;
+        state.pendingMusicFolder = null;
+        if (pending) unschedule(pending.timer);
+        return pending;
+    }
 
     function accept(command) {
         const time = now();
@@ -64,7 +77,8 @@ export function createGameFlowController({
         const operation = ++audioOperation;
         state.audioError = null;
         try {
-            // Keep this invocation in the original user-gesture call stack.
+            // Ordinary playback stays in the user gesture. A color exit can
+            // defer this call while the already-unlocked Mythos audio continues.
             const result = audio[method](options);
             Promise.resolve(result).then(() => {
                 if (operation !== audioOperation || method !== 'play') return;
@@ -96,8 +110,42 @@ export function createGameFlowController({
         return { kind: 'white', profile: state.lastWhiteProfile };
     }
 
+    function selectOrdinaryMusic(context, method, options) {
+        let delay = 0;
+        const profile = ['action', 'action-muted'].includes(context) ? 'action' : 'encounters';
+        if (canControlLighting() && audio.state.playingFolder === 'mythos' && !audio.state.isPaused) {
+            if (pendingMusic && profile === state.lastWhiteProfile) {
+                // The same white target keeps its fade and original deadline.
+                delay = Math.max(0, pendingMusic.deadline - now());
+            } else if (pendingMusic || (state.selectedContext === 'mythos' && state.selectedMythosColor)) {
+                // Changing white profiles replans the lamp's color fade too.
+                const configured = Number(getSceneFadeOutMs());
+                delay = Number.isFinite(configured) ? Math.max(0, Math.min(30000, configured)) : 0;
+            }
+        }
+        cancelPendingMusic();
+        const target = chooseContext(context);
+        if (delay === 0) {
+            runAudio(method, options);
+            sendTarget(target);
+            return;
+        }
+
+        sendTarget(target);
+        const pending = { deadline: now() + delay, timer: null };
+        pendingMusic = pending;
+        state.pendingMusicFolder = options?.folderSlug ?? null;
+        pending.timer = schedule(() => {
+            if (pendingMusic !== pending) return;
+            pendingMusic = null;
+            state.pendingMusicFolder = null;
+            if (canControlLighting()) runAudio(method, options);
+        }, delay);
+    }
+
     function enterMythos(audioOptions = {}) {
         if (!accept('mythos.enter')) return false;
+        const cancelledMusic = cancelPendingMusic();
         if (!canControlLighting()) {
             state.selectedContext = 'mythos';
             clearMythos();
@@ -111,8 +159,11 @@ export function createGameFlowController({
             state.mythosSessionId = uuid();
             state.selectedMythosColor = null;
         }
-        if (!isNewSession && audio.state.playingFolder === 'mythos') runAudio('stop');
-        else runAudio('play', { folderSlug: 'mythos', label: 'Mythos', crossfade: true, ...audioOptions });
+        // Returning during a color exit keeps the current Mythos track intact.
+        if (!(cancelledMusic && audio.state.playingFolder === 'mythos')) {
+            if (!isNewSession && audio.state.playingFolder === 'mythos') runAudio('stop');
+            else runAudio('play', { folderSlug: 'mythos', label: 'Mythos', crossfade: true, ...audioOptions });
+        }
         if (isNewSession) sendTarget({ kind: 'mythos', mythosSessionId: state.mythosSessionId, color: null });
         if (currentPath !== '/mythos') navigate('/mythos');
         return true;
@@ -133,22 +184,18 @@ export function createGameFlowController({
     function selectAction(variant = 'action') {
         if (!['action', 'action-muted'].includes(variant)) return false;
         if (!accept(variant === 'action' ? 'action.tap' : 'action.hold')) return false;
-        const target = chooseContext(variant);
         const playing = audio.state.playingFolder;
-        if (playing === variant || (variant === 'action' && playing === 'action-muted')) runAudio('stop');
-        else runAudio('play', { folderSlug: variant, label: variant === 'action' ? 'Action' : 'Muted Action', crossfade: true });
-        sendTarget(target);
+        const method = playing === variant || (variant === 'action' && playing === 'action-muted') ? 'stop' : 'play';
+        selectOrdinaryMusic(variant, method, { folderSlug: variant, label: variant === 'action' ? 'Action' : 'Muted Action', crossfade: true });
         return true;
     }
 
     function selectCombat(variant = 'combat') {
         if (!['combat', 'combat-epic'].includes(variant)) return false;
         if (!accept(variant === 'combat' ? 'combat.tap' : 'combat.hold')) return false;
-        const target = chooseContext(variant);
         const playing = audio.state.playingFolder;
-        if (playing === variant || (variant === 'combat' && playing === 'combat-epic')) runAudio('stop');
-        else runAudio('play', { folderSlug: variant, label: variant === 'combat' ? 'Combat' : 'Epic Combat', crossfade: true });
-        if (target) sendTarget(target);
+        const method = playing === variant || (variant === 'combat' && playing === 'combat-epic') ? 'stop' : 'play';
+        selectOrdinaryMusic(variant, method, { folderSlug: variant, label: variant === 'combat' ? 'Combat' : 'Epic Combat', crossfade: true });
         return true;
     }
 
@@ -162,10 +209,7 @@ export function createGameFlowController({
         const context = resolveGameContext(options.folderSlug, explicitContext);
         if (context === 'mythos') return enterMythos(options);
         if (!accept(`play:${context}:${options.folderSlug}:${options.mode || ''}`)) return false;
-        const target = chooseContext(context);
-        if (audio.state.playingFolder === options.folderSlug) runAudio('stop');
-        else runAudio('play', options);
-        if (target) sendTarget(target);
+        selectOrdinaryMusic(context, audio.state.playingFolder === options.folderSlug ? 'stop' : 'play', options);
         return true;
     }
 
@@ -177,17 +221,20 @@ export function createGameFlowController({
 
     function stopUserAudio() {
         if (!accept('audio.stop')) return false;
+        cancelPendingMusic();
         runAudio('stop');
         return true;
     }
 
     function togglePause() {
         if (!accept('audio.pause-toggle')) return false;
+        cancelPendingMusic();
         runAudio(audio.state.isPaused ? 'resume' : 'pause');
         return true;
     }
 
     function logout() {
+        cancelPendingMusic();
         state.selectedContext = null;
         clearMythos();
         const fadePromise = Promise.resolve(runAudio('fadeOutCurrent')).catch(() => {});
@@ -199,5 +246,5 @@ export function createGameFlowController({
 
     return { state, enterMythos, selectMythosColor, selectAction, selectCombat,
         enterEncounters, playUserChoice, observeNavigation,
-        stopUserAudio, togglePause, logout };
+        stopUserAudio, togglePause, logout, cancelPendingMusic };
 }

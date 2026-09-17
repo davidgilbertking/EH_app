@@ -12,9 +12,12 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const page = usePage();
 watch(
-    () => [page.props.auth?.user?.id ?? null, page.props.lighting?.canControl === true],
-    ([userId, allowed]) => {
+    () => [page.props.auth?.user?.id ?? null, page.props.lighting?.canControl === true,
+        page.props.lighting?.sceneFadeOutMs ?? 0],
+    ([userId, allowed, sceneFadeOutMs], previous = []) => {
+        if (userId !== previous[0] || allowed !== previous[1]) gameFlow.cancelPendingMusic();
         lighting.setAccess(allowed, userId);
+        lighting.state.sceneFadeOutMs = sceneFadeOutMs;
         if (allowed) lighting.startPolling();
     },
     { immediate: true, flush: 'sync' },
@@ -370,6 +373,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     removeNavigationListener?.();
+    gameFlow.cancelPendingMusic();
     lighting.setAccess(false);
     resizeObserver?.disconnect();
     window.removeEventListener('resize', syncHeaderHeight);

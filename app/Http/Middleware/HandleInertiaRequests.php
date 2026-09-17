@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'lighting' => [
                 'canControl' => Gate::allows('control-lighting'),
+                'sceneFadeOutMs' => max(0, min(30000, (int) config('lighting.scene_fade_out_ms'))),
             ],
             'ui' => [
                 'yellowSignSeed' => $yellowSignSeed,

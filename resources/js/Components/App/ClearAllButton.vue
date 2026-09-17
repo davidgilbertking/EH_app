@@ -20,6 +20,9 @@ function clearAll() {
     // phase buttons or directly from a sub-page (no blob) keep playing —
     // those are independent of the blob roster.
     const blobs = page.props.gameState?.blobs ?? [];
+    if (blobs.some((b) => b.folderSlug === gameFlow.state.pendingMusicFolder)) {
+        gameFlow.cancelPendingMusic();
+    }
     const activeOrPausedFolder = engine.state.playingFolder || engine.state.pausedFolder;
     if (activeOrPausedFolder && blobs.some((b) => b.folderSlug === activeOrPausedFolder)) {
         gameFlow.stopUserAudio();

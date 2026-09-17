@@ -484,3 +484,182 @@ test('1000ms ordinary-button hold saves a blob without audio or lighting', (t) =
 test('session identifiers satisfy the server UUID contract', () => {
     assert.match(createSessionId(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 });
+
+function setupColorExit(t, overrides = {}, color = 'blue') {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const result = setup({ getSceneFadeOutMs: () => 2500, ...overrides });
+    result.flow.enterMythos();
+    result.flow.selectMythosColor(color, result.flow.state.mythosSessionId);
+    result.events.length = 0;
+    return { ...result, tick(ms) { result.advance(ms); t.mock.timers.tick(ms); } };
+}
+
+for (const color of ['green', 'yellow', 'blue']) {
+    test(`${color} keeps Mythos music during color fade-out, then starts Action`, (t) => {
+        const { flow, audio, lights, music, tick } = setupColorExit(t, {}, color);
+        const session = flow.state.mythosSessionId;
+        flow.selectAction();
+        assert.deepEqual(lights(), [{ kind: 'white', profile: 'action' }]);
+        assert.equal(flow.state.mythosSessionId, null);
+        assert.equal(flow.selectMythosColor('green', session), false);
+        assert.equal(flow.state.pendingMusicFolder, 'action');
+        assert.deepEqual(music(), []);
+        tick(2499);
+        assert.equal(audio.state.playingFolder, 'mythos');
+        tick(1);
+        assert.equal(audio.state.playingFolder, 'action');
+        assert.equal(flow.state.pendingMusicFolder, null);
+        assert.equal(music().length, 1);
+        tick(10000);
+        assert.equal(music().length, 1);
+    });
+}
+
+for (const [folderSlug, choose, profile] of [
+    ['action-muted', flow => flow.selectAction('action-muted'), 'action'],
+    ['combat', flow => flow.selectCombat(), 'encounters'],
+    ['combat-epic', flow => flow.selectCombat('combat-epic'), 'encounters'],
+    ['contacts/city', flow => flow.playUserChoice({ folderSlug: 'contacts/city', crossfade: true }, 'encounters'), 'encounters'],
+    ['special/victory', flow => flow.playUserChoice({ folderSlug: 'special/victory', mode: 'from_start_no_fade', crossfade: true }), 'encounters'],
+]) {
+    test(`color exit delays ${folderSlug} while sending its white profile immediately`, (t) => {
+        const { flow, audio, lights, music, tick } = setupColorExit(t);
+        choose(flow);
+        assert.deepEqual(lights(), [{ kind: 'white', profile }]);
+        assert.deepEqual(music(), []);
+        tick(2500);
+        assert.equal(audio.state.playingFolder, folderSlug);
+        assert.equal(music()[0][1].crossfade, true);
+        if (folderSlug === 'special/victory') assert.equal(music()[0][1].mode, 'from_start_no_fade');
+    });
+}
+
+test('Mythos without a color and ordinary-to-ordinary choices have no music delay', () => {
+    const { flow, audio } = setup({ getSceneFadeOutMs: () => 2500 });
+    flow.enterMythos();
+    flow.selectAction();
+    assert.equal(audio.state.playingFolder, 'action');
+    flow.selectCombat();
+    assert.equal(audio.state.playingFolder, 'combat');
+});
+
+test('users without lighting access never delay music even with stale color selection', (t) => {
+    let allowed = true;
+    const { flow, audio, lights, tick } = setupColorExit(t, { canControlLighting: () => allowed });
+    allowed = false;
+    flow.selectAction();
+    assert.equal(audio.state.playingFolder, 'action');
+    assert.deepEqual(lights(), []);
+    tick(2500);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('paused or stopped Mythos does not delay the next music choice', () => {
+    for (const command of ['togglePause', 'stopUserAudio']) {
+        const { flow, audio } = setup({ getSceneFadeOutMs: () => 2500 });
+        flow.enterMythos();
+        flow.selectMythosColor('blue', flow.state.mythosSessionId);
+        flow[command]();
+        flow.selectAction();
+        assert.equal(audio.state.playingFolder, 'action', command);
+    }
+});
+
+test('rapid choices with the same white profile replace queued music and keep the fade deadline', (t) => {
+    const { flow, audio, music, tick } = setupColorExit(t);
+    flow.selectCombat();
+    assert.equal(flow.selectCombat(), false);
+    tick(1000);
+    flow.selectCombat('combat-epic');
+    tick(1000);
+    flow.playUserChoice({ folderSlug: 'contacts/city', crossfade: true });
+    tick(499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'contacts/city');
+    assert.equal(music().length, 1);
+    tick(10000);
+    assert.equal(music().length, 1);
+});
+
+test('changing the queued white profile restarts the delay with the replanned color fade', (t) => {
+    const { flow, audio, lights, music, tick } = setupColorExit(t);
+    flow.selectAction();
+    tick(1000);
+    flow.selectCombat();
+    assert.deepEqual(lights().map(target => target.profile), ['action', 'encounters']);
+    tick(2499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'combat');
+    assert.equal(music().length, 1);
+});
+
+test('navigation during a color exit preserves the queued music', (t) => {
+    const { flow, audio, tick } = setupColorExit(t);
+    flow.selectAction();
+    flow.enterEncounters();
+    for (const url of ['/encounters', '/other', '/', '/mythos']) flow.observeNavigation(url);
+    tick(2500);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('returning to Mythos cancels queued music without restarting the playing Mythos track', (t) => {
+    const { flow, audio, lights, music, tick } = setupColorExit(t);
+    flow.selectAction();
+    tick(500);
+    flow.enterMythos();
+    assert.equal(flow.state.selectedMythosColor, null);
+    assert.equal(flow.state.pendingMusicFolder, null);
+    assert.equal(lights().at(-1).kind, 'mythos');
+    tick(2500);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    assert.deepEqual(music(), []);
+    flow.selectAction(); // New Mythos session has no selected color.
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+for (const command of ['togglePause', 'stopUserAudio', 'logout', 'cancelPendingMusic']) {
+    test(`${command} cancels deferred music with no late playback`, (t) => {
+        const { flow, music, tick } = setupColorExit(t);
+        flow.selectAction();
+        tick(500);
+        flow[command]();
+        assert.equal(flow.state.pendingMusicFolder, null);
+        const count = music().length;
+        tick(10000);
+        assert.equal(music().length, count);
+    });
+}
+
+test('permission revocation before the deadline blocks deferred playback', (t) => {
+    let allowed = true;
+    const { flow, music, tick } = setupColorExit(t, { canControlLighting: () => allowed });
+    flow.selectAction();
+    allowed = false;
+    tick(2500);
+    assert.deepEqual(music(), []);
+    assert.equal(flow.state.pendingMusicFolder, null);
+});
+
+test('delay reads the current config; unavailable lighting cannot stall audio forever', (t) => {
+    let duration = 2500;
+    const { flow, audio, lighting, tick } = setupColorExit(t, { getSceneFadeOutMs: () => duration });
+    duration = 1200;
+    lighting.requestTarget = () => new Promise(() => {});
+    flow.selectAction();
+    tick(1199);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('zero or invalid fade timings use immediate playback', () => {
+    for (const duration of [0, -10, NaN, undefined, Infinity]) {
+        const { flow, audio } = setup({ getSceneFadeOutMs: () => duration });
+        flow.enterMythos();
+        flow.selectMythosColor('blue', flow.state.mythosSessionId);
+        flow.selectAction();
+        assert.equal(audio.state.playingFolder, 'action');
+    }
+});

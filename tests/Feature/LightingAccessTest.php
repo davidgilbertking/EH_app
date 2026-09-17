@@ -34,9 +34,11 @@ class LightingAccessTest extends TestCase
         $owner = User::factory()->create();
         $other = User::factory()->create();
         config()->set('lighting.allowed_user_ids', [(string) $owner->id]);
+        config()->set('lighting.scene_fade_out_ms', 2750);
 
         $this->actingAs($owner)->get('/mythos')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Mythos/Index')->where('lighting.canControl', true));
+            ->component('Mythos/Index')->where('lighting.canControl', true)
+            ->where('lighting.sceneFadeOutMs', 2750));
         $this->getJson('/lighting/status')->assertOk();
 
         $this->actingAs($other)->get('/')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
