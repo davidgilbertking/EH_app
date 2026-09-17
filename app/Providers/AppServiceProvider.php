@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Lighting\CloudContinuousCoordinator;
 use App\Lighting\CloudNativeCoordinator;
 use App\Lighting\Drivers\CloudLightingDriver;
 use App\Lighting\Drivers\LightingDriver;
@@ -10,6 +11,7 @@ use App\Lighting\Drivers\NativeCloudLightingDriver;
 use App\Lighting\Drivers\TuyaCloudClient;
 use App\Lighting\LightingCoordinator;
 use App\Lighting\LightingExecutor;
+use App\Lighting\LightingStore;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(LightingDriver::class, function () {
             if (config('lighting.driver') === 'cloud') {
-                if (config('lighting.cloud.native_transitions')) {
+                if (config('lighting.cloud.native_transitions') || config('lighting.cloud.continuous_transitions')) {
                     return new NativeCloudLightingDriver(new TuyaCloudClient(config('lighting.cloud')));
                 }
 
@@ -34,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
             return new MockLightingDriver;
         });
         $this->app->bind(LightingExecutor::class, function ($app) {
+            if (config('lighting.driver') === 'cloud' && config('lighting.cloud.continuous_transitions')) {
+                return new CloudContinuousCoordinator($app->make(LightingStore::class), new TuyaCloudClient(config('lighting.cloud')));
+            }
+
             return $app->make(config('lighting.driver') === 'cloud' && config('lighting.cloud.native_transitions')
                 ? CloudNativeCoordinator::class : LightingCoordinator::class);
         });

@@ -12,8 +12,10 @@ function pathname(url) {
 // The UI supplies the branch for ambiguous ancient/* music. Legacy blobs can
 // safely infer contacts/*, while ancient/* without stored context stays Other.
 export function resolveGameContext(folderSlug, explicitContext = null, url = null) {
-    if (explicitContext) return explicitContext;
     if (['action', 'action-muted', 'combat', 'combat-epic', 'mythos'].includes(folderSlug)) return folderSlug;
+    // Saved branch context disambiguates ordinary tracks, but cannot turn a
+    // different track into Action or Mythos (or override their actual folders).
+    if (['encounters', 'other'].includes(explicitContext)) return explicitContext;
     if (url && /^\/encounters(?:\/|$)/.test(pathname(url))) return 'encounters';
     if (folderSlug?.startsWith('contacts/')) return 'encounters';
     return 'other';
@@ -50,10 +52,10 @@ export function createGameFlowController({
         return true;
     }
 
-    function sendTarget(target, acquire = true) {
+    function sendTarget(target) {
         // Lighting owns its visible transport errors. A failed lamp never
         // prevents audio or navigation, including synchronous driver failures.
-        try { Promise.resolve(lighting.requestTarget(target, { acquire })).catch(() => {}); } catch (_) { /* isolated */ }
+        try { Promise.resolve(lighting.requestTarget(target)).catch(() => {}); } catch (_) { /* isolated */ }
     }
 
     function runAudio(method, options) {
@@ -83,18 +85,13 @@ export function createGameFlowController({
     }
 
     function chooseContext(context) {
-        const wasMythos = state.selectedContext === 'mythos';
         state.selectedContext = context;
         clearMythos();
-        if (context === 'action' || context === 'action-muted') {
-            state.lastWhiteProfile = 'action';
-            return { kind: 'white', profile: 'action' };
-        }
-        if (context === 'encounters') {
-            state.lastWhiteProfile = 'encounters';
-            return { kind: 'white', profile: 'encounters' };
-        }
-        return wasMythos ? { kind: 'white', profile: state.lastWhiteProfile } : null;
+        // Action is the only ordinary context with its own white profile.
+        // Every other music choice uses calibrated Encounters. Navigation does
+        // not select a context: the current music and light continue together.
+        state.lastWhiteProfile = ['action', 'action-muted'].includes(context) ? 'action' : 'encounters';
+        return { kind: 'white', profile: state.lastWhiteProfile };
     }
 
     function enterMythos(audioOptions = {}) {
@@ -147,7 +144,6 @@ export function createGameFlowController({
 
     function enterEncounters() {
         if (!accept('encounters.enter')) return false;
-        sendTarget(chooseContext('encounters'));
         navigate('/encounters');
         return true;
     }
@@ -163,28 +159,10 @@ export function createGameFlowController({
         return true;
     }
 
-    function leaveMythos(nextContext = 'other', acquire = true) {
-        if (state.selectedContext !== 'mythos') return false;
-        sendTarget(chooseContext(nextContext), acquire);
-        return true;
-    }
-
     function observeNavigation(url) {
-        const nextPath = pathname(url);
-        // Also cover a new route winning before the /mythos visit completes.
-        // Same-path props/history refreshes never terminate the selected phase.
-        const leftMythosPage = currentPath !== nextPath && nextPath !== '/mythos';
-        currentPath = nextPath;
-        if (leftMythosPage) leaveMythos('other', false);
-    }
-
-    function restoreNormalLight() {
-        if (!accept('light.restore')) return false;
-        state.lastWhiteProfile = 'action';
-        state.selectedContext = 'action';
-        clearMythos();
-        sendTarget({ kind: 'white', profile: state.lastWhiteProfile });
-        return true;
+        // Route changes, including leaving Mythos, preserve the active music
+        // context and scene. Remember only whether a future Mythos tap must navigate.
+        currentPath = pathname(url);
     }
 
     function stopUserAudio() {
@@ -210,6 +188,6 @@ export function createGameFlowController({
     }
 
     return { state, enterMythos, selectMythosColor, selectAction, selectCombat,
-        enterEncounters, playUserChoice, leaveMythos, observeNavigation,
-        restoreNormalLight, stopUserAudio, togglePause, logout };
+        enterEncounters, playUserChoice, observeNavigation,
+        stopUserAudio, togglePause, logout };
 }

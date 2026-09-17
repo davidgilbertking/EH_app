@@ -3,6 +3,7 @@
 namespace App\Lighting\Drivers;
 
 use Closure;
+use GuzzleHttp\Utils;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Http;
@@ -24,6 +25,11 @@ class TuyaCloudClient
     private bool $credentialsLoaded = false;
 
     private ?array $model = null;
+
+    // Share the connection pool, while keeping each request's signature,
+    // headers and Laravel middleware isolated. Reconnecting for every fade
+    // frame adds a TLS round trip between otherwise continuous targets.
+    private ?Closure $transportHandler = null;
 
     private const ENDPOINTS = [
         'https://openapi.tuyaeu.com', 'https://openapi-weaz.tuyaeu.com',
@@ -140,6 +146,121 @@ class TuyaCloudClient
     }
 
     /** One API write attempt. Even an expired token or timeout is never replayed. */
+    public function sendRealtime(array $channels): array
+    {
+        // Native DP28 avoids the incompatible 0..255 S/V schema exposed by
+        // the standardized JSON command. Wire format is the same as LAN:
+        // gradient flag + H4/S4/V4/white4/temperature4 (21 hex characters).
+        // https://developer.tuya.com/en/docs/iot/product-function-definition?id=K9s9rhj576ypf
+        $fields = ['h' => 360, 's' => 1000, 'v' => 1000, 'bright' => 1000, 'temperature' => 1000];
+        if (count($channels) !== count($fields) || array_diff_key($channels, $fields) !== []) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $payload = '1';
+        foreach ($fields as $name => $max) {
+            $value = $channels[$name] ?? null;
+            if (! is_int($value) || $value < 0 || $value > $max) {
+                throw new TuyaCloudException('configuration_error');
+            }
+            $payload .= sprintf('%04x', $value);
+        }
+        if ($channels['bright'] === 0 && $channels['v'] === 0) {
+            throw new TuyaCloudException('unsupported_transition');
+        }
+        $model = $this->model ?? $this->readModel();
+        $matches = 0;
+        foreach ($model['services'] as $service) {
+            foreach ($service['properties'] as $property) {
+                if (! is_array($property)) {
+                    throw new TuyaCloudException('configuration_error');
+                }
+                if (($property['abilityId'] ?? null) !== 28 && ($property['code'] ?? null) !== 'control_data') {
+                    continue;
+                }
+                if ($service['code'] !== '' || ($property['abilityId'] ?? null) !== 28
+                    || ($property['code'] ?? null) !== 'control_data'
+                    || ! in_array($property['accessMode'] ?? null, ['wr', 'rw'], true)
+                    || ($property['typeSpec']['type'] ?? null) !== 'string'
+                    || ! is_int($property['typeSpec']['maxlen'] ?? null) || $property['typeSpec']['maxlen'] < 21) {
+                    throw new TuyaCloudException('configuration_error');
+                }
+                $matches++;
+            }
+        }
+        if ($matches !== 1) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $this->accessToken();
+        $sentAt = ($this->clock)();
+        $data = $this->request('POST', '/v2.0/cloud/thing/'.$this->deviceId().'/shadow/properties/issue', [
+            'properties' => json_encode(['control_data' => $payload], JSON_THROW_ON_ERROR),
+        ]);
+        if (($data['result'] ?? null) !== []) {
+            throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+        }
+
+        return ['sentAt' => $sentAt, 'acceptedAt' => $data['t'] ?? null];
+    }
+
+    /** Stop scene playback at one explicit RGB value, without a power command. */
+    public function sendStaticColour(array $channels): array
+    {
+        $fields = ['h' => 360, 's' => 1000, 'v' => 1000, 'bright' => 0, 'temperature' => 0];
+        if (count($channels) !== count($fields) || array_diff_key($channels, $fields) !== []) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        foreach ($fields as $field => $maximum) {
+            if (! is_int($channels[$field] ?? null) || $channels[$field] < ($field === 'v' ? 10 : 0)
+                || $channels[$field] > $maximum) {
+                throw new TuyaCloudException('configuration_error');
+            }
+        }
+        $deviceId = $this->deviceId();
+        $model = $this->model ?? $this->readModel();
+        $matches = [21 => 0, 24 => 0];
+        foreach ($model['services'] as $service) {
+            foreach ($service['properties'] as $property) {
+                if (! is_array($property)) {
+                    throw new TuyaCloudException('configuration_error');
+                }
+                foreach ([21 => 'work_mode', 24 => 'colour_data'] as $id => $code) {
+                    if (($property['abilityId'] ?? null) !== $id && ($property['code'] ?? null) !== $code) {
+                        continue;
+                    }
+                    if ($service['code'] !== '' || ($property['abilityId'] ?? null) !== $id
+                        || ($property['code'] ?? null) !== $code || ($property['accessMode'] ?? null) !== 'rw') {
+                        throw new TuyaCloudException('configuration_error');
+                    }
+                    $spec = $property['typeSpec'] ?? [];
+                    if ($id === 24) {
+                        if (($spec['type'] ?? null) !== 'string' || ! is_int($spec['maxlen'] ?? null) || $spec['maxlen'] < 12) {
+                            throw new TuyaCloudException('configuration_error');
+                        }
+                    } elseif (($spec['type'] ?? null) !== 'enum' || ! is_array($spec['range'] ?? null)
+                        || ! array_is_list($spec['range']) || ! in_array('colour', $spec['range'], true)) {
+                        throw new TuyaCloudException('configuration_error');
+                    }
+                    $matches[$id]++;
+                }
+            }
+        }
+        if ($matches !== [21 => 1, 24 => 1]) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $this->accessToken();
+        $sentAt = ($this->clock)();
+        $data = $this->request('POST', '/v2.0/cloud/thing/'.$deviceId.'/shadow/properties/issue', [
+            'properties' => json_encode(['colour_data' => sprintf('%04x%04x%04x', $channels['h'], $channels['s'], $channels['v']),
+                'work_mode' => 'colour'], JSON_THROW_ON_ERROR),
+        ]);
+        if (($data['result'] ?? null) !== []) {
+            throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+        }
+
+        return ['sentAt' => $sentAt, 'acceptedAt' => $data['t'] ?? null];
+    }
+
+    /** One API write attempt. Even an expired token or timeout is never replayed. */
     public function sendCommands(array $commands): array
     {
         $allowed = ['switch_led', 'work_mode', 'bright_value_v2', 'temp_value_v2', 'control_data', 'scene_data_v2'];
@@ -224,6 +345,7 @@ class TuyaCloudClient
             }
             $factory = $this->http ?? Http::getFacadeRoot();
             $response = $factory->withHeaders($headers)->acceptJson()->contentType('application/json')
+                ->setHandler($this->transportHandler ??= Closure::fromCallable(Utils::chooseHandler()))
                 ->timeout(max(0.5, min(5, ($this->settings['timeout_ms'] ?? 3000) / 1000)))
                 ->connectTimeout(max(0.2, min(2, ($this->settings['connect_timeout_ms'] ?? 1000) / 1000)))
                 ->withoutRedirecting()->send($method, $endpoint.$path, ['body' => $body]);

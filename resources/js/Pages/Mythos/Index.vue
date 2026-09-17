@@ -35,6 +35,18 @@ const selected = computed(() => gameFlow.state.selectedMythosColor);
                     </defs>
                     <image :href="card.image" width="2172" height="724" :clip-path="`url(#mythos-art-${card.id})`" />
                 </svg>
+                <span class="mythos-card-symbols" aria-hidden="true">
+                    <img
+                        v-for="symbol in card.symbols"
+                        :key="symbol.id"
+                        :src="`/images/mythos/symbols/${symbol.id}.png`"
+                        :data-symbol="symbol.id"
+                        :style="{ '--symbol-scale': symbol.scale, '--symbol-center': `${symbol.center}%` }"
+                        class="mythos-card-symbol"
+                        alt=""
+                        draggable="false"
+                    >
+                </span>
             </button>
         </ButtonGrid>
         <p v-if="gameFlow.state.audioError" role="status" class="mt-3 text-center text-sm text-amber-200">{{ gameFlow.state.audioError }}</p>
@@ -59,5 +71,24 @@ const selected = computed(() => gameFlow.state.selectedMythosColor);
 .mythos-card-art {
     overflow: hidden;
     border-radius: inherit;
+}
+
+.mythos-card-symbols {
+    position: absolute;
+    inset: 17% 0;
+    pointer-events: none;
+}
+
+.mythos-card-symbol {
+    position: absolute;
+    top: 50%;
+    left: var(--symbol-center);
+    display: block;
+    /* Keep each optical center fixed when a neighboring symbol grows. */
+    width: calc(21.28% * var(--symbol-scale));
+    height: calc(100% * var(--symbol-scale));
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    user-select: none;
 }
 </style>

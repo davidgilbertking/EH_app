@@ -120,9 +120,11 @@ test('Action tap stops Muted Action while hold switches ordinary Action and togg
     assert.equal(flow.state.lastWhiteProfile, 'action');
 });
 
-test('Combat keeps pair-specific tap/hold behavior and restores only on exiting Mythos', () => {
+test('Combat and Epic Combat always select Encounters while retaining tap/hold audio behavior', () => {
     const { flow, audio, lights, advance } = setup();
-    flow.enterEncounters();
+    flow.selectAction();
+    flow.selectCombat();
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
     flow.enterMythos();
     flow.selectCombat('combat-epic');
     assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
@@ -133,45 +135,54 @@ test('Combat keeps pair-specific tap/hold behavior and restores only on exiting 
     flow.selectCombat();
     flow.selectCombat('combat-epic');
     assert.equal(audio.state.playingFolder, 'combat-epic');
-    assert.equal(lights().length, count);
+    assert.equal(lights().length, count + 3);
+    assert.equal(flow.state.lastWhiteProfile, 'encounters');
+    assert.equal(lights().slice(count).every(target => target.profile === 'encounters'), true);
 });
 
-test('explicit Encounters is navigation plus white profile without music', () => {
-    const { flow, events } = setup();
-    flow.enterEncounters();
-    assert.deepEqual(events, [['light', { kind: 'white', profile: 'encounters' }], ['navigate', '/encounters']]);
-});
-
-test('completed departure from Mythos restores once; props, same path and history entry do nothing', () => {
-    const { flow, lights } = setup({ initialUrl: '/mythos' });
-    flow.observeNavigation('/mythos?refresh=1');
-    assert.equal(lights().length, 0);
+test('Encounters header only navigates and preserves the current Action music and light', () => {
+    const { flow, events, audio } = setup();
+    flow.selectAction();
+    events.length = 0;
     flow.enterEncounters();
     flow.observeNavigation('/encounters');
-    assert.equal(lights().length, 1);
-    flow.enterMythos();
-    flow.observeNavigation('/mythos');
-    flow.observeNavigation('/mythos?props=updated');
-    const count = lights().length;
-    flow.observeNavigation('/other');
-    assert.equal(lights().length, count + 1);
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
-    flow.observeNavigation('/other');
-    flow.observeNavigation('/mythos');
-    assert.equal(lights().length, count + 1);
-    assert.equal(flow.state.mythosSessionId, null);
+    assert.deepEqual(events, [['navigate', '/encounters']]);
+    assert.equal(flow.state.selectedContext, 'action');
+    assert.equal(flow.state.lastWhiteProfile, 'action');
+    assert.equal(audio.state.playingFolder, 'action');
 });
 
-test('a successful competing visit cancels Mythos even before its page has arrived', () => {
+test('leaving and returning to Mythos preserves its session, selected scene and continuing music', () => {
+    const { flow, lights, music, audio } = setup({ initialUrl: '/mythos' });
+    flow.observeNavigation('/mythos?refresh=1');
+    assert.equal(lights().length, 0);
+    flow.enterMythos();
+    const session = flow.state.mythosSessionId;
+    flow.selectMythosColor('blue', session);
+    const count = lights().length;
+    flow.enterEncounters();
+    for (const url of ['/encounters', '/encounters/general/city', '/other', '/', '/mythos', '/mythos?props=updated']) {
+        flow.observeNavigation(url);
+        assert.equal(lights().length, count, url);
+        assert.equal(flow.state.mythosSessionId, session, url);
+        assert.equal(flow.state.selectedMythosColor, 'blue', url);
+        assert.equal(flow.state.selectedContext, 'mythos', url);
+    }
+    assert.equal(audio.state.playingFolder, 'mythos');
+    assert.equal(music().length, 1);
+});
+
+test('a competing route completion cannot cancel a newly selected Mythos phase', () => {
     const { flow, lights } = setup({ initialUrl: '/' });
     flow.enterMythos();
     const session = flow.state.mythosSessionId;
     flow.observeNavigation('/?props=refreshed');
     assert.equal(flow.state.selectedContext, 'mythos');
     flow.observeNavigation('/other');
-    assert.equal(flow.state.mythosSessionId, null);
-    assert.equal(flow.selectMythosColor('blue', session), false);
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'action' });
+    assert.equal(flow.state.mythosSessionId, session);
+    assert.equal(lights().length, 1);
+    assert.equal(flow.selectMythosColor('blue', session), true);
+    assert.deepEqual(lights().at(-1), { kind: 'mythos', mythosSessionId: session, color: 'blue' });
 });
 
 test('same color can be sent explicitly after linking or failure, but accepted target stays idempotent', () => {
@@ -188,7 +199,7 @@ test('same color can be sent explicitly after linking or failure, but accepted t
     assert.equal(lights().length, 3);
 });
 
-test('contact music and saved explicit ancient context select Encounters; Other ancient stays Other', () => {
+test('contact and Other music use Encounters lighting while retaining their distinct game contexts', () => {
     const { flow, lights } = setup();
     const play = (folderSlug, context) => flow.playUserChoice({ folderSlug, label: 'test', mode: 'random_pos_fade', crossfade: true }, context);
     play('contacts/city');
@@ -197,12 +208,111 @@ test('contact music and saved explicit ancient context select Encounters; Other 
     assert.equal(flow.state.selectedContext, 'encounters');
     const count = lights().length;
     play('ancient/test', 'other');
-    assert.equal(lights().length, count);
+    assert.equal(lights().length, count + 1);
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
     assert.equal(flow.state.selectedContext, 'other');
     assert.equal(resolveGameContext('ancient/test', null, '/encounters'), 'encounters');
     assert.equal(resolveGameContext('ancient/test', null, '/other'), 'other');
     assert.equal(resolveGameContext('ancient/test'), 'other');
     assert.equal(resolveGameContext('contacts/test'), 'encounters');
+});
+
+test('all ordinary music choices except Action use the Encounters profile', () => {
+    for (const folderSlug of ['combat', 'combat-epic', 'ancient/test', 'special/victory', 'investigators/test', 'maps/test']) {
+        const { flow, lights, events } = setup();
+        flow.selectAction();
+        events.length = 0;
+        flow.playUserChoice({ folderSlug, crossfade: true });
+        assert.deepEqual(events.map(([type]) => type), ['play', 'light'], folderSlug);
+        assert.deepEqual(lights(), [{ kind: 'white', profile: 'encounters' }], folderSlug);
+    }
+    for (const folderSlug of ['action', 'action-muted']) {
+        const { flow, lights } = setup();
+        flow.playUserChoice({ folderSlug, crossfade: true });
+        assert.deepEqual(lights(), [{ kind: 'white', profile: 'action' }]);
+    }
+});
+
+test('saved branch metadata cannot override the actual Action, Combat or Mythos music folder', () => {
+    for (const [folderSlug, profile] of [['action', 'action'], ['action-muted', 'action'],
+        ['combat', 'encounters'], ['combat-epic', 'encounters']]) {
+        const { flow, lights } = setup();
+        flow.playUserChoice({ folderSlug }, 'other');
+        assert.equal(flow.state.selectedContext, folderSlug);
+        assert.deepEqual(lights(), [{ kind: 'white', profile }]);
+    }
+    const { flow, lights, audio } = setup();
+    flow.playUserChoice({ folderSlug: 'mythos' }, 'other');
+    assert.equal(audio.state.playingFolder, 'mythos');
+    assert.equal(lights()[0].kind, 'mythos');
+    assert.equal(flow.state.selectedContext, 'mythos');
+    for (const staleContext of ['action', 'mythos']) {
+        flow.playUserChoice({ folderSlug: `special/${staleContext}` }, staleContext);
+        assert.equal(flow.state.selectedContext, 'other');
+        assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
+    }
+});
+
+test('Other, nested navigation, Home and history preserve every active music context', () => {
+    for (const choose of [flow => flow.selectAction(), flow => flow.selectAction('action-muted'),
+        flow => flow.selectCombat(), flow => flow.selectCombat('combat-epic'),
+        flow => flow.playUserChoice({ folderSlug: 'contacts/city' }),
+        flow => flow.playUserChoice({ folderSlug: 'special/victory' })]) {
+        const { flow, events, audio } = setup();
+        choose(flow);
+        const before = { ...flow.state };
+        const playing = audio.state.playingFolder;
+        events.length = 0;
+        for (const url of ['/other', '/other/quest', '/encounters', '/encounters/general/city', '/', '/other', '/mythos']) {
+            flow.observeNavigation(url);
+            assert.deepEqual(events, [], url);
+            assert.deepEqual(flow.state, before, url);
+            assert.equal(audio.state.playingFolder, playing, url);
+        }
+    }
+});
+
+test('navigation alone never selects a context or sends commands on a fresh page', () => {
+    const { flow, events } = setup({ initialUrl: '/mythos' });
+    flow.enterEncounters();
+    assert.deepEqual(events, [['navigate', '/encounters']]);
+    events.length = 0;
+    for (const url of ['/encounters', '/other', '/', '/mythos', '/mythos?refresh=1']) {
+        flow.observeNavigation(url);
+    }
+    assert.deepEqual(events, []);
+    assert.equal(flow.state.selectedContext, null);
+    assert.equal(flow.state.mythosSessionId, null);
+});
+
+test('opening the Mythos page through navigation preserves its selected color and never creates a session', () => {
+    const { flow, lights } = setup();
+    flow.observeNavigation('/mythos');
+    assert.equal(flow.state.mythosSessionId, null);
+    assert.deepEqual(lights(), []);
+    flow.enterMythos();
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    flow.observeNavigation('/other');
+    flow.observeNavigation('/mythos');
+    assert.equal(flow.state.selectedMythosColor, 'blue');
+    assert.equal(lights().length, 2);
+});
+
+test('the next terminal music choice after navigation ends Mythos and rejects its old color events', () => {
+    const { flow, lights, audio } = setup();
+    flow.enterMythos();
+    const session = flow.state.mythosSessionId;
+    flow.selectMythosColor('yellow', session);
+    flow.enterEncounters();
+    flow.observeNavigation('/encounters/general/city');
+    assert.equal(flow.state.mythosSessionId, session);
+    assert.equal(lights().length, 2);
+    flow.playUserChoice({ folderSlug: 'contacts/city', crossfade: true });
+    assert.equal(flow.state.mythosSessionId, null);
+    assert.equal(flow.state.selectedContext, 'encounters');
+    assert.equal(audio.state.playingFolder, 'contacts/city');
+    assert.equal(flow.selectMythosColor('blue', session), false);
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
 });
 
 test('generic music duplicate and toggle retain audio options', () => {
@@ -227,19 +337,6 @@ test('pause, resume, and clear-blobs stop keep the selected Mythos scene', () =>
     flow.stopUserAudio();
     assert.equal(lights().length, 2);
     assert.equal(flow.state.selectedMythosColor, 'green');
-});
-
-test('Normal light is explicitly Action even after Encounters and never changes audio', () => {
-    const { flow, lights, music } = setup();
-    flow.enterEncounters();
-    flow.enterMythos();
-    flow.selectMythosColor('yellow', flow.state.mythosSessionId);
-    flow.restoreNormalLight();
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'action' });
-    assert.equal(music().length, 1);
-    assert.equal(flow.state.selectedContext, 'action');
-    assert.equal(flow.state.lastWhiteProfile, 'action');
-    assert.equal(flow.state.mythosSessionId, null);
 });
 
 test('lighting failures do not reject audio, navigation, or color selection', async () => {

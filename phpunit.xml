@@ -19,6 +19,10 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="LIGHTING_DRIVER" value="mock" force="true"/>
+        <env name="LIGHTING_CLOUD_NATIVE_TRANSITIONS" value="false" force="true"/>
+        <env name="LIGHTING_CLOUD_CONTINUOUS_TRANSITIONS" value="false" force="true"/>
+        <env name="LIGHTING_CLOUD_ONBOARD_FADES" value="false" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

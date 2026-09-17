@@ -140,7 +140,7 @@ const mythosBindings = useLongPress({
 
         <button
             type="button"
-            class="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
+            class="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn ui-header-link whitespace-normal break-words leading-tight"
             :class="[
                 variantClasses.mythos,
                 isMythosActive ? 'ring-2 ring-amber-400' : '',
@@ -150,7 +150,7 @@ const mythosBindings = useLongPress({
             @click="($event.detail === 0) && gameFlow.enterMythos()"
         >
             <span class="ui-header-nav-mobile-label min-w-0 whitespace-normal break-words text-center">Mythos</span>
-            <span aria-hidden="true" class="max-[640px]:hidden">›</span>
+            <span aria-hidden="true" class="rotate-90 max-[640px]:hidden">›</span>
         </button>
 
         <Link

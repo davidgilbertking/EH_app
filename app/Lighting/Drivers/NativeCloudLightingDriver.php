@@ -23,6 +23,16 @@ class NativeCloudLightingDriver implements LightingDriver
 
     public function capabilities(): array
     {
+        if ($this->settings['continuous_transitions'] ?? false) {
+            return ['readState' => true, 'setWhite' => true, 'applyCapturedScene' => true,
+                'sceneCapture' => false, 'nativeWhiteTransition' => false,
+                'nativeTransitionCancellation' => false, 'safeSceneExit' => false,
+                'continuousTransitions' => true, 'visualVerificationRequired' => true,
+                'onboardFades' => (bool) ($this->settings['onboard_fades'] ?? false),
+                'orderedCommands' => false, 'transitionCompletionSignal' => false,
+                'reportedStateReadback' => true, 'nativeSwitchGradient' => false, 'simulated' => false];
+        }
+
         return ['readState' => true, 'setWhite' => true, 'applyCapturedScene' => true,
             'sceneCapture' => false, 'nativeWhiteTransition' => true,
             'nativeTransitionCancellation' => (bool) ($this->settings['native_interruptions'] ?? false),
@@ -55,19 +65,47 @@ class NativeCloudLightingDriver implements LightingDriver
                 throw new TuyaCloudException('configuration_error');
             }
             $id = $property['dp_id'] ?? $property['dpId'] ?? null;
-            if (! is_int($id) || ! in_array($id, [20, 21, 22, 23, 25, 35], true)) {
+            if (! is_int($id) || ! in_array($id, [20, 21, 22, 23, 24, 25, 35], true)) {
                 continue;
             }
             if (array_key_exists($id, $values) || ! array_key_exists('value', $property)) {
                 throw new TuyaCloudException('configuration_error');
             }
             $values[$id] = $id === 35 ? $this->decodeGradient($property['value']) : $property['value'];
+            if ($id === 24 && is_string($values[$id])) {
+                $values[$id] = strtolower($values[$id]);
+            }
             $times[$id] = $property['time'] ?? null;
         }
         $snapshot = ['values' => $values, 'times' => $times, 'serverTime' => $report['serverTime'], 'receivedAt' => ($this->clock)()];
         $this->validateSnapshot($snapshot);
 
         return $snapshot;
+    }
+
+    /** Only active static colour has a readable HSV endpoint, not scene phase. */
+    public static function colourChannels(array $snapshot): array
+    {
+        if (($snapshot['values'][21] ?? null) !== 'colour') {
+            throw new TuyaCloudException('unsupported_transition');
+        }
+
+        return self::decodeColour($snapshot['values'][24] ?? null, 10);
+    }
+
+    private static function decodeColour(mixed $raw, int $minimumValue): array
+    {
+        if (! is_string($raw) || ! preg_match('/\A[0-9a-fA-F]{12}\z/D', $raw)) {
+            throw new TuyaCloudException('configuration_error');
+        }
+        $h = hexdec(substr($raw, 0, 4));
+        $s = hexdec(substr($raw, 4, 4));
+        $v = hexdec(substr($raw, 8, 4));
+        if ($h > 360 || $s > 1000 || $v < $minimumValue || $v > 1000) {
+            throw new TuyaCloudException('configuration_error');
+        }
+
+        return ['h' => $h, 's' => $s, 'v' => $v, 'bright' => 0, 'temperature' => 0];
     }
 
     /**
@@ -233,12 +271,17 @@ class NativeCloudLightingDriver implements LightingDriver
         CloudLightingFiles::range($values[22] ?? null, $files->schema['bright_value_v2']);
         CloudLightingFiles::range($values[23] ?? null, $files->schema['temp_value_v2']);
         $this->validateGradient($values[35] ?? null);
+        if ($values[21] === 'colour') {
+            self::colourChannels($snapshot);
+        } elseif (array_key_exists(24, $values)) {
+            self::decodeColour($values[24], 0);
+        }
         if (($values[21] === 'scene' && ! is_string($values[25] ?? null))
             || (isset($values[25]) && (! is_string($values[25]) || strlen($values[25]) > 4096))) {
             throw new TuyaCloudException('configuration_error');
         }
         foreach ($values as $id => $value) {
-            if (! in_array($id, [20, 21, 22, 23, 25, 35], true) || ! is_int($times[$id] ?? null)
+            if (! in_array($id, [20, 21, 22, 23, 24, 25, 35], true) || ! is_int($times[$id] ?? null)
                 || $times[$id] < 0 || $times[$id] > $snapshot['serverTime'] + 1000) {
                 throw new TuyaCloudException('configuration_error');
             }

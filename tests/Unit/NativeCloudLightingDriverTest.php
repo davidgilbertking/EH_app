@@ -233,14 +233,14 @@ class NativeCloudLightingDriverTest extends TestCase
         return [
             'prepare while on' => [['operation' => 'prepare_white', 'profile' => 'dark'], []],
             'endpoint while off' => [['operation' => 'endpoint_white', 'profile' => 'action'], [20 => false]],
-            'endpoint while RGB' => [['operation' => 'endpoint_white', 'profile' => 'action'], [21 => 'colour']],
+            'endpoint while RGB' => [['operation' => 'endpoint_white', 'profile' => 'action'], [21 => 'colour', 24 => '00c703e803e8']],
             'on while scene off' => [['operation' => 'power', 'on' => true], [20 => false, 21 => 'scene', 25 => 'external']],
             'on at unverified raw profile' => [['operation' => 'power', 'on' => true], [20 => false, 22 => 900, 23 => 200]],
             'on already on' => [['operation' => 'power', 'on' => true], []],
             'off already off' => [['operation' => 'power', 'on' => false], [20 => false]],
             'scene while bright' => [['operation' => 'scene', 'color' => 'blue'], [22 => 1000, 23 => 332]],
             'scene while off' => [['operation' => 'scene', 'color' => 'blue'], [20 => false]],
-            'realtime while RGB' => [['operation' => 'realtime_white', 'brightnessPct' => 1, 'temperaturePct' => 0], [21 => 'colour']],
+            'realtime while RGB' => [['operation' => 'realtime_white', 'brightnessPct' => 1, 'temperaturePct' => 0], [21 => 'colour', 24 => '00c703e803e8']],
         ];
     }
 
@@ -347,5 +347,66 @@ class NativeCloudLightingDriverTest extends TestCase
             $driver = new NativeCloudLightingDriver($client, $settings);
             $this->assertSame($expected, $driver->capabilities()['nativeTransitionCancellation']);
         }
+    }
+
+    public function test_static_colour_snapshot_canonicalizes_hex_and_keeps_readback_unconfirmed(): void
+    {
+        $client = $this->client();
+        $client->expects($this->once())->method('readProperties')->willReturn($this->report([21 => 'colour', 24 => '00C703E803E8']));
+        $client->expects($this->never())->method('sendStaticColour');
+        $client->expects($this->never())->method('sendCommands');
+        $driver = $this->driver($client);
+        $snapshot = $driver->readSnapshot();
+        $this->assertSame('00c703e803e8', $snapshot['values'][24]);
+        $this->assertSame(199000, $snapshot['times'][24]);
+        $this->assertSame(['h' => 199, 's' => 1000, 'v' => 1000, 'bright' => 0, 'temperature' => 0],
+            NativeCloudLightingDriver::colourChannels($snapshot));
+        $summary = $driver->observationFromSnapshot($snapshot, 200000);
+        $this->assertSame('colour', $summary['mode']);
+        $this->assertFalse($summary['physicalConfirmed']);
+        $this->assertFalse($summary['outputSettled']);
+    }
+
+    public function test_inactive_colour_shadow_is_optional_and_does_not_become_current_output(): void
+    {
+        $client = $this->client();
+        $client->expects($this->exactly(3))->method('readProperties')->willReturnOnConsecutiveCalls(
+            $this->report(), $this->report([24 => '000000000000']), $this->report([21 => 'colour', 24 => '016803e8000a']));
+        $client->expects($this->never())->method('sendStaticColour');
+        $driver = $this->driver($client);
+        $this->assertArrayNotHasKey(24, $driver->readSnapshot()['values']);
+        $white = $driver->readSnapshot();
+        $this->assertSame('000000000000', $white['values'][24]);
+        $this->assertSame(10, NativeCloudLightingDriver::colourChannels($driver->readSnapshot())['v']);
+        $this->expectExceptionMessage('unsupported_transition');
+        NativeCloudLightingDriver::colourChannels($white);
+    }
+
+    public static function invalidColourSnapshots(): array
+    {
+        return [
+            'missing' => [[21 => 'colour']],
+            'null' => [[21 => 'colour', 24 => null]],
+            'not string' => [[21 => 'colour', 24 => 123]],
+            'short' => [[21 => 'colour', 24 => '00000000000']],
+            'non hex' => [[21 => 'colour', 24 => '00000000000z']],
+            'hue range' => [[21 => 'colour', 24 => '016903e803e8']],
+            'saturation range' => [[21 => 'colour', 24 => '00c703e903e8']],
+            'value range' => [[21 => 'colour', 24 => '00c703e803e9']],
+            'value below floor' => [[21 => 'colour', 24 => '00c703e80009']],
+            'zero active value' => [[21 => 'colour', 24 => '00c703e80000']],
+            'malformed inactive' => [[21 => 'white', 24 => 'invalid']],
+        ];
+    }
+
+    #[DataProvider('invalidColourSnapshots')]
+    public function test_invalid_colour_snapshot_fails_closed_without_any_post(array $values): void
+    {
+        $client = $this->client();
+        $client->expects($this->once())->method('readProperties')->willReturn($this->report($values));
+        $client->expects($this->never())->method('sendStaticColour');
+        $client->expects($this->never())->method('sendCommands');
+        $this->expectExceptionMessage('configuration_error');
+        $this->driver($client)->readSnapshot();
     }
 }

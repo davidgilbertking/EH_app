@@ -335,8 +335,8 @@ function onBeforeHistoryBackNav() {
 
 let removeNavigationListener = null;
 onMounted(() => {
-    // Read-only status bootstrap. Only completed navigations may leave Mythos;
-    // mount, cancelled visits and partial prop refreshes never start a phase.
+    // Read-only status bootstrap. Navigation only tracks the current URL;
+    // music gestures choose the phase, while browsing preserves music and light.
     lighting.startPolling();
     removeNavigationListener = router.on('navigate', (event) => {
         gameFlow.observeNavigation(event.detail.page.url);

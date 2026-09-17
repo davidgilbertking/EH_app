@@ -461,4 +461,206 @@ class TuyaCloudClientTest extends TestCase
         $this->assertSame(3, $models);
         Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
     }
+
+    public function test_native_realtime_preserves_full_resolution_and_never_sends_power_or_gradient_settings(): void
+    {
+        $requests = [];
+        Http::fake(function (Request $request) use (&$requests) {
+            $requests[] = $request;
+            if (str_contains($request->url(), '/token?')) {
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                return Http::response(['success' => true, 'result' => ['model' => json_encode($this->nativeModel([
+                    'abilityId' => 28, 'code' => 'control_data', 'accessMode' => 'wr',
+                    'typeSpec' => ['type' => 'string', 'maxlen' => 255],
+                ]))]]);
+            }
+
+            return Http::response(['success' => true, 't' => self::NOW, 'result' => (object) []]);
+        });
+        $client = $this->client();
+        $this->assertSame(['sentAt' => self::NOW, 'acceptedAt' => self::NOW], $client->sendRealtime([
+            'h' => 199, 's' => 1000, 'v' => 1000, 'bright' => 0, 'temperature' => 0,
+        ]));
+        $client->sendRealtime(['h' => 0, 's' => 0, 'v' => 0, 'bright' => 10, 'temperature' => 0]);
+        $this->assertCount(4, $requests);
+        foreach (array_slice($requests, 2) as $index => $request) {
+            $this->assertSame(self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/shadow/properties/issue', $request->url());
+            $this->assertSame(['control_data' => $index === 0 ? '100c703e803e800000000' : '1000000000000000a0000'],
+                json_decode(json_decode($request->body(), true)['properties'], true));
+        }
+    }
+
+    public function test_realtime_rejects_invalid_or_zero_output_before_network_io(): void
+    {
+        Http::fake();
+        $valid = ['h' => 0, 's' => 0, 'v' => 0, 'bright' => 10, 'temperature' => 0];
+        foreach ([['h' => 361], ['s' => 1001], ['v' => -1], ['bright' => '10'], ['temperature' => true], ['unexpected' => 1]] as $bad) {
+            $this->assertSame('configuration_error', $this->failure(fn () => $this->client()->sendRealtime(array_merge($valid, $bad)))->getMessage());
+        }
+        $this->assertSame('unsupported_transition', $this->failure(fn () => $this->client()->sendRealtime(array_merge($valid, ['bright' => 0])))->getMessage());
+        Http::assertNothingSent();
+    }
+
+    public static function realtimeModelValidity(): array
+    {
+        return [[true], [false]];
+    }
+
+    #[DataProvider('realtimeModelValidity')]
+    public function test_realtime_wrong_model_and_ambiguous_write_never_retry(bool $badModel): void
+    {
+        $writes = 0;
+        Http::fake(function (Request $request) use ($badModel, &$writes) {
+            if (str_contains($request->url(), '/token?')) {
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                return Http::response(['success' => true, 'result' => ['model' => json_encode($this->nativeModel([
+                    'abilityId' => 28, 'code' => 'control_data', 'accessMode' => $badModel ? 'ro' : 'wr',
+                    'typeSpec' => ['type' => 'string', 'maxlen' => 255],
+                ]))]]);
+            }
+            $writes++;
+            throw new ConnectionException('network failure');
+        });
+        $error = $this->failure(fn () => $this->client()->sendRealtime(['h' => 0, 's' => 0, 'v' => 0, 'bright' => 10, 'temperature' => 0]));
+        $this->assertSame($badModel ? 0 : 1, $writes);
+        $this->assertSame(! $badModel, $error->writeOutcomeUnknown);
+    }
+
+    private static function nativeColourModel(): array
+    {
+        return ['services' => [['code' => '', 'properties' => [
+            ['abilityId' => 21, 'code' => 'work_mode', 'accessMode' => 'rw',
+                'typeSpec' => ['type' => 'enum', 'range' => ['white', 'colour', 'scene', 'music']]],
+            ['abilityId' => 24, 'code' => 'colour_data', 'accessMode' => 'rw',
+                'typeSpec' => ['type' => 'string', 'maxlen' => 255]],
+        ]]]];
+    }
+
+    public function test_static_colour_uses_full_native_hsv_range_and_one_exact_issue_without_power(): void
+    {
+        $requests = [];
+        $now = self::NOW;
+        Http::fake(function (Request $request) use (&$requests, &$now) {
+            $requests[] = $request;
+            if (str_contains($request->url(), '/token?')) {
+                $now += 1000;
+
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                $now += 500;
+
+                return Http::response(['success' => true, 'result' => ['model' => json_encode(self::nativeColourModel())]]);
+            }
+
+            return Http::response(['success' => true, 't' => $now + 20, 'result' => (object) []]);
+        });
+        $client = $this->client(clock: static function () use (&$now) {
+            return $now;
+        });
+        $receipt = $client->sendStaticColour(['h' => 360, 's' => 1000, 'v' => 1000, 'bright' => 0, 'temperature' => 0]);
+        $this->assertSame(['sentAt' => self::NOW + 1500, 'acceptedAt' => self::NOW + 1520], $receipt);
+        $this->assertCount(3, $requests);
+        $this->assertSame(['GET', 'GET', 'POST'], array_map(fn ($request) => $request->method(), $requests));
+        $this->assertSame(self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/shadow/properties/issue', $requests[2]->url());
+        $this->assertSame(['properties' => '{"colour_data":"016803e803e8","work_mode":"colour"}'],
+            json_decode($requests[2]->body(), true));
+        $client->sendStaticColour(['h' => 199, 's' => 1000, 'v' => 10, 'bright' => 0, 'temperature' => 0]);
+        $this->assertCount(4, $requests, 'The second explicit call reuses the model and token, not a retry.');
+        $this->assertSame(['colour_data' => '00c703e8000a', 'work_mode' => 'colour'],
+            json_decode(json_decode($requests[3]->body(), true)['properties'], true));
+    }
+
+    public function test_invalid_static_colour_channels_never_even_read_the_model(): void
+    {
+        Http::fake();
+        $valid = ['h' => 199, 's' => 1000, 'v' => 1000, 'bright' => 0, 'temperature' => 0];
+        foreach ([['h' => -1], ['h' => 361], ['s' => 1001], ['v' => 0], ['v' => 9], ['v' => 1001],
+            ['bright' => 10], ['temperature' => 1], ['v' => '1000'], ['s' => 1000.0], ['h' => true], ['unexpected' => 0]] as $bad) {
+            $error = $this->failure(fn () => $this->client()->sendStaticColour(array_replace($valid, $bad)));
+            $this->assertSame('configuration_error', $error->getMessage());
+            $this->assertFalse($error->writeOutcomeUnknown);
+        }
+        unset($valid['temperature']);
+        $this->assertSame('configuration_error', $this->failure(fn () => $this->client()->sendStaticColour($valid))->getMessage());
+        Http::assertNothingSent();
+    }
+
+    public static function invalidStaticColourModels(): array
+    {
+        $cases = [];
+        foreach ([
+            ['mode read only', 0, ['accessMode' => 'ro']],
+            ['mode wrong id', 0, ['abilityId' => 20]],
+            ['mode wrong code', 0, ['code' => 'mode']],
+            ['mode wrong type', 0, ['typeSpec' => ['type' => 'string', 'range' => ['colour']]]],
+            ['mode without colour', 0, ['typeSpec' => ['type' => 'enum', 'range' => ['white', 'scene']]]],
+            ['mode malformed range', 0, ['typeSpec' => ['type' => 'enum', 'range' => 'colour']]],
+            ['colour write only', 1, ['accessMode' => 'wr']],
+            ['colour wrong id', 1, ['abilityId' => 25]],
+            ['colour wrong code', 1, ['code' => 'colour_data_v2']],
+            ['colour wrong type', 1, ['typeSpec' => ['type' => 'raw', 'maxlen' => 255]]],
+            ['colour too short', 1, ['typeSpec' => ['type' => 'string', 'maxlen' => 11]]],
+            ['colour malformed maxlen', 1, ['typeSpec' => ['type' => 'string', 'maxlen' => '255']]],
+        ] as [$name, $index, $replacement]) {
+            $model = self::nativeColourModel();
+            $model['services'][0]['properties'][$index] = array_replace($model['services'][0]['properties'][$index], $replacement);
+            $cases[$name] = [$model];
+        }
+        $model = self::nativeColourModel();
+        $model['services'][0]['properties'][] = $model['services'][0]['properties'][1];
+        $cases['duplicate colour'] = [$model];
+        $model = self::nativeColourModel();
+        array_pop($model['services'][0]['properties']);
+        $cases['missing colour'] = [$model];
+        $model = self::nativeColourModel();
+        array_shift($model['services'][0]['properties']);
+        $cases['missing mode'] = [$model];
+        $model = self::nativeColourModel();
+        $model['services'][0]['code'] = 'another_service';
+        $cases['namespaced properties'] = [$model];
+
+        return $cases;
+    }
+
+    #[DataProvider('invalidStaticColourModels')]
+    public function test_static_colour_requires_both_exact_native_properties_before_any_post(array $model): void
+    {
+        Http::fake([
+            self::ENDPOINT.'/v1.0/token?grant_type=1' => Http::response($this->token()),
+            self::ENDPOINT.'/v2.0/cloud/thing/'.self::DEVICE.'/model' => Http::response([
+                'success' => true, 'result' => ['model' => json_encode($model)],
+            ]),
+        ]);
+        $error = $this->failure(fn () => $this->client()->sendStaticColour(['h' => 199, 's' => 1000, 'v' => 10, 'bright' => 0, 'temperature' => 0]));
+        $this->assertSame('configuration_error', $error->getMessage());
+        $this->assertFalse($error->writeOutcomeUnknown);
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+    }
+
+    public function test_static_colour_timeout_is_unknown_and_never_replayed_or_read_afterwards(): void
+    {
+        $writes = 0;
+        Http::fake(function (Request $request) use (&$writes) {
+            if (str_contains($request->url(), '/token?')) {
+                return Http::response($this->token());
+            }
+            if (str_ends_with($request->url(), '/model')) {
+                return Http::response(['success' => true, 'result' => ['model' => json_encode(self::nativeColourModel())]]);
+            }
+            $writes++;
+            throw new ConnectionException('Fixture authorization '.self::SECRET);
+        });
+        $error = $this->failure(fn () => $this->client()->sendStaticColour(['h' => 199, 's' => 1000, 'v' => 10, 'bright' => 0, 'temperature' => 0]));
+        $this->assertSame('transport_timeout', $error->getMessage());
+        $this->assertTrue($error->writeOutcomeUnknown);
+        $this->assertNull($error->getPrevious());
+        $this->assertSame(1, $writes);
+        Http::assertSentCount(2); // The timed-out POST is not recorded as a response.
+    }
 }

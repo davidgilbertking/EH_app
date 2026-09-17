@@ -79,10 +79,19 @@ Inspect `app/Domain/Pages.php` for the full slug catalogue.
 ## Mythos lighting
 
 The Mythos header action opens a separate Green / Yellow / Blue card selector
-while music continues. Lighting defaults to **simulation**. The opt-in native
-Cloud executor runs on the server, independently of the tablet browser and Mac.
-Its durable transition state preserves the latest intent across slow fades and
-process restarts. The configured white rise is 12 seconds.
+while music continues. Lighting defaults to **simulation**. The visually accepted
+Cloud implementation uses native DP28 channel gradients while keeping power on.
+It stops a breathing scene before dimming its colour to 1%, switches to white
+at 1%, then raises white brightness. Timings are configured in `.env`: Mythos
+dimming and RGB rise/fall use 6 seconds, while white rise uses 12 seconds.
+Deployment uses a Git checkout of `feature/kojima-mythos-lighting`; `main` stays
+unchanged. Audio remains in the existing private storage outside Git. Enable
+only one lighting worker across the server, staging, and local machine.
+Lighting follows music selection: **Action / Muted Action** use 100% brightness
+and 33% temperature; **Combat / Epic Combat** and other terminal music buttons
+use 90% / 20%. **Mythos** has its own dimming and card selection flow.
+The **Encounters / Other** navigation headers, nested folders, Home, Back, and
+browser history preserve the current light, continuing music, and game context.
 See [lighting setup and hardware handoff](docs/lighting.md) for
 the dedicated worker, transition policies, tests, and KOJIMA diagnostics.
 

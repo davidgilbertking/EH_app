@@ -290,7 +290,7 @@ test('an early Mythos color keeps its session and replaces darkness before acqui
     await first;
 });
 
-test('navigation cannot acquire but can replace an existing gesture pending target', async () => {
+test('a non-acquiring target request cannot acquire but can replace an existing pending target', async () => {
     const { client, requests } = setup();
     const action = { kind: 'white', profile: 'action' };
     assert.equal(await client.requestTarget(action, { acquire: false }), false);
@@ -415,11 +415,12 @@ test('game gestures start audio synchronously and navigation after takeover cann
     requests[2].resolve({ data: status(3, { controlGeneration: 'other-owner' }) });
     await read;
     flow.observeNavigation('/other');
-    assert.equal(flow.state.mythosSessionId, null);
+    assert.equal(flow.state.mythosSessionId, 'session');
+    assert.equal(flow.state.selectedMythosColor, 'blue');
     assert.equal(requests.length, 3);
 });
 
-test('a route completing during Mythos acquisition replaces it with restored white', async () => {
+test('navigation during Mythos acquisition preserves the selected scene as the pending target', async () => {
     const { client, requests } = setup();
     const audio = { state: { playingFolder: null },
         play(options) { this.state.playingFolder = options.folderSlug; } };
@@ -427,10 +428,72 @@ test('a route completing during Mythos acquisition replaces it with restored whi
     flow.observeNavigation('/mythos');
     assert.equal(requests.length, 0);
     flow.enterMythos();
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    flow.enterEncounters();
     flow.observeNavigation('/other');
     requests[0].resolve({ data: status(1, { controlEpoch: 'epoch' }) });
     await flush();
-    assert.deepEqual(requests[1].body.target, { kind: 'white', profile: 'action' });
+    assert.deepEqual(requests[1].body.target, { kind: 'mythos', mythosSessionId: 'session', color: 'blue' });
     requests[1].resolve({ data: status(2, { accepted: true }) });
     await flush();
+});
+
+test('pure navigation, including Encounters and reload, never acquires lighting control', async () => {
+    const { client, requests } = setup();
+    const flow = createGameFlowController({ audio: { state: {} }, lighting: client });
+    flow.observeNavigation('/other');
+    assert.equal(requests.length, 0);
+    flow.enterEncounters();
+    for (const url of ['/encounters', '/encounters/general', '/other', '/', '/mythos', '/other?refresh=1']) {
+        flow.observeNavigation(url);
+    }
+    await flush();
+    assert.equal(requests.length, 0);
+    assert.equal(flow.state.selectedContext, null);
+});
+
+test('navigation cannot replace a pending Action lighting target with Encounters', async () => {
+    const { client, requests } = setup();
+    const audio = { state: { playingFolder: null },
+        play(options) { this.state.playingFolder = options.folderSlug; } };
+    const flow = createGameFlowController({ audio, lighting: client });
+    flow.selectAction();
+    flow.enterEncounters();
+    flow.observeNavigation('/encounters');
+    flow.observeNavigation('/other/quest');
+    assert.equal(audio.state.playingFolder, 'action');
+    assert.equal(requests.length, 1);
+    requests[0].resolve({ data: status(1, { controlEpoch: 'epoch' }) });
+    await flush();
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[1].body.target, { kind: 'white', profile: 'action' });
+    assert.equal(requests[1].body.clientSeq, 1);
+    requests[1].resolve({ data: status(2, { accepted: true }) });
+    await flush();
+});
+
+test('only a terminal music choice after leaving Mythos sends the Encounters lighting intent', async () => {
+    const { client, requests } = setup();
+    const audio = { state: { playingFolder: null },
+        play(options) { this.state.playingFolder = options.folderSlug; } };
+    const flow = createGameFlowController({ audio, lighting: client, uuid: () => 'session' });
+    flow.enterMythos();
+    flow.observeNavigation('/mythos');
+    requests[0].resolve({ data: status(1, { controlEpoch: 'epoch' }) });
+    await flush();
+    requests[1].resolve({ data: status(2, { accepted: true }) });
+    await flush();
+    flow.enterEncounters();
+    flow.observeNavigation('/encounters');
+    flow.observeNavigation('/other');
+    assert.equal(requests.length, 2);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    assert.equal(flow.state.mythosSessionId, 'session');
+    flow.playUserChoice({ folderSlug: 'special/victory' }, 'other');
+    assert.equal(requests.length, 3);
+    assert.deepEqual(requests[2].body.target, { kind: 'white', profile: 'encounters' });
+    requests[2].resolve({ data: status(3, { accepted: true }) });
+    await flush();
+    assert.equal(audio.state.playingFolder, 'special/victory');
+    assert.equal(flow.state.mythosSessionId, null);
 });

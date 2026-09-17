@@ -8,6 +8,7 @@ return [
     'white_fade_down_ms' => (int) env('LIGHTING_WHITE_FADE_DOWN_MS', env('LIGHTING_WHITE_FADE_MS', 4000)),
     'white_fade_up_ms' => (int) env('LIGHTING_WHITE_FADE_UP_MS', env('LIGHTING_WHITE_FADE_MS', 4000)),
     'scene_fade_out_ms' => (int) env('LIGHTING_SCENE_FADE_OUT_MS', 2000),
+    'scene_fade_in_ms' => (int) env('LIGHTING_SCENE_FADE_IN_MS', 4000),
     'dark_hold_ms' => (int) env('LIGHTING_DARK_HOLD_MS', 150),
     'curve' => env('LIGHTING_CURVE', 'smoothstep'), // smoothstep | linear
     'tick_ms' => (int) env('LIGHTING_TICK_MS', 100),
@@ -22,6 +23,15 @@ return [
         'encounters' => ['brightnessPct' => 90, 'temperaturePct' => 20],
     ],
     'cloud' => [
+        'continuous_transitions' => (bool) env('LIGHTING_CLOUD_CONTINUOUS_TRANSITIONS', false),
+        // Local candidate: the lamp interpolates down/RGB fades in DP25.
+        // Raw firmware timing and our minimum wait are separately calibrated;
+        // neither value promises a measured physical duration on this lamp.
+        'onboard_fades' => (bool) env('LIGHTING_CLOUD_ONBOARD_FADES', false),
+        'native_fade_timing_byte' => (int) env('LIGHTING_CLOUD_NATIVE_FADE_TIMING_BYTE', 30),
+        'native_fade_wait_ms' => (int) env('LIGHTING_CLOUD_NATIVE_FADE_WAIT_MS', 5000),
+        'frame_interval_ms' => 300,
+        'white_up_curve' => 'perceptual',
         'native_transitions' => (bool) env('LIGHTING_CLOUD_NATIVE_TRANSITIONS', false),
         'native_interruptions' => (bool) env('LIGHTING_CLOUD_NATIVE_INTERRUPTS', false),
         'settle_margin_ms' => 400,
