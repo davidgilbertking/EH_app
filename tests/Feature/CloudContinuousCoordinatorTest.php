@@ -46,12 +46,29 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->fixture = new ContinuousCloudFixture(fn () => $this->now);
         $this->coordinator = $this->makeCoordinator();
         $this->user = User::factory()->create()->id;
+        config()->set('lighting.allowed_user_ids', [$this->user]);
         $this->epoch = app(LightingControl::class)->control($this->user, 'continuous-fixture', true, null)['controlEpoch'];
     }
 
     private function makeCoordinator(): CloudContinuousCoordinator
     {
         return new CloudContinuousCoordinator(app(LightingStore::class), $this->fixture, new ContinuousSnapshotFixture($this->fixture));
+    }
+
+    public function test_removed_account_cannot_continue_an_inflight_transition(): void
+    {
+        $this->send($this->mythos());
+        $this->until(fn () => count($this->fixture->writes) === 1);
+        config()->set('lighting.allowed_user_ids', []);
+
+        for ($i = 0; $i < 5; $i++) {
+            $state = $this->tick(1000);
+        }
+        $this->assertFalse($state->enabled);
+        $this->assertNull($state->owner_user_id);
+        $this->assertNull($state->desired_target);
+        $this->assertCount(1, $this->fixture->writes);
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'control_access_revoked']);
     }
 
     private function send(array $target): void

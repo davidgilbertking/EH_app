@@ -25,6 +25,7 @@ export function resolveGameContext(folderSlug, explicitContext = null, url = nul
 export function createGameFlowController({
     audio,
     lighting,
+    canControlLighting = () => false,
     navigate = () => {},
     now = () => globalThis.performance.now(),
     uuid = createUuid,
@@ -53,6 +54,7 @@ export function createGameFlowController({
     }
 
     function sendTarget(target) {
+        if (!canControlLighting()) return;
         // Lighting owns its visible transport errors. A failed lamp never
         // prevents audio or navigation, including synchronous driver failures.
         try { Promise.resolve(lighting.requestTarget(target)).catch(() => {}); } catch (_) { /* isolated */ }
@@ -96,7 +98,14 @@ export function createGameFlowController({
 
     function enterMythos(audioOptions = {}) {
         if (!accept('mythos.enter')) return false;
-        const isNewSession = state.selectedContext !== 'mythos';
+        if (!canControlLighting()) {
+            state.selectedContext = 'mythos';
+            clearMythos();
+            if (audio.state.playingFolder === 'mythos') runAudio('stop');
+            else runAudio('play', { folderSlug: 'mythos', label: 'Mythos', crossfade: true, ...audioOptions });
+            return true;
+        }
+        const isNewSession = state.selectedContext !== 'mythos' || !state.mythosSessionId;
         if (isNewSession) {
             state.selectedContext = 'mythos';
             state.mythosSessionId = uuid();
@@ -110,6 +119,7 @@ export function createGameFlowController({
     }
 
     function selectMythosColor(color, sessionId) {
+        if (!canControlLighting()) return false;
         if (state.selectedContext !== 'mythos' || !sessionId || sessionId !== state.mythosSessionId) return false;
         if (!MYTHOS_COLORS.has(color)) return false;
         const target = { kind: 'mythos', mythosSessionId: sessionId, color };
@@ -182,7 +192,7 @@ export function createGameFlowController({
         clearMythos();
         const fadePromise = Promise.resolve(runAudio('fadeOutCurrent')).catch(() => {});
         let releasePromise;
-        try { releasePromise = Promise.resolve(lighting.releaseForLogout()).catch(() => {}); }
+        try { releasePromise = canControlLighting() ? Promise.resolve(lighting.releaseForLogout()).catch(() => {}) : Promise.resolve(); }
         catch (_) { releasePromise = Promise.resolve(); }
         return { fadePromise, releasePromise };
     }

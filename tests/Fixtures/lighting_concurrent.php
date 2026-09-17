@@ -18,6 +18,7 @@ config()->set('database.connections.sqlite.database', $argv[1]);
 config()->set('database.connections.sqlite.url', null);
 config()->set('database.connections.sqlite.busy_timeout', 5000);
 config()->set('app.key', 'concurrency-test-only-not-a-credential');
+config()->set('lighting.allowed_user_ids', [1]);
 DB::purge();
 
 $control = app(LightingControl::class);

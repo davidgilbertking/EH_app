@@ -37,6 +37,7 @@ class LightingPhysicalCoordinatorTest extends TestCase
         config()->set('lighting.dark_hold_ms', 50);
         $this->clock = LightingStore::now();
         $this->userId = User::factory()->create()->id;
+        config()->set('lighting.allowed_user_ids', [$this->userId]);
         $this->epoch = app(LightingControl::class)->control($this->userId, 'fixture-session', true, null)['controlEpoch'];
     }
 

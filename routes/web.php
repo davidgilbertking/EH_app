@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/mythos', [PageController::class, 'mythos'])->name('mythos');
 
-    Route::prefix('lighting')->name('lighting.')->group(function () {
+    Route::prefix('lighting')->name('lighting.')->middleware('can:control-lighting')->group(function () {
         Route::get('/status', [LightingController::class, 'status'])->middleware('throttle:180,1,lighting-status:')->name('status');
         Route::post('/control', [LightingController::class, 'control'])->middleware('throttle:30,1,lighting-control:')->name('control');
         Route::post('/intents', [LightingController::class, 'intent'])->middleware('throttle:120,1,lighting-intents:')->name('intents');

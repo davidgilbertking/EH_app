@@ -11,6 +11,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const canControlLighting = computed(() => page.props.lighting?.canControl === true);
 const url = computed(() => page.url || '/');
 const playingFolder = computed(() => engine.state.playingFolder);
 const phaseFolder = computed(() =>
@@ -150,7 +151,7 @@ const mythosBindings = useLongPress({
             @click="($event.detail === 0) && gameFlow.enterMythos()"
         >
             <span class="ui-header-nav-mobile-label min-w-0 whitespace-normal break-words text-center">Mythos</span>
-            <span aria-hidden="true" class="rotate-90 max-[640px]:hidden">›</span>
+            <span v-if="canControlLighting" aria-hidden="true" class="rotate-90 max-[640px]:hidden">›</span>
         </button>
 
         <Link

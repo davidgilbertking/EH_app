@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // Empty allowlist disables all account access, including persisted leases.
+    'allowed_user_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('LIGHTING_ALLOWED_USER_IDS', ''))))),
     // Physical Cloud transport is opt-in; credentials stay in a private file.
     'driver' => env('LIGHTING_DRIVER', 'mock'),
     // Duration of the full calibrated white range (1% to 100%).

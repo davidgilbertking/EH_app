@@ -12,6 +12,8 @@ class LightingControl
 
     public function control(int $userId, string $sessionId, bool $enabled, ?string $epoch): array
     {
+        LightingAccess::authorize($userId);
+
         return $this->store->atomic(function (LightingState $state) use ($userId, $sessionId, $enabled, $epoch) {
             if (! $enabled && ! $this->owns($state, $userId, $sessionId, $epoch)) {
                 return ['accepted' => false, 'error' => 'control_lost', 'httpStatus' => 409];
@@ -38,6 +40,8 @@ class LightingControl
 
     public function intent(int $userId, string $sessionId, array $intent): array
     {
+        LightingAccess::authorize($userId);
+
         return $this->store->atomic(function (LightingState $state) use ($userId, $sessionId, $intent) {
             if (! $this->owns($state, $userId, $sessionId, $intent['controlEpoch'])) {
                 return ['accepted' => false, 'error' => 'control_lost', 'httpStatus' => 409];

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\AncientOne;
 use App\Models\Investigator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Middleware;
 
@@ -42,6 +43,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
+            'lighting' => [
+                'canControl' => Gate::allows('control-lighting'),
+            ],
             'ui' => [
                 'yellowSignSeed' => $yellowSignSeed,
                 'yellowSignImageUrl' => route('ui.yellowSignIcon', [
@@ -75,6 +79,7 @@ class HandleInertiaRequests extends Middleware
 
         $seed = Str::uuid()->toString();
         $session->put('yellow_sign_seed', $seed);
+
         return $seed;
     }
 

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AncientOne;
 use App\Models\Investigator;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,8 +16,12 @@ class PageController extends Controller
         return Inertia::render('Home');
     }
 
-    public function mythos(): Response
+    public function mythos(): Response|RedirectResponse
     {
+        if (Gate::denies('control-lighting')) {
+            return redirect()->route('home');
+        }
+
         return Inertia::render('Mythos/Index');
     }
 
@@ -145,7 +151,7 @@ class PageController extends Controller
         ];
 
         return Inertia::render('Special/Investigators', [
-            'men'   => $all->where('gender', 'M')->values()->map($shape)->all(),
+            'men' => $all->where('gender', 'M')->values()->map($shape)->all(),
             'women' => $all->where('gender', 'F')->values()->map($shape)->all(),
         ]);
     }

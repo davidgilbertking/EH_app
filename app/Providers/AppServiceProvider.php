@@ -9,9 +9,12 @@ use App\Lighting\Drivers\LightingDriver;
 use App\Lighting\Drivers\MockLightingDriver;
 use App\Lighting\Drivers\NativeCloudLightingDriver;
 use App\Lighting\Drivers\TuyaCloudClient;
+use App\Lighting\LightingAccess;
 use App\Lighting\LightingCoordinator;
 use App\Lighting\LightingExecutor;
 use App\Lighting\LightingStore;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -53,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('control-lighting', fn (User $user) => LightingAccess::allows($user->id));
         Vite::prefetch(concurrency: 3);
     }
 }

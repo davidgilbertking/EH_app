@@ -17,6 +17,7 @@ class LightingRateLimitTest extends TestCase
         config(['lighting.driver' => 'mock']);
         $this->freezeTime();
         $this->actingAs(User::factory()->create());
+        config()->set('lighting.allowed_user_ids', [auth()->id()]);
     }
 
     public function test_status_polling_does_not_consume_write_limits(): void

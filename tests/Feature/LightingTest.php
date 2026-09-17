@@ -45,6 +45,7 @@ class LightingTest extends TestCase
     private function link(): void
     {
         $this->actingAs(User::factory()->create());
+        config()->set('lighting.allowed_user_ids', [auth()->id()]);
         $this->epoch = $this->postJson('/lighting/control', ['enabled' => true])->assertOk()->json('controlEpoch');
         $this->withCookie(config('session.cookie'), session()->getId());
         $this->withCredentials();
@@ -94,6 +95,7 @@ class LightingTest extends TestCase
         $this->postJson('/lighting/intents', [])->assertUnauthorized();
         $this->get('/mythos')->assertRedirect('/login');
         $this->actingAs(User::factory()->create());
+        config()->set('lighting.allowed_user_ids', [auth()->id()]);
         $this->get('/mythos')->assertOk()->assertInertia(fn ($page) => $page->component('Mythos/Index'));
         $this->getJson('/lighting/status')->assertOk()->assertJsonPath('enabled', false)->assertJsonPath('simulated', true)
             ->assertHeader('Cache-Control', 'no-store, private')->assertJsonMissingPath('controlEpoch');

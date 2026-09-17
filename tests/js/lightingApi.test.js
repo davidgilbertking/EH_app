@@ -18,14 +18,14 @@ function status(version, extra = {}) {
         ...(extra.controlEpoch ? { controlEpochGeneration: extra.controlGeneration ?? 'owner-1' } : {}), ...extra };
 }
 
-function setup() {
+function setup(overrides = {}) {
     const requests = [];
     const http = {
         get: (url) => { const d = deferred(); requests.push({ method: 'get', url, ...d }); return d.promise; },
         post: (url, body) => { const d = deferred(); requests.push({ method: 'post', url, body, ...d }); return d.promise; },
     };
     let id = 0;
-    const client = createLightingClient({ http, uuid: () => `intent-${++id}` });
+    const client = createLightingClient({ http, uuid: () => `intent-${++id}`, canControl: true, ...overrides });
     async function enable() {
         const promise = client.enable();
         requests.at(-1).resolve({ data: status(1, { controlEpoch: 'secret-epoch' }) });
@@ -42,6 +42,94 @@ test('status reads and a fresh client never acquire control or replay a target',
     assert.equal(client.state.linked, false);
     assert.equal(await client.sendTarget({ kind: 'white', profile: 'action' }), false);
     assert.equal(requests.length, 1);
+});
+
+test('denied clients make zero lighting requests, including polling, music choices and logout', async () => {
+    const scheduled = [];
+    const { client, requests } = setup({ canControl: false, schedule: (callback) => scheduled.push(callback) });
+    client.startPolling();
+    await client.poll();
+    assert.equal(await client.enable(), false);
+    assert.equal(await client.requestTarget({ kind: 'white', profile: 'action' }), false);
+    assert.equal(await client.sendTarget({ kind: 'mythos', color: 'blue' }), false);
+    await client.disable();
+    await client.releaseForLogout();
+    assert.deepEqual(requests, []);
+    assert.deepEqual(scheduled, []);
+    assert.equal(client.state.error, null);
+
+    const defaultClient = createLightingClient({ http: {
+        get: () => { throw new Error('Unexpected GET'); },
+        post: () => { throw new Error('Unexpected POST'); },
+    } });
+    defaultClient.startPolling();
+    assert.equal(await defaultClient.enable(), false);
+    assert.equal(defaultClient.state.canControl, false);
+});
+
+test('revoking permission during acquisition discards the late epoch and pending light command', async () => {
+    const { client, requests } = setup();
+    client.setAccess(true, 4);
+    const pending = client.requestTarget({ kind: 'white', profile: 'action' });
+    assert.equal(requests.length, 1);
+    client.setAccess(false, 5);
+    requests[0].resolve({ data: status(1, { controlEpoch: 'old-epoch' }) });
+    assert.equal(await pending, false);
+    await client.releaseForLogout();
+    assert.equal(requests.length, 1);
+    assert.equal(client.state.linked, false);
+    assert.equal(client.state.controlPending, false);
+    assert.equal(client.state.observed, null);
+    assert.equal(client.state.error, null);
+});
+
+test('a fresh account session can acquire immediately while the previous acquisition is still pending', async () => {
+    const { client, requests } = setup();
+    client.setAccess(true, 4);
+    const previous = client.requestTarget({ kind: 'white', profile: 'action' });
+    client.setAccess(false, 5);
+    client.setAccess(true, 4);
+    const target = { kind: 'white', profile: 'encounters' };
+    const current = client.requestTarget(target);
+    assert.equal(requests.length, 2);
+    requests[0].resolve({ data: status(1, { controlEpoch: 'old-epoch' }) });
+    assert.equal(await previous, false);
+    assert.equal(client.state.controlPending, true);
+    requests[1].resolve({ data: status(2, { controlEpoch: 'new-epoch', controlGeneration: 'new-owner' }) });
+    await flush();
+    assert.equal(requests.length, 3);
+    assert.deepEqual(requests[2].body.target, target);
+    assert.equal(requests[2].body.controlEpoch, 'new-epoch');
+    requests[2].resolve({ data: status(3, { accepted: true, controlGeneration: 'new-owner' }) });
+    assert.equal(await current, true);
+});
+
+test('revoking permission stops polling and ignores an outstanding status response', async () => {
+    const scheduled = [];
+    const { client, requests } = setup({ schedule: (callback) => scheduled.push(callback) });
+    client.startPolling();
+    client.setAccess(false, 5);
+    requests[0].resolve({ data: status(7, { observed: { brightnessPct: 100 } }) });
+    await flush();
+    assert.equal(client.state.observed, null);
+    assert.equal(client.state.remoteEnabled, false);
+    assert.deepEqual(scheduled, []);
+    assert.equal(requests.length, 1);
+});
+
+test('changing account invalidates previous control and permission revocation prevents transport retries', async () => {
+    const { client, requests, enable } = setup();
+    client.setAccess(true, 4);
+    await enable();
+    const command = client.sendTarget({ kind: 'white', profile: 'action' });
+    client.setAccess(false, 5);
+    requests[1].reject(new Error('connection interrupted'));
+    assert.equal(await command, false);
+    assert.equal(requests.length, 2);
+    client.setAccess(true, 4);
+    assert.equal(await client.sendTarget({ kind: 'white', profile: 'action' }), false);
+    assert.equal(client.state.linked, false);
+    assert.equal(client.state.error, null);
 });
 
 test('link only obtains a fresh epoch; no implicit replay', async () => {
@@ -401,7 +489,7 @@ test('game gestures start audio synchronously and navigation after takeover cann
     const played = [];
     const audio = { state: { playingFolder: null },
         play(options) { played.push(options.folderSlug); this.state.playingFolder = options.folderSlug; } };
-    const flow = createGameFlowController({ audio, lighting: client, uuid: () => 'session' });
+    const flow = createGameFlowController({ audio, lighting: client, canControlLighting: () => client.state.canControl, uuid: () => 'session' });
     flow.enterMythos();
     flow.selectMythosColor('blue', flow.state.mythosSessionId);
     assert.deepEqual(played, ['mythos']);
@@ -424,7 +512,7 @@ test('navigation during Mythos acquisition preserves the selected scene as the p
     const { client, requests } = setup();
     const audio = { state: { playingFolder: null },
         play(options) { this.state.playingFolder = options.folderSlug; } };
-    const flow = createGameFlowController({ audio, lighting: client, uuid: () => 'session' });
+    const flow = createGameFlowController({ audio, lighting: client, canControlLighting: () => client.state.canControl, uuid: () => 'session' });
     flow.observeNavigation('/mythos');
     assert.equal(requests.length, 0);
     flow.enterMythos();
@@ -440,7 +528,7 @@ test('navigation during Mythos acquisition preserves the selected scene as the p
 
 test('pure navigation, including Encounters and reload, never acquires lighting control', async () => {
     const { client, requests } = setup();
-    const flow = createGameFlowController({ audio: { state: {} }, lighting: client });
+    const flow = createGameFlowController({ audio: { state: {} }, lighting: client, canControlLighting: () => client.state.canControl });
     flow.observeNavigation('/other');
     assert.equal(requests.length, 0);
     flow.enterEncounters();
@@ -456,7 +544,7 @@ test('navigation cannot replace a pending Action lighting target with Encounters
     const { client, requests } = setup();
     const audio = { state: { playingFolder: null },
         play(options) { this.state.playingFolder = options.folderSlug; } };
-    const flow = createGameFlowController({ audio, lighting: client });
+    const flow = createGameFlowController({ audio, lighting: client, canControlLighting: () => client.state.canControl });
     flow.selectAction();
     flow.enterEncounters();
     flow.observeNavigation('/encounters');
@@ -476,7 +564,7 @@ test('only a terminal music choice after leaving Mythos sends the Encounters lig
     const { client, requests } = setup();
     const audio = { state: { playingFolder: null },
         play(options) { this.state.playingFolder = options.folderSlug; } };
-    const flow = createGameFlowController({ audio, lighting: client, uuid: () => 'session' });
+    const flow = createGameFlowController({ audio, lighting: client, canControlLighting: () => client.state.canControl, uuid: () => 'session' });
     flow.enterMythos();
     flow.observeNavigation('/mythos');
     requests[0].resolve({ data: status(1, { controlEpoch: 'epoch' }) });

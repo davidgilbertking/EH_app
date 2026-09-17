@@ -9,6 +9,7 @@ export { resolveGameContext, createGameFlowController } from './createController
 export const gameFlow = createGameFlowController({
     audio: engine,
     lighting,
+    canControlLighting: () => lighting.state.canControl,
     reactive,
     navigate: (url) => router.get(url),
     initialUrl: typeof window === 'undefined' ? '/' : window.location.pathname,

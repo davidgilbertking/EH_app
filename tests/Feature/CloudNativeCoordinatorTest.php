@@ -41,6 +41,7 @@ class CloudNativeCoordinatorTest extends TestCase
         $this->driver = new NativeCloudCoordinatorFixture(fn () => $this->now);
         $this->coordinator = new CloudNativeCoordinator(app(LightingStore::class), $this->driver);
         $this->user = User::factory()->create()->id;
+        config()->set('lighting.allowed_user_ids', [$this->user]);
         $this->epoch = app(LightingControl::class)->control($this->user, 'native-fixture', true, null)['controlEpoch'];
     }
 
@@ -50,6 +51,22 @@ class CloudNativeCoordinatorTest extends TestCase
             'intentId' => (string) Str::uuid(), 'controlEpoch' => $this->epoch,
             'clientSeq' => ++$this->sequence, 'target' => $target]);
         $this->assertTrue($response['accepted']);
+    }
+
+    public function test_removed_account_cannot_continue_an_inflight_transition(): void
+    {
+        $this->send($this->mythos('blue'));
+        $this->until(fn () => count($this->driver->writes) === 1);
+        config()->set('lighting.allowed_user_ids', []);
+
+        for ($i = 0; $i < 8; $i++) {
+            $state = $this->tick(1000);
+        }
+        $this->assertFalse($state->enabled);
+        $this->assertNull($state->owner_user_id);
+        $this->assertNull($state->desired_target);
+        $this->assertCount(1, $this->driver->writes);
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'control_access_revoked']);
     }
 
     private function white(string $profile = 'action'): array

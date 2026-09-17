@@ -8,6 +8,7 @@ const KNOWN_ERRORS = new Set([
 
 export function createLightingState() {
     return {
+        canControl: false,
         linked: false, remoteEnabled: false, controlPending: false,
         driver: 'mock', simulated: true, controlGeneration: null,
         revision: 0, appliedRevision: null, statusVersion: -1,
@@ -21,7 +22,10 @@ export function createLightingState() {
 export function createLightingClient({
     http, state = createLightingState(), uuid = createUuid,
     schedule = setTimeout, unschedule = clearTimeout, pollIntervalMs = 1000,
+    canControl = false,
 }) {
+    state.canControl = canControl === true;
+    let accessUserId = null;
     let epoch = null;
     let seq = 0;
     let lifecycle = 0;
@@ -37,6 +41,23 @@ export function createLightingClient({
     let releaseOperation = null;
     let loggedOut = false;
     let lastTargetKey = null;
+
+    // Permission comes from the authenticated page. Revocation/account changes
+    // discard pending work locally; only the server can authorize lamp access.
+    function setAccess(allowed, userId = null) {
+        allowed = allowed === true;
+        if (state.canControl === allowed && accessUserId === userId) return;
+        accessUserId = userId;
+        lifecycle++;
+        stopPolling();
+        discardPendingTarget();
+        forgetControl();
+        acquireOperation = null;
+        acquireRequest = null;
+        releaseOperation = null;
+        Object.assign(state, createLightingState(), { canControl: allowed });
+        loggedOut = !allowed;
+    }
 
     function discardPendingTarget() {
         targetGeneration++;
@@ -77,6 +98,7 @@ export function createLightingClient({
     }
 
     async function poll() {
+        if (!state.canControl) return;
         // At most one status read in flight; ordered server versions also protect
         // against a read overtaken by an intent/control response.
         if (pollInFlight) return pollInFlight;
@@ -102,7 +124,7 @@ export function createLightingClient({
     }
 
     function enable() {
-        if (loggedOut || releaseOperation) return Promise.resolve(false);
+        if (!state.canControl || loggedOut || releaseOperation) return Promise.resolve(false);
         if (acquireOperation) return acquireOperation;
         if (state.controlPending) return Promise.resolve(false);
         const operation = acquireControl();
@@ -151,7 +173,7 @@ export function createLightingClient({
     // Only explicit gestures may start acquisition. A route completion can
     // replace a pending gesture's target, but cannot acquire on its own.
     function requestTarget(target, { acquire = true } = {}) {
-        if (loggedOut || releaseOperation) return Promise.resolve(false);
+        if (!state.canControl || loggedOut || releaseOperation) return Promise.resolve(false);
         if (userAcquisition) {
             pendingTarget = target;
             return userAcquisition.promise;
@@ -181,7 +203,7 @@ export function createLightingClient({
     }
 
     async function sendTarget(target) {
-        if (!epoch || !state.linked || state.controlPending) return false;
+        if (!state.canControl || !epoch || !state.linked || state.controlPending) return false;
         const targetKey = JSON.stringify(target);
         if (hasTarget(target)) return true;
         lastTargetKey = targetKey;
@@ -221,7 +243,7 @@ export function createLightingClient({
     }
 
     function startPolling() {
-        if (polling) return;
+        if (!state.canControl || polling) return;
         // A newly mounted authenticated layout permits new gestures after a
         // previous logout. Its bootstrap remains strictly read-only.
         if (!releaseOperation) loggedOut = false;
@@ -238,6 +260,7 @@ export function createLightingClient({
 
     function disable() {
         discardPendingTarget();
+        if (!state.canControl) return Promise.resolve(false);
         if (releaseOperation) return releaseOperation;
         const operation = releaseControl();
         releaseOperation = operation;
@@ -259,7 +282,7 @@ export function createLightingClient({
                 const { data } = await pendingAcquisition;
                 releaseEpoch = data.controlEpoch ?? releaseEpoch;
             }
-            if (releaseEpoch) {
+            if (releaseEpoch && state.canControl && generation === lifecycle) {
                 const { data } = await http.post('/lighting/control', {
                     enabled: false, controlEpoch: releaseEpoch,
                 }, { timeout: 5000 });
@@ -282,10 +305,11 @@ export function createLightingClient({
     }
 
     function hasTarget(target) {
+        if (!state.canControl) return false;
         if (userAcquisition && JSON.stringify(pendingTarget) === JSON.stringify(target)) return true;
         return state.linked && (!state.error || state.error === 'worker_unavailable')
             && lastTargetKey === JSON.stringify(target);
     }
 
-    return { state, enable, disable, requestTarget, sendTarget, hasTarget, poll, startPolling, stopPolling, releaseForLogout };
+    return { state, setAccess, enable, disable, requestTarget, sendTarget, hasTarget, poll, startPolling, stopPolling, releaseForLogout };
 }

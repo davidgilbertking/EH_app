@@ -11,6 +11,14 @@ import { router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const page = usePage();
+watch(
+    () => [page.props.auth?.user?.id ?? null, page.props.lighting?.canControl === true],
+    ([userId, allowed]) => {
+        lighting.setAccess(allowed, userId);
+        if (allowed) lighting.startPolling();
+    },
+    { immediate: true, flush: 'sync' },
+);
 const url = computed(() => page.url || '/');
 const path = computed(() => url.value.split('?')[0]);
 const isHome = computed(() => url.value === '/');
@@ -335,9 +343,7 @@ function onBeforeHistoryBackNav() {
 
 let removeNavigationListener = null;
 onMounted(() => {
-    // Read-only status bootstrap. Navigation only tracks the current URL;
-    // music gestures choose the phase, while browsing preserves music and light.
-    lighting.startPolling();
+    // Music gestures choose the phase; browsing preserves music and light.
     removeNavigationListener = router.on('navigate', (event) => {
         gameFlow.observeNavigation(event.detail.page.url);
     });
@@ -364,7 +370,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     removeNavigationListener?.();
-    lighting.stopPolling();
+    lighting.setAccess(false);
     resizeObserver?.disconnect();
     window.removeEventListener('resize', syncHeaderHeight);
     window.removeEventListener('resize', syncUiScale);

@@ -2,7 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\AncientOne;
+use App\Models\SoundFolder;
+use App\Models\SoundTrack;
+use App\Models\User;
+use App\Models\UserState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -45,14 +51,15 @@ class PageRoutesTest extends TestCase
     #[DataProvider('pageRoutes')]
     public function test_authenticated_pages_render(string $url): void
     {
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
+        config()->set('lighting.allowed_user_ids', [$user->id]);
         $this->actingAs($user)->get($url)->assertOk();
     }
 
     public function test_set_ancient_one_persists_in_state(): void
     {
-        $user = \App\Models\User::factory()->create();
-        $ancient = \App\Models\AncientOne::firstOrCreate(
+        $user = User::factory()->create();
+        $ancient = AncientOne::firstOrCreate(
             ['slug' => 'cthulhu'],
             ['name' => 'Cthulhu', 'sort_order' => 0],
         );
@@ -72,7 +79,7 @@ class PageRoutesTest extends TestCase
 
     public function test_blob_save_and_clear_round_trip(): void
     {
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
         $payload = [
             ['id' => 'blob-1', 'label' => 'Action', 'folderSlug' => 'action', 'mode' => null],
         ];
@@ -87,7 +94,7 @@ class PageRoutesTest extends TestCase
         $this->assertDatabaseHas('user_states', [
             'user_id' => $user->id,
         ]);
-        $this->assertCount(1, \App\Models\UserState::where('user_id', $user->id)->first()->blobs);
+        $this->assertCount(1, UserState::where('user_id', $user->id)->first()->blobs);
 
         $this->actingAs($user)
             ->withSession(['_token' => 'test-token'])
@@ -96,13 +103,13 @@ class PageRoutesTest extends TestCase
             ->assertStatus(303)
             ->assertRedirect('/encounters');
 
-        $this->assertSame([], \App\Models\UserState::where('user_id', $user->id)->first()->blobs);
+        $this->assertSame([], UserState::where('user_id', $user->id)->first()->blobs);
     }
 
     public function test_audio_pick_404_when_folder_empty(): void
     {
-        $user = \App\Models\User::factory()->create();
-        \App\Models\SoundFolder::firstOrCreate(['slug' => 'action'], ['name' => 'Action']);
+        $user = User::factory()->create();
+        SoundFolder::firstOrCreate(['slug' => 'action'], ['name' => 'Action']);
 
         $this->actingAs($user)
             ->getJson('/audio/folder/action/random')
@@ -111,19 +118,19 @@ class PageRoutesTest extends TestCase
 
     public function test_audio_stream_uses_x_accel_redirect_when_enabled(): void
     {
-        $user = \App\Models\User::factory()->create();
-        $folder = \App\Models\SoundFolder::create([
+        $user = User::factory()->create();
+        $folder = SoundFolder::create([
             'slug' => 'action',
             'name' => 'Action',
-            'mode' => \App\Models\SoundFolder::MODE_RANDOM_POS_FADE,
+            'mode' => SoundFolder::MODE_RANDOM_POS_FADE,
         ]);
-        $track = \App\Models\SoundTrack::create([
+        $track = SoundTrack::create([
             'sound_folder_id' => $folder->id,
             'file_path' => 'action/test.mp3',
             'duration_seconds' => 3.5,
         ]);
 
-        \Illuminate\Support\Facades\Storage::disk('local')->put('audio/action/test.mp3', 'fake-mp3');
+        Storage::disk('local')->put('audio/action/test.mp3', 'fake-mp3');
 
         config()->set('eh.audio_accel_enabled', true);
         config()->set('eh.audio_accel_internal_prefix', '/_protected-audio/');

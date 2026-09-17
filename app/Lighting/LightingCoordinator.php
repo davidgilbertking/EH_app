@@ -50,7 +50,8 @@ class LightingCoordinator implements LightingExecutor
     {
         $snapshot = $this->store->atomic(function (LightingState $state) use ($now) {
             $state->worker_seen_ms = $now;
-            if ($state->enabled && $state->control_expires_ms <= $now) {
+            $accessRevoked = $state->enabled && ! LightingAccess::allows($state->owner_user_id);
+            if ($accessRevoked || ($state->enabled && $state->control_expires_ms <= $now)) {
                 $state->enabled = false;
                 $state->epoch_hash = null;
                 $state->control_generation = null;
@@ -62,7 +63,7 @@ class LightingCoordinator implements LightingExecutor
                 $state->transition = null;
                 $state->stage = 'cancelled';
                 $state->error = 'control_lost';
-                $this->store->event($state, 'control_expired');
+                $this->store->event($state, $accessRevoked ? 'control_access_revoked' : 'control_expired');
             }
             if (! $state->enabled || $state->desired_target === null || $state->error !== null || $state->applied_revision === $state->revision) {
                 return null;
@@ -207,6 +208,7 @@ class LightingCoordinator implements LightingExecutor
     private function current(LightingState $state, array $snapshot): bool
     {
         return $state->enabled && $state->revision === $snapshot['revision']
+            && LightingAccess::allows($state->owner_user_id)
             && $state->control_expires_ms > LightingStore::now()
             && $state->control_generation === $snapshot['control_generation'];
     }

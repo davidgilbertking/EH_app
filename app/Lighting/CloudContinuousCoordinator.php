@@ -62,7 +62,8 @@ class CloudContinuousCoordinator implements LightingExecutor
     {
         $state = $this->store->atomic(function (LightingState $state) use ($now) {
             $state->worker_seen_ms = $now;
-            if ($state->enabled && $state->control_expires_ms <= $now) {
+            $accessRevoked = $state->enabled && ! LightingAccess::allows($state->owner_user_id);
+            if ($accessRevoked || ($state->enabled && $state->control_expires_ms <= $now)) {
                 $state->enabled = false;
                 $state->epoch_hash = $state->control_generation = null;
                 $state->owner_user_id = $state->owner_session_hash = null;
@@ -71,7 +72,7 @@ class CloudContinuousCoordinator implements LightingExecutor
                 $state->revision++;
                 $state->stage = 'cancelled';
                 $state->error = 'control_lost';
-                $this->store->event($state, 'control_expired');
+                $this->store->event($state, $accessRevoked ? 'control_access_revoked' : 'control_expired');
             }
 
             return $state->toArray();
@@ -672,7 +673,8 @@ class CloudContinuousCoordinator implements LightingExecutor
 
     private function active(array $state, int $now): bool
     {
-        return $state['enabled'] && $state['control_expires_ms'] > $now && $state['desired_target'] !== null;
+        return $state['enabled'] && LightingAccess::allows($state['owner_user_id'])
+            && $state['control_expires_ms'] > $now && $state['desired_target'] !== null;
     }
 
     private function sameIntent(array $state, array $effect): bool

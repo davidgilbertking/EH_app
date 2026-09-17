@@ -20,7 +20,7 @@ function setup(overrides = {}) {
         releaseForLogout() { events.push(['release']); return Promise.resolve(); },
     };
     const flow = createGameFlowController({
-        audio, lighting, now: () => time, uuid: () => `session-${++session}`,
+        audio, lighting, canControlLighting: () => true, now: () => time, uuid: () => `session-${++session}`,
         navigate: (url) => events.push(['navigate', url]), ...overrides,
     });
     return { flow, audio, lighting, events, advance: (ms = 300) => { time += ms; },
@@ -37,6 +37,71 @@ test('Mythos starts audio synchronously, then darkness and navigation without wa
     assert.deepEqual(events[0][1], { folderSlug: 'mythos', label: 'Mythos', crossfade: true });
     assert.deepEqual(events[1][1], { kind: 'mythos', mythosSessionId: 'session-1', color: null });
     assert.equal(flow.state.selectedMythosColor, null);
+});
+
+test('without lighting permission Mythos toggles only music and stays on the current page', () => {
+    const { flow, events, advance } = setup({ canControlLighting: () => false, initialUrl: '/encounters/general/city' });
+    assert.equal(flow.enterMythos(), true);
+    assert.deepEqual(events, [['play', { folderSlug: 'mythos', label: 'Mythos', crossfade: true }]]);
+    assert.equal(flow.state.mythosSessionId, null);
+    assert.equal(flow.selectMythosColor('blue', 'stale-session'), false);
+    advance();
+    flow.enterMythos();
+    assert.deepEqual(events.at(-1), ['stop']);
+    advance();
+    flow.playUserChoice({ folderSlug: 'mythos', label: 'Mythos', mode: 'saved' });
+    assert.equal(events.at(-1)[0], 'play');
+    assert.equal(events.at(-1)[1].mode, 'saved');
+    assert.deepEqual(events.map(([type]) => type), ['play', 'stop', 'play']);
+});
+
+test('all music controls and logout still work without any lighting calls for other users', async () => {
+    const { flow, events, advance, music } = setup({ canControlLighting: () => false });
+    flow.selectAction();
+    flow.selectAction('action-muted');
+    flow.selectCombat();
+    flow.selectCombat('combat-epic');
+    flow.playUserChoice({ folderSlug: 'contacts/city', label: 'City' });
+    flow.playUserChoice({ folderSlug: 'ancient/test', label: 'Other' }, 'other');
+    flow.enterMythos();
+    flow.togglePause();
+    advance();
+    flow.togglePause();
+    flow.stopUserAudio();
+    const { fadePromise, releasePromise } = flow.logout();
+    await Promise.all([fadePromise, releasePromise]);
+    assert.equal(music().length, 10);
+    assert.equal(events.at(-1)[0], 'fade');
+    assert.equal(events.some(([type]) => ['light', 'release', 'navigate'].includes(type)), false);
+});
+
+test('permission is required explicitly and revocation rejects an already selected color session', () => {
+    const defaultEvents = [];
+    const defaultFlow = createGameFlowController({
+        audio: { state: {}, play: () => defaultEvents.push('play') },
+        lighting: { requestTarget: () => defaultEvents.push('light') },
+        navigate: () => defaultEvents.push('navigate'),
+    });
+    defaultFlow.enterMythos();
+    assert.deepEqual(defaultEvents, ['play']);
+
+    let allowed = true;
+    const { flow, events, advance } = setup({ canControlLighting: () => allowed });
+    flow.enterMythos();
+    const sessionId = flow.state.mythosSessionId;
+    allowed = false;
+    events.length = 0;
+    assert.equal(flow.selectMythosColor('blue', sessionId), false);
+    advance();
+    flow.enterMythos();
+    assert.equal(flow.state.mythosSessionId, null);
+    assert.deepEqual(events, [['stop']]);
+    allowed = true;
+    advance();
+    events.length = 0;
+    flow.enterMythos();
+    assert.equal(flow.state.mythosSessionId, 'session-2');
+    assert.deepEqual(events.map(([type]) => type), ['play', 'light', 'navigate']);
 });
 
 test('accidental duplicate filters audio, lighting and navigation as one action', () => {
