@@ -87,7 +87,7 @@ class LightingProbeContinuousCommand extends Command
                 throw new TuyaCloudException('device_mismatch');
             }
             $this->directory = config('lighting.cloud.private_directory');
-            $files = new CloudLightingFiles($this->directory, $expected);
+            $files = new CloudLightingFiles($this->directory, $expected, $this->client);
             $locks[] = $this->lock($this->senderPath());
             $locks[] = $this->lock($this->directory.'/probe.lock');
             $this->guard();

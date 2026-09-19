@@ -7,6 +7,9 @@ use Throwable;
 /** Validated local calibration and explicit LAN/cloud scene pairs; no discovery. */
 class CloudLightingFiles
 {
+    /** Capture provenance stays stable when Tuya assigns the lamp a new ID. */
+    public readonly string $sourceDeviceId;
+
     public readonly array $schema;
 
     public readonly array $profiles;
@@ -16,34 +19,17 @@ class CloudLightingFiles
     private const TYPES = ['switch_led' => 'Boolean', 'work_mode' => 'Enum', 'bright_value_v2' => 'Integer',
         'temp_value_v2' => 'Integer', 'control_data' => 'Json', 'scene_data_v2' => 'Json'];
 
-    public function __construct(string $directory, string $deviceId)
+    public function __construct(string $directory, string $deviceId, ?TuyaCloudClient $client = null)
     {
         $document = self::readJson($directory.'/cloud-functions-inspection.json');
-        if (($document['device_id'] ?? null) !== $deviceId || ($document['response']['success'] ?? null) !== true) {
+        $this->sourceDeviceId = self::documentDeviceId($document);
+        if ($this->sourceDeviceId !== $deviceId && $client === null) {
             self::fail();
         }
-        $schema = [];
-        foreach ($document['response']['result']['functions'] ?? [] as $entry) {
-            $code = $entry['code'] ?? null;
-            if (! is_string($code) || ! isset(self::TYPES[$code])) {
-                continue;
-            }
-            if (isset($schema[$code]) || ($entry['type'] ?? null) !== self::TYPES[$code]) {
-                self::fail();
-            }
-            $schema[$code] = self::object($entry['values'] ?? null);
-        }
-        if (count($schema) !== count(self::TYPES) || ! in_array('white', $schema['work_mode']['range'] ?? [], true)
-            || ! in_array('scene', $schema['work_mode']['range'] ?? [], true)
-            || ! in_array('gradient', $schema['control_data']['change_mode']['range'] ?? [], true)) {
-            self::fail();
-        }
-        foreach (['h', 's', 'v'] as $field) {
-            self::range(0, $schema['control_data'][$field] ?? null);
-        }
+        $schema = self::functionSchema($document['response']['result']['functions'] ?? []);
         $this->schema = $schema;
         $saved = self::readJson($directory.'/calibration.json');
-        self::identity($saved, $deviceId);
+        self::identity($saved, $this->sourceDeviceId);
         $profiles = [];
         foreach (['dark' => [1, 0], 'action' => [100, 33], 'encounters' => [90, 20]] as $name => [$brightness, $temperature]) {
             $profile = $saved['white_profiles'][$name] ?? null;
@@ -64,7 +50,132 @@ class CloudLightingFiles
             self::fail();
         }
         $this->profiles = $profiles;
-        $this->scenes = $this->loadScenes($directory, $deviceId);
+        $this->scenes = $this->loadScenes($directory, $this->sourceDeviceId);
+
+        // Keep the established ID path entirely local. A new cloud address must
+        // support the saved command schema before any driver can use the bundle.
+        if ($this->sourceDeviceId !== $deviceId) {
+            if ($client->deviceId() !== $deviceId
+                || self::canonical(self::functionSchema($client->readFunctions())) !== self::canonical($schema)) {
+                self::fail();
+            }
+            $this->validateReboundModel($client->readModel());
+        }
+    }
+
+    public static function capturedDeviceId(string $directory): string
+    {
+        return self::documentDeviceId(self::readJson($directory.'/cloud-functions-inspection.json'));
+    }
+
+    private static function documentDeviceId(array $document): string
+    {
+        $id = $document['device_id'] ?? null;
+        if (! is_string($id) || ! preg_match('/\A[A-Za-z0-9_-]{6,128}\z/D', $id)
+            || ($document['response']['success'] ?? null) !== true) {
+            self::fail();
+        }
+
+        return $id;
+    }
+
+    private static function functionSchema(mixed $functions): array
+    {
+        if (! is_array($functions)) {
+            self::fail();
+        }
+        $schema = [];
+        foreach ($functions as $entry) {
+            $code = $entry['code'] ?? null;
+            if (! is_string($code) || ! isset(self::TYPES[$code])) {
+                continue;
+            }
+            if (isset($schema[$code]) || ($entry['type'] ?? null) !== self::TYPES[$code]) {
+                self::fail();
+            }
+            $schema[$code] = self::object($entry['values'] ?? null);
+        }
+        if (count($schema) !== count(self::TYPES) || ! in_array('white', $schema['work_mode']['range'] ?? [], true)
+            || ! in_array('scene', $schema['work_mode']['range'] ?? [], true)
+            || ! in_array('gradient', $schema['control_data']['change_mode']['range'] ?? [], true)) {
+            self::fail();
+        }
+        foreach (['h', 's', 'v'] as $field) {
+            self::range(0, $schema['control_data'][$field] ?? null);
+        }
+
+        return $schema;
+    }
+
+    private static function canonical(array $value): array
+    {
+        foreach ($value as $key => $entry) {
+            if (is_array($entry)) {
+                $value[$key] = self::canonical($entry);
+                if ($key === 'range' && array_is_list($entry)) {
+                    sort($value[$key]);
+                }
+            }
+        }
+        if (! array_is_list($value)) {
+            ksort($value);
+        }
+
+        return $value;
+    }
+
+    /** Numeric shadow reads and native writes must keep their established DP map. */
+    private function validateReboundModel(array $model): void
+    {
+        $expected = [20 => ['switch_led', 'bool'], 21 => ['work_mode', 'enum'],
+            22 => ['bright_value', 'value'], 23 => ['temp_value', 'value'],
+            24 => ['colour_data', 'string'], 25 => ['scene_data', 'string'],
+            28 => ['control_data', 'string'], 35 => ['switch_gradient', 'raw']];
+        $matches = array_fill_keys(array_keys($expected), 0);
+        foreach ($model['services'] ?? [] as $service) {
+            foreach ($service['properties'] ?? [] as $property) {
+                if (! is_array($property)) {
+                    self::fail();
+                }
+                foreach ($expected as $id => [$code, $type]) {
+                    if (($property['abilityId'] ?? null) !== $id && ($property['code'] ?? null) !== $code) {
+                        continue;
+                    }
+                    $spec = $property['typeSpec'] ?? [];
+                    if (($service['code'] ?? null) !== '' || ($property['abilityId'] ?? null) !== $id
+                        || ($property['code'] ?? null) !== $code || ($spec['type'] ?? null) !== $type
+                        || ! in_array($property['accessMode'] ?? null, $id === 28 ? ['wr', 'rw'] : ['rw'], true)) {
+                        self::fail();
+                    }
+                    if ($id === 21) {
+                        if (self::canonical(['range' => $spec['range'] ?? null])
+                            !== self::canonical(['range' => $this->schema['work_mode']['range']])) {
+                            self::fail();
+                        }
+                    } elseif ($id === 22 || $id === 23) {
+                        foreach (['min', 'max', 'scale', 'step'] as $field) {
+                            if (($spec[$field] ?? null) !== ($this->schema[$code.'_v2'][$field] ?? null)) {
+                                self::fail();
+                            }
+                        }
+                    } elseif (in_array($id, [24, 25, 28, 35], true)) {
+                        $minimum = match ($id) {
+                            24 => 12,
+                            25 => max([54, ...array_map(static fn (array $scene): int => strlen($scene['raw']), $this->scenes)]),
+                            28 => 21,
+                            35 => 7,
+                        };
+                        if (! is_int($spec['maxlen'] ?? null) || $spec['maxlen'] < $minimum) {
+                            self::fail();
+                        }
+                    }
+                    $matches[$id]++;
+                }
+            }
+        }
+        if (array_values($matches) !== array_fill(0, count($expected), 1)) {
+            self::fail();
+        }
     }
 
     public static function readJson(string $path): array

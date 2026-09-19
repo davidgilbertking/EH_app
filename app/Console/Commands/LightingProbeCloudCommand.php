@@ -43,7 +43,7 @@ class LightingProbeCloudCommand extends Command
                 return $ack;
             };
             if ($operation !== 'status') {
-                $files = new CloudLightingFiles(config('lighting.cloud.private_directory'), $client->deviceId());
+                $files = new CloudLightingFiles(config('lighting.cloud.private_directory'), $client->deviceId(), $client);
                 if (($dps[20]['value'] ?? null) !== true) {
                     throw new TuyaCloudException('unsupported_transition');
                 }

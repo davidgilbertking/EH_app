@@ -95,7 +95,7 @@ class LightingProbeCloudNativeCommand extends Command
                 $this->result['stage'] = 'status';
             } else {
                 $this->directory = config('lighting.cloud.private_directory');
-                $files = new CloudLightingFiles($this->directory, $expected);
+                $files = new CloudLightingFiles($this->directory, $expected, $this->client);
                 $dark = $files->profiles['dark'];
                 $target = $operation === 'dark' ? $dark : $files->profiles['action'];
                 $source = [20 => true, 21 => 'white'];

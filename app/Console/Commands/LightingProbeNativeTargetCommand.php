@@ -82,7 +82,7 @@ class LightingProbeNativeTargetCommand extends Command
                 throw new TuyaCloudException('device_mismatch');
             }
             $this->directory = config('lighting.cloud.private_directory');
-            $files = new CloudLightingFiles($this->directory, $expected);
+            $files = new CloudLightingFiles($this->directory, $expected, $this->client);
             $db = DB::connection();
             $identity = $db->getDriverName().':'.$db->getConfig('host').':'.$db->getDatabaseName();
             $locks[] = $this->lock(storage_path('framework/lighting-sender-'.hash('sha256', $identity).'.lock'));

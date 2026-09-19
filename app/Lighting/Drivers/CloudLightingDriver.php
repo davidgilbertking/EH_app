@@ -210,7 +210,7 @@ class CloudLightingDriver implements LightingDriver
 
     private function configuration(): CloudLightingFiles
     {
-        return $this->files ??= new CloudLightingFiles($this->settings['private_directory'] ?? storage_path('app/private/lighting'), $this->client->deviceId());
+        return $this->files ??= new CloudLightingFiles($this->settings['private_directory'] ?? storage_path('app/private/lighting'), $this->client->deviceId(), $this->client);
     }
 
     private function settledWhite(?array $observation): bool

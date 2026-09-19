@@ -97,6 +97,7 @@ class NativeCloudLightingDriverTest extends TestCase
     {
         $client = $this->createMock(TuyaCloudClient::class);
         $client->method('deviceId')->willReturn($this->deviceId);
+        $client->expects($this->never())->method('readFunctions');
         $client->expects($this->once())->method('readModel')->willReturn($model ?? $this->model());
 
         return $client;
@@ -320,6 +321,37 @@ class NativeCloudLightingDriverTest extends TestCase
         $client->expects($this->never())->method('sendCommands');
         $this->expectExceptionMessage('configuration_error');
         $this->driver($client)->readSnapshot();
+    }
+
+    public function test_rebound_native_driver_preserves_the_captured_scene_command(): void
+    {
+        $functions = json_decode(file_get_contents($this->directory.'/cloud-functions-inspection.json'), true, flags: JSON_THROW_ON_ERROR)['response']['result']['functions'];
+        $range = static fn (int $min): array => ['type' => 'value', 'min' => $min, 'max' => 1000, 'step' => 1, 'scale' => 0];
+        $properties = [];
+        foreach ([20 => ['switch_led', ['type' => 'bool']],
+            21 => ['work_mode', ['type' => 'enum', 'range' => ['white', 'colour', 'scene', 'music']]],
+            22 => ['bright_value', $range(10)], 23 => ['temp_value', $range(0)],
+            24 => ['colour_data', ['type' => 'string', 'maxlen' => 255]],
+            25 => ['scene_data', ['type' => 'string', 'maxlen' => 255]],
+            28 => ['control_data', ['type' => 'string', 'maxlen' => 255]],
+            35 => ['switch_gradient', ['type' => 'raw', 'maxlen' => 128]]] as $id => [$code, $spec]) {
+            $properties[] = ['abilityId' => $id, 'code' => $code, 'accessMode' => $id === 28 ? 'wr' : 'rw', 'typeSpec' => $spec];
+        }
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_device_456');
+        $client->expects($this->once())->method('readFunctions')->willReturn($functions);
+        $client->expects($this->exactly(2))->method('readModel')->willReturn(['services' => [['code' => '', 'properties' => $properties]]]);
+        $client->expects($this->once())->method('readProperties')->willReturn($this->report());
+        $client->expects($this->once())->method('sendCommands')->with([
+            ['code' => 'scene_data_v2', 'value' => $this->scene], ['code' => 'work_mode', 'value' => 'scene'],
+        ])->willReturn(['sentAt' => 200000]);
+        $client->expects($this->never())->method('sendSwitchGradient');
+        $driver = $this->driver($client);
+        $snapshot = $driver->readSnapshot();
+        $this->assertSame($this->raw, $driver->scenes()['blue']['raw']);
+        $this->assertSame(['sentAt' => 200000, 'acceptedAt' => null], $driver->issue([
+            'operation' => 'scene', 'color' => 'blue', 'sourceSnapshot' => $snapshot,
+        ]));
     }
 
     public function test_corrupt_scene_pair_fails_before_read_or_write(): void

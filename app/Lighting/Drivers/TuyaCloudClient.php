@@ -75,6 +75,18 @@ class TuyaCloudClient
         return ['properties' => $data['result']['properties'], 'serverTime' => $data['t']];
     }
 
+    /** Read-only compatibility check for a newly configured cloud device ID. */
+    public function readFunctions(): array
+    {
+        $data = $this->request('GET', '/v1.1/devices/'.$this->deviceId().'/specifications');
+        $functions = $data['result']['functions'] ?? null;
+        if (! is_array($functions) || ! array_is_list($functions)) {
+            throw new TuyaCloudException('configuration_error');
+        }
+
+        return $functions;
+    }
+
     /** Refresh only the selected device's native model; never an account list. */
     public function readModel(): array
     {
