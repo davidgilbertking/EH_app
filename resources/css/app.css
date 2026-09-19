@@ -242,6 +242,9 @@ body {
         --ui-volume-thumb-base-d: calc(var(--ui-volume-track-w) * 1.25);
         --ui-volume-thumb-scale: 1;
         --ui-volume-thumb-d: calc(var(--ui-volume-thumb-base-d) * var(--ui-volume-thumb-scale));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         width: var(--corner-size);
         min-height: calc(var(--corner-size) * 1.45);
         overflow: visible;
@@ -255,6 +258,10 @@ body {
         -webkit-appearance: none;
         appearance: none;
         display: block;
+        /* Safari misresolves percentage heights on vertical range inputs
+           inside a container sized by top/bottom. Flex uses its actual span. */
+        flex: 1 1 0;
+        min-height: 0;
         width: var(--ui-volume-track-w);
         margin: 0 auto;
         writing-mode: vertical-lr;
