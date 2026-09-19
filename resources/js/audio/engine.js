@@ -1110,6 +1110,13 @@ class AudioEngine {
         }
 
         this._appleMobileGraphByHowl.set(howl, graph);
+        // The graph owns fades and master volume on iPhone. Keep Howler's
+        // stored source volume at unity too: seek()/resume() reapplies it to
+        // the media element, otherwise a track that started at 0 stays silent.
+        try {
+            if (soundId != null) howl.volume(1, soundId);
+            else howl.volume(1);
+        } catch (_) { /* keep the media-element fallback */ }
         try { node.volume = 1; } catch (_) { /* ignore */ }
         this._resumeAppleMobileAudioContext();
         return graph;
