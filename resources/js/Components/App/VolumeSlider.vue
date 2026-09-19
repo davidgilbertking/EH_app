@@ -35,7 +35,7 @@ function onVolumeInput(event) {
             step="1"
             orient="vertical"
             aria-label="Master volume"
-            class="ui-volume-range h-full"
+            class="ui-volume-range"
             :value="volumePercent"
             @input="onVolumeInput"
         />
