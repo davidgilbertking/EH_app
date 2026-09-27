@@ -24,7 +24,7 @@ class CloudLightingDriver implements LightingDriver
 
     public function capabilities(): array
     {
-        return ['readState' => true, 'setWhite' => true, 'applyCapturedScene' => true,
+        return ['readState' => true, 'setWhite' => true, 'setColour' => false, 'applyCapturedScene' => true,
             'sceneCapture' => false, 'nativeWhiteTransition' => false, 'nativeTransitionCancellation' => false,
             'safeSceneExit' => false, 'orderedCommands' => false, 'transitionCompletionSignal' => false,
             'reportedStateReadback' => true, 'simulated' => false];
@@ -113,6 +113,11 @@ class CloudLightingDriver implements LightingDriver
         if ($operation === 'white' && ($command['commit'] ?? null) !== true) {
             throw new TuyaCloudException('configuration_error');
         }
+        $profile = isset($command['profile'])
+            ? ($files->profiles[$command['profile']] ?? throw new TuyaCloudException('preset_not_configured')) : null;
+        if ($profile !== null) {
+            $white = ['brightness' => $profile['brightness'], 'temperature' => $profile['temperature']];
+        }
         $receipt = $this->client->sendCommands([
             ['code' => 'switch_led', 'value' => true],
             ['code' => 'bright_value_v2', 'value' => $white['brightness']],
@@ -120,7 +125,11 @@ class CloudLightingDriver implements LightingDriver
             ['code' => 'work_mode', 'value' => 'white'],
         ]);
 
-        return $this->confirm(['20' => true, '21' => 'white', '22' => $white['brightness'], '23' => $white['temperature']], [21, 22, 23], $receipt, $now);
+        $observation = $this->confirm(['20' => true, '21' => 'white', '22' => $white['brightness'], '23' => $white['temperature']], [21, 22, 23], $receipt, $now);
+
+        return $profile === null ? $observation : array_merge($observation, [
+            'brightnessPct' => $profile['brightnessPct'], 'temperaturePct' => $profile['temperaturePct'],
+        ]);
     }
 
     private function confirm(array $target, array $freshFields, array $receipt, int $now): array

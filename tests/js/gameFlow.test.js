@@ -185,14 +185,14 @@ test('Action tap stops Muted Action while hold switches ordinary Action and togg
     assert.equal(flow.state.lastWhiteProfile, 'action');
 });
 
-test('Combat and Epic Combat always select Encounters while retaining tap/hold audio behavior', () => {
+test('Combat and Epic Combat have distinct profiles while retaining tap/hold audio behavior', () => {
     const { flow, audio, lights, advance } = setup();
     flow.selectAction();
     flow.selectCombat();
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'combat' });
     flow.enterMythos();
     flow.selectCombat('combat-epic');
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'combat-epic' });
     const count = lights().length;
     flow.selectCombat();
     assert.equal(audio.state.playingFolder, null);
@@ -201,8 +201,8 @@ test('Combat and Epic Combat always select Encounters while retaining tap/hold a
     flow.selectCombat('combat-epic');
     assert.equal(audio.state.playingFolder, 'combat-epic');
     assert.equal(lights().length, count + 3);
-    assert.equal(flow.state.lastWhiteProfile, 'encounters');
-    assert.equal(lights().slice(count).every(target => target.profile === 'encounters'), true);
+    assert.equal(flow.state.lastWhiteProfile, 'combat-epic');
+    assert.deepEqual(lights().slice(count).map(target => target.profile), ['combat', 'combat', 'combat-epic']);
 });
 
 test('Encounters header only navigates and preserves the current Action music and light', () => {
@@ -264,7 +264,7 @@ test('same color can be sent explicitly after linking or failure, but accepted t
     assert.equal(lights().length, 3);
 });
 
-test('contact and Other music use Encounters lighting while retaining their distinct game contexts', () => {
+test('Ancient One uses its preset in both branches while generic contacts retain Encounters', () => {
     const { flow, lights } = setup();
     const play = (folderSlug, context) => flow.playUserChoice({ folderSlug, label: 'test', mode: 'random_pos_fade', crossfade: true }, context);
     play('contacts/city');
@@ -274,7 +274,7 @@ test('contact and Other music use Encounters lighting while retaining their dist
     const count = lights().length;
     play('ancient/test', 'other');
     assert.equal(lights().length, count + 1);
-    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' });
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'ancient-one' });
     assert.equal(flow.state.selectedContext, 'other');
     assert.equal(resolveGameContext('ancient/test', null, '/encounters'), 'encounters');
     assert.equal(resolveGameContext('ancient/test', null, '/other'), 'other');
@@ -282,25 +282,22 @@ test('contact and Other music use Encounters lighting while retaining their dist
     assert.equal(resolveGameContext('contacts/test'), 'encounters');
 });
 
-test('all ordinary music choices except Action use the Encounters profile', () => {
-    for (const folderSlug of ['combat', 'combat-epic', 'ancient/test', 'special/victory', 'investigators/test', 'maps/test']) {
+test('ordinary music choices resolve individual presets from their folder', () => {
+    for (const [folderSlug, profile] of [
+        ['combat', 'combat'], ['combat-epic', 'combat-epic'], ['ancient/test', 'ancient-one'],
+        ['special/victory', 'victory'], ['special/characters/test', 'intro-investigators'],
+        ['maps/test', 'encounters'], ['action', 'action'], ['action-muted', 'action-muted'],
+    ]) {
         const { flow, lights, events } = setup();
-        flow.selectAction();
-        events.length = 0;
         flow.playUserChoice({ folderSlug, crossfade: true });
         assert.deepEqual(events.map(([type]) => type), ['play', 'light'], folderSlug);
-        assert.deepEqual(lights(), [{ kind: 'white', profile: 'encounters' }], folderSlug);
-    }
-    for (const folderSlug of ['action', 'action-muted']) {
-        const { flow, lights } = setup();
-        flow.playUserChoice({ folderSlug, crossfade: true });
-        assert.deepEqual(lights(), [{ kind: 'white', profile: 'action' }]);
+        assert.deepEqual(lights(), [{ kind: 'white', profile }], folderSlug);
     }
 });
 
 test('saved branch metadata cannot override the actual Action, Combat or Mythos music folder', () => {
-    for (const [folderSlug, profile] of [['action', 'action'], ['action-muted', 'action'],
-        ['combat', 'encounters'], ['combat-epic', 'encounters']]) {
+    for (const [folderSlug, profile] of [['action', 'action'], ['action-muted', 'action-muted'],
+        ['combat', 'combat'], ['combat-epic', 'combat-epic']]) {
         const { flow, lights } = setup();
         flow.playUserChoice({ folderSlug }, 'other');
         assert.equal(flow.state.selectedContext, folderSlug);
@@ -516,11 +513,11 @@ for (const color of ['green', 'yellow', 'blue']) {
 }
 
 for (const [folderSlug, choose, profile] of [
-    ['action-muted', flow => flow.selectAction('action-muted'), 'action'],
-    ['combat', flow => flow.selectCombat(), 'encounters'],
-    ['combat-epic', flow => flow.selectCombat('combat-epic'), 'encounters'],
+    ['action-muted', flow => flow.selectAction('action-muted'), 'action-muted'],
+    ['combat', flow => flow.selectCombat(), 'combat'],
+    ['combat-epic', flow => flow.selectCombat('combat-epic'), 'combat-epic'],
     ['contacts/city', flow => flow.playUserChoice({ folderSlug: 'contacts/city', crossfade: true }, 'encounters'), 'encounters'],
-    ['special/victory', flow => flow.playUserChoice({ folderSlug: 'special/victory', mode: 'from_start_no_fade', crossfade: true }), 'encounters'],
+    ['special/victory', flow => flow.playUserChoice({ folderSlug: 'special/victory', mode: 'from_start_no_fade', crossfade: true }), 'victory'],
 ]) {
     test(`color exit delays ${folderSlug} while sending its white profile immediately`, (t) => {
         const { flow, audio, lights, music, tick } = setupColorExit(t);
@@ -567,10 +564,10 @@ test('paused or stopped Mythos does not delay the next music choice', () => {
 
 test('rapid choices with the same white profile replace queued music and keep the fade deadline', (t) => {
     const { flow, audio, music, tick } = setupColorExit(t);
-    flow.selectCombat();
-    assert.equal(flow.selectCombat(), false);
+    flow.playUserChoice({ folderSlug: 'contacts/sea' });
+    assert.equal(flow.playUserChoice({ folderSlug: 'contacts/sea' }), false);
     tick(1000);
-    flow.selectCombat('combat-epic');
+    flow.playUserChoice({ folderSlug: 'contacts/wilderness' });
     tick(1000);
     flow.playUserChoice({ folderSlug: 'contacts/city', crossfade: true });
     tick(499);
@@ -587,7 +584,7 @@ test('changing the queued white profile restarts the delay with the replanned co
     flow.selectAction();
     tick(1000);
     flow.selectCombat();
-    assert.deepEqual(lights().map(target => target.profile), ['action', 'encounters']);
+    assert.deepEqual(lights().map(target => target.profile), ['action', 'combat']);
     tick(2499);
     assert.equal(audio.state.playingFolder, 'mythos');
     tick(1);
@@ -662,4 +659,442 @@ test('zero or invalid music delay timings use immediate playback', () => {
         flow.selectAction();
         assert.equal(audio.state.playingFolder, 'action');
     }
+});
+
+test('restriction and all nine gate locations send independent colour profiles', () => {
+    const folders = [
+        ['contacts/obstruction/detained', 'detained'], ['contacts/obstruction/lost', 'lost'],
+        ...['carcosa', 'great-race', 'yuggoth', 'celaeno', 'leng', 'kadath', 'underworld', 'abyss']
+            .map(profile => [`contacts/other-world/${profile}`, profile]),
+        ['contacts/other-world/dreamlands', 'dreamlands-gate'],
+    ];
+    const { flow, lights } = setup();
+    for (const [folderSlug, profile] of folders) {
+        flow.playUserChoice({ folderSlug }, 'encounters');
+        assert.deepEqual(lights().at(-1), { kind: 'colour', profile }, folderSlug);
+    }
+});
+
+test('all sixteen time locations resolve individually, including the two white future presets', () => {
+    const { flow, lights } = setup();
+    for (const period of ['past', 'future']) {
+        for (let number = 1; number <= 8; number++) {
+            flow.playUserChoice({ folderSlug: `contacts/other-world/${period}/${number}` });
+            const kind = period === 'future' && [1, 6].includes(number) ? 'white' : 'colour';
+            assert.deepEqual(lights().at(-1), { kind, profile: `${period}-${number}` });
+        }
+    }
+});
+
+test('every side-board location, including four Dream Quest locations, shares its board preset', () => {
+    const boards = [
+        ['antarctica', 'antarctica', ['frozen-waste', 'lake-camp', 'miskatonic-outpost', 'city-of-elder-things', 'plateau-of-leng', 'snowy-mountains']],
+        ['egypt', 'egypt', ['alexandria', 'bent-pyramid', 'cairo', 'sahara-desert', 'tel-el-amarna', 'nile-river']],
+        ['dreamlands', 'dreamlands-board', ['unknown-kadath', 'enchanted-wood', 'celephais', 'ulthar', 'dylath-leen', 'underworld', 'moon']],
+    ];
+    const { flow, lights } = setup();
+    for (const [board, profile, locations] of boards) {
+        for (const location of locations) {
+            flow.playUserChoice({ folderSlug: `contacts/${board}/${location}` });
+            assert.deepEqual(lights().at(-1), { kind: 'white', profile }, location);
+        }
+    }
+});
+
+test('Other terminal buttons and disaster branches resolve their configured white presets', () => {
+    const { flow, lights } = setup();
+    for (const [folderSlug, profile] of [
+        ['special/defeat', 'defeat'], ['special/victory', 'victory'], ['special/awakening', 'awakening'],
+        ['special/death-sacrifice', 'sacrifice'], ['special/honey-pie', 'intro-investigators'],
+        ['special/characters/akachi-onyele', 'intro-investigators'], ['ancient/azathoth', 'ancient-one'],
+        ['special/disaster/city/rome', 'disaster-city'], ['special/disaster/weather/polar-vortex', 'disaster-weather'],
+        ['special/disaster/location/meteor-showers', 'disaster-location'],
+    ]) {
+        flow.playUserChoice({ folderSlug }, 'other');
+        assert.deepEqual(lights().at(-1), { kind: 'white', profile }, folderSlug);
+    }
+});
+
+test('prefix boundaries and unconfigured encounters preserve the generic preset', () => {
+    const { flow, lights } = setup();
+    for (const folderSlug of ['contacts/antarctica-extra/frozen-waste', 'contacts/general/sea/antarctica',
+        'contacts/general/wilderness/pyramids', 'contacts/defeated/sanity', 'contacts/devastation',
+        'contacts/expedition/ruins', 'contacts/big-city/rome', 'constructor']) {
+        flow.playUserChoice({ folderSlug });
+        assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' }, folderSlug);
+    }
+});
+
+for (const folderSlug of ['special/death-sanity', 'special/death-health', 'special/devoured']) {
+    test(`${folderSlug} plays immediately without changing Mythos light or accepting stale color events`, (t) => {
+        const { flow, audio, lights, tick } = setupColorExit(t);
+        const oldSession = flow.state.mythosSessionId;
+        flow.playUserChoice({ folderSlug });
+        assert.equal(audio.state.playingFolder, folderSlug);
+        assert.deepEqual(lights(), []);
+        assert.equal(flow.selectMythosColor('yellow', oldSession), false);
+        flow.selectAction();
+        assert.equal(audio.state.playingFolder, folderSlug);
+        tick(2500);
+        assert.equal(audio.state.playingFolder, 'action');
+    });
+
+    test(`${folderSlug} cancels queued music and preserves the already requested lamp transition`, (t) => {
+        const { flow, audio, lights, music, tick } = setupColorExit(t);
+        flow.selectAction();
+        tick(500);
+        flow.playUserChoice({ folderSlug });
+        assert.equal(audio.state.playingFolder, folderSlug);
+        assert.equal(flow.state.pendingMusicFolder, null);
+        assert.deepEqual(lights(), [{ kind: 'white', profile: 'action' }]);
+        tick(10000);
+        assert.equal(audio.state.playingFolder, folderSlug);
+        assert.equal(music().length, 1);
+    });
+}
+
+test('death before the first lamp selection never acquires lighting control', () => {
+    const { flow, lights, audio } = setup();
+    flow.playUserChoice({ folderSlug: 'special/devoured' });
+    assert.equal(audio.state.playingFolder, 'special/devoured');
+    assert.deepEqual(lights(), []);
+});
+
+test('death leaves the remaining colour fade deadline intact for a subsequent matching target', (t) => {
+    const { flow, audio, tick } = setupColorExit(t);
+    flow.selectAction();
+    tick(500);
+    flow.playUserChoice({ folderSlug: 'special/devoured' });
+    tick(500);
+    flow.selectAction();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'special/devoured');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+for (const folderSlug of ['contacts/other-world/future/1', 'contacts/other-world/future/6',
+    'contacts/obstruction/lost', 'combat']) {
+    test(`static colour exit delays ${folderSlug} with the encounter policy`, (t) => {
+        t.mock.timers.enable({ apis: ['setTimeout'] });
+        const { flow, audio, lights, music, events, advance } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+        flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+        events.length = 0;
+        flow.playUserChoice({ folderSlug });
+        assert.equal(lights().length, 1);
+        assert.equal(music().length, 0);
+        assert.equal(audio.state.playingFolder, 'contacts/obstruction/detained');
+        advance(1500);
+        t.mock.timers.tick(1500);
+        assert.equal(audio.state.playingFolder, folderSlug);
+    });
+}
+
+test('static colour music toggles immediately while retaining its colour target', () => {
+    const { flow, audio, advance, lights } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+    const options = { folderSlug: 'contacts/obstruction/detained' };
+    flow.playUserChoice(options);
+    advance();
+    flow.playUserChoice(options);
+    assert.equal(audio.state.playingFolder, null);
+    assert.equal(flow.state.pendingMusicFolder, null);
+    assert.deepEqual(lights().at(-1), { kind: 'colour', profile: 'detained' });
+});
+
+test('death preserves static colour independently of its music context', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const { flow, audio, lights, events, advance } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    events.length = 0;
+    flow.playUserChoice({ folderSlug: 'special/death-health' });
+    assert.deepEqual(lights(), []);
+    flow.selectCombat();
+    assert.equal(audio.state.playingFolder, 'special/death-health');
+    advance(1500);
+    t.mock.timers.tick(1500);
+    assert.equal(audio.state.playingFolder, 'combat');
+});
+
+test('entering Mythos from static colour delays its music but establishes the new session immediately', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const { flow, audio, lights, events, advance } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    events.length = 0;
+    flow.enterMythos();
+    assert.equal(flow.state.mythosSessionId, 'session-1');
+    assert.equal(audio.state.playingFolder, 'contacts/obstruction/detained');
+    assert.deepEqual(lights(), [{ kind: 'mythos', mythosSessionId: 'session-1', color: null }]);
+    advance(1500);
+    t.mock.timers.tick(1500);
+    assert.equal(audio.state.playingFolder, 'mythos');
+});
+
+function setupEncounterTiming(t, overrides = {}) {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const result = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500, ...overrides });
+    return { ...result, tick(ms) { result.advance(ms); t.mock.timers.tick(ms); } };
+}
+
+const encounterFolders = [
+    'contacts/obstruction/detained', 'contacts/obstruction/lost',
+    ...['carcosa', 'great-race', 'yuggoth', 'celaeno', 'leng', 'dreamlands', 'kadath', 'underworld', 'abyss']
+        .map(location => `contacts/other-world/${location}`),
+    ...['past', 'future'].flatMap(period => Array.from({ length: 8 }, (_, i) => `contacts/other-world/${period}/${i + 1}`)),
+];
+
+test('all 27 restriction and other-world presets delay music on both entry and exit by 1500ms', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    for (const folderSlug of encounterFolders) {
+        const { flow, audio, events, advance } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+        const tick = ms => { advance(ms); t.mock.timers.tick(ms); };
+        flow.selectAction();
+        events.length = 0;
+        flow.playUserChoice({ folderSlug });
+        assert.deepEqual(events.map(([type]) => type), ['light'], folderSlug);
+        tick(1499);
+        assert.equal(audio.state.playingFolder, 'action', folderSlug);
+        tick(1);
+        assert.equal(audio.state.playingFolder, folderSlug);
+        events.length = 0;
+        flow.selectAction();
+        assert.deepEqual(events.map(([type]) => type), ['light'], folderSlug);
+        tick(1499);
+        assert.equal(audio.state.playingFolder, folderSlug);
+        tick(1);
+        assert.equal(audio.state.playingFolder, 'action', folderSlug);
+    }
+});
+
+test('white Future presets use the encounter delay between one another', (t) => {
+    const { flow, audio, lights, tick } = setupEncounterTiming(t);
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/6' });
+    assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'future-6' });
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/1');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/6');
+});
+
+test('first encounter playback and paused or stopped audio begin immediately', () => {
+    for (const prepare of [() => {}, flow => { flow.selectAction(); flow.togglePause(); },
+        flow => { flow.selectAction(); flow.stopUserAudio(); }]) {
+        for (const folderSlug of ['contacts/obstruction/detained', 'contacts/other-world/future/1']) {
+            const { flow, audio } = setup({ getMusicDelayMs: () => 4500, getEncounterMusicDelayMs: () => 1500 });
+            prepare(flow);
+            flow.playUserChoice({ folderSlug });
+            assert.equal(audio.state.playingFolder, folderSlug);
+            assert.equal(flow.state.pendingMusicFolder, null);
+        }
+    }
+});
+
+test('phase-only Mythos colour exit retains 4500ms and ordinary white phases remain immediate', (t) => {
+    const { flow, audio, tick } = setupEncounterTiming(t);
+    flow.selectAction();
+    flow.selectCombat();
+    assert.equal(audio.state.playingFolder, 'combat');
+    flow.enterMythos();
+    assert.equal(audio.state.playingFolder, 'mythos');
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    flow.selectAction();
+    tick(4499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('repeating a pending encounter target preserves its original music deadline', (t) => {
+    const { flow, audio, music, tick } = setupEncounterTiming(t);
+    flow.selectAction();
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    tick(500);
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    tick(999);
+    assert.equal(audio.state.playingFolder, 'action');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'contacts/obstruction/detained');
+    assert.equal(music().length, 2);
+});
+
+test('a changed destination during encounter exit retains the encounter source policy', (t) => {
+    const { flow, audio, tick } = setupEncounterTiming(t);
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    flow.selectAction();
+    tick(500);
+    flow.selectCombat();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/1');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'combat');
+});
+
+test('an encounter destination replaces a pending 4500ms phase delay with its 1500ms policy', (t) => {
+    const { flow, audio, tick } = setupEncounterTiming(t);
+    flow.enterMythos();
+    flow.selectMythosColor('green', flow.state.mythosSessionId);
+    flow.selectAction();
+    tick(500);
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/6' });
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/6');
+    tick(4500);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/6');
+});
+
+test('completed encounter handoff does not leak its delay into later phase-only transitions', (t) => {
+    const { flow, audio, tick } = setupEncounterTiming(t);
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    flow.enterMythos();
+    tick(1500);
+    flow.selectMythosColor('yellow', flow.state.mythosSessionId);
+    flow.selectAction();
+    tick(4499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('death keeps the encounter exit deadline and never sends a light replacement', (t) => {
+    const { flow, audio, lights, tick } = setupEncounterTiming(t);
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    flow.selectAction();
+    tick(500);
+    flow.playUserChoice({ folderSlug: 'special/devoured' });
+    assert.equal(lights().length, 2);
+    assert.equal(audio.state.playingFolder, 'special/devoured');
+    tick(500);
+    flow.selectAction();
+    tick(499);
+    assert.equal(audio.state.playingFolder, 'special/devoured');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('returning to playing Mythos retains an in-flight encounter policy for the next choice', (t) => {
+    const { flow, audio, tick } = setupEncounterTiming(t);
+    flow.enterMythos();
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    tick(500);
+    flow.enterMythos();
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(500);
+    flow.selectCombat();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'combat');
+});
+
+test('encounter delay reads current settings and remains optional without lighting access', (t) => {
+    let delay = 1500;
+    let allowed = true;
+    const { flow, audio, tick } = setupEncounterTiming(t, {
+        getEncounterMusicDelayMs: () => delay, canControlLighting: () => allowed,
+    });
+    flow.selectAction();
+    delay = 900;
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    tick(899);
+    assert.equal(audio.state.playingFolder, 'action');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'contacts/other-world/future/1');
+    allowed = false;
+    flow.selectCombat();
+    assert.equal(audio.state.playingFolder, 'combat');
+});
+
+test('encounter source policy survives the music deadline until the lamp actually completes', (t) => {
+    let settled = false;
+    const { flow, lighting, audio, tick } = setupEncounterTiming(t);
+    lighting.isTargetSettled = () => settled;
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    flow.selectAction();
+    tick(1800); // Music has changed; the lamp is still fading.
+    assert.equal(audio.state.playingFolder, 'action');
+    flow.selectCombat();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'action');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'combat');
+    settled = true;
+    flow.enterMythos();
+    assert.equal(audio.state.playingFolder, 'mythos');
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    flow.selectAction();
+    tick(4499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('death after the music deadline preserves the still-running encounter light policy', (t) => {
+    const { flow, lighting, audio, lights, tick } = setupEncounterTiming(t);
+    lighting.isTargetSettled = () => false;
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    flow.selectAction();
+    tick(1800);
+    flow.playUserChoice({ folderSlug: 'special/death-sanity' });
+    assert.equal(lights().length, 2);
+    flow.enterMythos();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'special/death-sanity');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'mythos');
+});
+
+test('a new Mythos colour does not revive the policy of an already completed encounter exit', (t) => {
+    const { flow, lighting, audio, lights, tick } = setupEncounterTiming(t);
+    let settledTarget = null;
+    lighting.isTargetSettled = target => JSON.stringify(target) === JSON.stringify(settledTarget);
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    flow.enterMythos();
+    tick(3000);
+    settledTarget = lights().at(-1);
+    assert.equal(settledTarget.kind, 'mythos');
+    assert.equal(settledTarget.color, null);
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    assert.equal(lighting.isTargetSettled(lights().at(-1)), false);
+    flow.selectAction();
+    tick(4499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('a new Mythos colour retains the policy of an unfinished encounter exit', (t) => {
+    const { flow, lighting, audio, lights, tick } = setupEncounterTiming(t);
+    const settledTarget = { kind: 'colour', profile: 'detained' };
+    lighting.isTargetSettled = target => JSON.stringify(target) === JSON.stringify(settledTarget);
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    flow.enterMythos();
+    tick(1800);
+    assert.equal(lighting.isTargetSettled(lights().at(-1)), false);
+    flow.selectMythosColor('blue', flow.state.mythosSessionId);
+    flow.selectAction();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'mythos');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'action');
+});
+
+test('paused encounter exit starts music immediately and retains its unfinished policy for the next destination', (t) => {
+    const { flow, lighting, audio, tick } = setupEncounterTiming(t);
+    let settledTarget = null;
+    lighting.isTargetSettled = target => JSON.stringify(target) === JSON.stringify(settledTarget);
+    flow.playUserChoice({ folderSlug: 'contacts/other-world/future/1' });
+    settledTarget = { kind: 'white', profile: 'future-1' };
+    flow.togglePause();
+    flow.selectAction();
+    assert.equal(audio.state.playingFolder, 'action');
+    assert.equal(flow.state.pendingMusicFolder, null);
+    audio.state.isPaused = false; // The real play operation clears its paused state.
+    tick(500);
+    flow.selectCombat();
+    tick(1499);
+    assert.equal(audio.state.playingFolder, 'action');
+    tick(1);
+    assert.equal(audio.state.playingFolder, 'combat');
 });

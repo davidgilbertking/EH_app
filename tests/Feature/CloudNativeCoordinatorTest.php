@@ -53,6 +53,28 @@ class CloudNativeCoordinatorTest extends TestCase
         $this->assertTrue($response['accepted']);
     }
 
+    public function test_static_colour_target_is_rejected_before_any_legacy_power_command(): void
+    {
+        $this->send(['kind' => 'colour', 'profile' => 'detained']);
+        $state = $this->tick();
+        $this->assertSame('unsupported_transition', $state->error);
+        $this->assertSame([], $this->driver->writes);
+        $this->assertNull($state->native_effect);
+    }
+
+    public function test_encounter_white_source_and_target_are_rejected_before_legacy_commands(): void
+    {
+        $this->send($this->white('future-1'));
+        $state = $this->tick();
+        $this->assertSame('unsupported_transition', $state->error);
+        $this->assertSame([], $this->driver->writes);
+        $this->driver->white('future-1');
+        $this->send($this->white());
+        $state = $this->tick();
+        $this->assertSame('unsupported_transition', $state->error);
+        $this->assertSame([], $this->driver->writes);
+    }
+
     public function test_removed_account_cannot_continue_an_inflight_transition(): void
     {
         $this->send($this->mythos('blue'));
@@ -443,6 +465,7 @@ class NativeCloudCoordinatorFixture extends NativeCloudLightingDriver
     {
         return ['dark' => ['brightness' => 10, 'temperature' => 0, 'brightnessPct' => 1.0, 'temperaturePct' => 0.0],
             'action' => ['brightness' => 1000, 'temperature' => 332, 'brightnessPct' => 100.0, 'temperaturePct' => 33.0],
+            'future-1' => ['brightness' => 200, 'temperature' => 1000, 'brightnessPct' => 20.0, 'temperaturePct' => 100.0],
             'encounters' => ['brightness' => 901, 'temperature' => 197, 'brightnessPct' => 90.0, 'temperaturePct' => 20.0]];
     }
 

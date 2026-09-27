@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Lighting\LightingTransitionPolicy;
 use App\Models\AncientOne;
 use App\Models\Investigator;
 use Illuminate\Http\Request;
@@ -48,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'lighting' => [
                 'canControl' => Gate::allows('control-lighting'),
                 'musicDelayMs' => (int) round($sceneFadeOutMs * $musicDelayMultiplier),
+                'encounterMusicDelayMs' => LightingTransitionPolicy::encounterMusicDelayMs(),
             ],
             'ui' => [
                 'yellowSignSeed' => $yellowSignSeed,

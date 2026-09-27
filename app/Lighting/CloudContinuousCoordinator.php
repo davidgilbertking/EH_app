@@ -111,6 +111,15 @@ class CloudContinuousCoordinator implements LightingExecutor
                 }
                 $sameTarget = $effect['target'] === $state['desired_target'];
                 $sameOwner = $effect['generation'] === $state['control_generation'];
+                $wasComplete = $effect['revision'] <= $state['applied_revision'];
+                $encounter = LightingTransitionPolicy::isEncounter($effect['target'])
+                    || LightingTransitionPolicy::isEncounter($state['desired_target'])
+                    || $this->isEncounterOutput($effect['output'])
+                    || (! $wasComplete && ($effect['encounterTransition'] ?? false));
+                if (! $sameTarget || ! $sameOwner || $effect['needsBoundary']) {
+                    $effect['encounterMinimum'] = false;
+                }
+                $effect['encounterTransition'] = $encounter;
                 $effect['revision'] = $state['revision'];
                 $effect['generation'] = $state['control_generation'];
                 $effect['target'] = $state['desired_target'];
@@ -118,8 +127,13 @@ class CloudContinuousCoordinator implements LightingExecutor
                 // Rebase from last accepted channels, not old DP22/23 or elapsed
                 // frames missed during downtime. Preserve an endpoint settle wait.
                 if ((! $sameTarget || ! $sameOwner || $effect['needsBoundary'])
-                    && ! in_array($effect['phase'], ['commit_wait', 'onboard_wait'], true)) {
+                    && ! in_array($effect['phase'], $encounter ? ['commit_wait'] : ['commit_wait', 'onboard_wait'], true)) {
                     $effect['phase'] = 'plan';
+                    if ($encounter) {
+                        // A qualified native program can be stopped by a direct
+                        // minimum endpoint; its original fade wait is unnecessary.
+                        $effect['notBefore'] = $now;
+                    }
                 }
                 $effect['needsBoundary'] = false;
                 $this->save($effect, true);
@@ -173,7 +187,7 @@ class CloudContinuousCoordinator implements LightingExecutor
             && $effect['revision'] <= $state['applied_revision']
             && $effect['pending'] === null
             && in_array($effect['phase'], ['complete', 'plan'], true)
-            && in_array($effect['output']['kind'], ['white', 'scene'], true);
+            && in_array($effect['output']['kind'], ['white', 'scene', 'colour'], true);
     }
 
     private function rebaseCompleted(array $state, array $previous, array $snapshot, int $now): bool
@@ -216,7 +230,9 @@ class CloudContinuousCoordinator implements LightingExecutor
         return ['engine' => 'continuous_v1', 'id' => (string) Str::uuid(), 'revision' => $state['revision'],
             'generation' => $state['control_generation'], 'target' => $state['desired_target'],
             'phase' => 'plan', 'snapshot' => $snapshot, 'output' => $output, 'pending' => null,
-            'notBefore' => $now, 'needsBoundary' => false];
+            'notBefore' => $now, 'needsBoundary' => false,
+            'encounterTransition' => LightingTransitionPolicy::isEncounter($state['desired_target']) || $this->isEncounterOutput($output),
+            'encounterMinimum' => false];
     }
 
     private function plan(array $effect, int $now): bool
@@ -224,14 +240,30 @@ class CloudContinuousCoordinator implements LightingExecutor
         $output = $effect['output'];
         $target = $effect['target'];
         $channels = $output['channels'];
-        if ($output['kind'] === 'onboard' && $channels['v'] === 0) {
-            // End the temporary native white program before a software white
-            // rise. Its repeated minimum target must not compete with DP28.
-            return $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now);
+        if ($target['kind'] === 'colour') {
+            $colour = $this->colourChannels($target['profile']);
+            if ($output['kind'] === 'colour' && $channels === $colour
+                && $this->matches($effect['snapshot'], [20 => true, 21 => 'colour',
+                    24 => sprintf('%04x%04x%04x', $colour['h'], $colour['s'], $colour['v'])])) {
+                return $this->complete($effect, $now);
+            }
+        }
+        if ($target['kind'] === 'white' && $output['kind'] === 'white'
+            && $channels === $this->profileChannels($target['profile'])
+            && $this->matchesWhite($effect['snapshot'], $target['profile'])) {
+            return $this->complete($effect, $now);
         }
         if ($output['kind'] === 'scene' && $target['kind'] === 'mythos'
             && $target['color'] === $output['color'] && $target['mythosSessionId'] === ($output['mythosSessionId'] ?? null)) {
             return $this->complete($effect, $now);
+        }
+        if ($effect['encounterTransition'] ?? false) {
+            return $this->planEncounter($effect, $now);
+        }
+        if ($output['kind'] === 'onboard' && $channels['v'] === 0) {
+            // End the temporary native white program before a software white
+            // rise. Its repeated minimum target must not compete with DP28.
+            return $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now);
         }
         if ($output['kind'] === 'scene') {
             // Stop the autonomous scene before fading. Its exact instantaneous
@@ -265,23 +297,61 @@ class CloudContinuousCoordinator implements LightingExecutor
         if ($output['kind'] !== 'white' || ! $this->matchesWhite($effect['snapshot'], $profile)) {
             return $this->commit($effect, ['operation' => 'white', 'profile' => $profile], $now);
         }
-        if ($target['kind'] === 'white' || $target['color'] === null) {
+        if ($target['kind'] === 'white' || ($target['kind'] === 'mythos' && $target['color'] === null)) {
             return $this->complete($effect, $now);
         }
 
-        $anchor = $this->sceneChannels($target['color']);
+        $anchor = $target['kind'] === 'colour' ? $colour : $this->sceneChannels($target['color']);
         $anchor['v'] = 10;
 
         // Let one native gradient transfer the minimum white output to minimum
         // RGB. Interpolating raw white 10..0 would issue subminimum 1..9 values.
-        return $this->startFade($effect, 'scene_anchor', $anchor, 0, $now);
+        return $this->startFade($effect, $target['kind'] === 'colour' ? 'colour_anchor' : 'scene_anchor', $anchor, 0, $now);
+    }
+
+    private function planEncounter(array $effect, int $now): bool
+    {
+        $output = $effect['output'];
+        $channels = $output['channels'];
+        $target = $effect['target'];
+        $destination = match ($target['kind']) {
+            'white' => $this->profileChannels($target['profile']),
+            'colour' => $this->colourChannels($target['profile']),
+            default => $target['color'] === null ? $this->profileChannels('dark') : $this->sceneChannels($target['color']),
+        };
+        if (! ($effect['encounterMinimum'] ?? false)) {
+            if ($channels['v'] > 0) {
+                $minimum = array_replace($channels, ['v' => 10, 'bright' => 0, 'temperature' => 0]);
+                if ($channels !== $minimum || $output['kind'] !== 'colour' || $effect['snapshot']['values'][21] !== 'colour') {
+                    // DP24 stops a breathing/native scene and drops the current
+                    // hue directly to 1%; DP28 always encodes a device gradient.
+                    return $this->commit($effect, ['operation' => 'static_colour', 'channels' => $minimum], $now);
+                }
+            }
+            if ($output['kind'] !== 'white' || ! $this->matchesWhite($effect['snapshot'], 'dark')
+                || $channels !== $this->profileChannels('dark')) {
+                return $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now);
+            }
+            $effect['encounterMinimum'] = true;
+        }
+        if ($target['kind'] === 'mythos' && $target['color'] === null) {
+            return $this->complete($effect, $now);
+        }
+        $white = $target['kind'] === 'white';
+        $anchor = array_replace($destination, [$white ? 'bright' : 'v' => 10]);
+        if ($channels !== $anchor || $output['kind'] !== ($white ? 'white' : 'colour')) {
+            return $this->commit($effect, ['operation' => $white ? 'white_anchor' : 'static_colour', 'channels' => $anchor], $now);
+        }
+
+        return $this->startFade($effect, $white ? 'white' : ($target['kind'] === 'colour' ? 'colour' : 'scene'),
+            $destination, LightingTransitionPolicy::encounterFadeInMs(), $now);
     }
 
     private function startFade(array $effect, string $purpose, array $to, int $duration, int $now): bool
     {
         $effect['phase'] = 'fade';
-        if (config('lighting.cloud.onboard_fades', false) && $duration > 0
-            && in_array($purpose, ['dark', 'rgb_down', 'scene'], true)) {
+        if (! ($effect['encounterTransition'] ?? false) && config('lighting.cloud.onboard_fades', false) && $duration > 0
+            && in_array($purpose, ['dark', 'rgb_down', 'scene', 'colour'], true)) {
             $effect['phase'] = 'onboard_start';
         }
         $effect['fade'] = ['purpose' => $purpose, 'from' => $effect['output']['channels'], 'to' => $to,
@@ -332,7 +402,7 @@ class CloudContinuousCoordinator implements LightingExecutor
         $p = config('lighting.curve', 'smoothstep') === 'linear' ? $progress : $progress * $progress * (3 - 2 * $progress);
         if (config('lighting.cloud.white_up_curve', 'perceptual') === 'perceptual') {
             $sameWhite = $fade['purpose'] === 'white' && $fade['from']['v'] === 0 && $fade['to']['v'] === 0;
-            if ($fade['purpose'] === 'scene' || ($sameWhite && $fade['to']['bright'] > $fade['from']['bright'])) {
+            if (in_array($fade['purpose'], ['scene', 'colour'], true) || ($sameWhite && $fade['to']['bright'] > $fade['from']['bright'])) {
                 $p = $progress ** 2.2;
             } elseif (in_array($fade['purpose'], ['dark', 'rgb_down'], true)
                 || ($sameWhite && $fade['to']['bright'] < $fade['from']['bright'])) {
@@ -370,9 +440,12 @@ class CloudContinuousCoordinator implements LightingExecutor
             'rgb_down' => $this->startFade($effect, 'rgb_bridge', $this->profileChannels('dark'), 0, $now),
             'scene_anchor' => $this->startFade($effect, 'scene', $this->sceneChannels($effect['target']['color']),
                 $this->duration('scene_fade_in_ms', 4000), $now),
+            'colour_anchor' => $this->startFade($effect, 'colour', $this->colourChannels($effect['target']['profile']),
+                $this->duration('scene_fade_in_ms', 4000), $now),
             'dark', 'rgb_bridge' => $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now),
             'white' => $this->commit($effect, ['operation' => 'white', 'profile' => $effect['target']['profile']], $now),
             'scene' => $this->commit($effect, ['operation' => 'scene', 'color' => $effect['target']['color']], $now),
+            'colour' => $this->commit($effect, ['operation' => 'static_colour', 'profile' => $effect['target']['profile']], $now),
             default => throw new TuyaCloudException('configuration_error'),
         };
     }
@@ -382,13 +455,22 @@ class CloudContinuousCoordinator implements LightingExecutor
         $snapshot = $this->boundary($effect);
         $effect['snapshot'] = $snapshot;
         $expected = $this->sourceValues($snapshot);
-        if ($descriptor['operation'] === 'white') {
-            $profile = $this->reader->profiles()[$descriptor['profile']] ?? throw new TuyaCloudException('preset_not_configured');
+        if (in_array($descriptor['operation'], ['white', 'white_anchor'], true)) {
+            $profile = $descriptor['operation'] === 'white'
+                ? ($this->reader->profiles()[$descriptor['profile']] ?? throw new TuyaCloudException('preset_not_configured'))
+                : ['brightness' => $descriptor['channels']['bright'], 'temperature' => $descriptor['channels']['temperature']];
             unset($expected[24], $expected[25]);
             $expected = array_replace($expected, [21 => 'white', 22 => $profile['brightness'], 23 => $profile['temperature']]);
             $descriptor['commands'] = [['code' => 'bright_value_v2', 'value' => $profile['brightness']],
                 ['code' => 'temp_value_v2', 'value' => $profile['temperature']], ['code' => 'work_mode', 'value' => 'white']];
             $descriptor['freshFields'] = [21, 22, 23];
+        } elseif ($descriptor['operation'] === 'static_colour') {
+            $channels = isset($descriptor['profile']) ? $this->colourChannels($descriptor['profile']) : $descriptor['channels'];
+            unset($expected[25]);
+            $expected = array_replace($expected, [21 => 'colour',
+                24 => sprintf('%04x%04x%04x', $channels['h'], $channels['s'], $channels['v'])]);
+            $descriptor['channels'] = $channels;
+            $descriptor['freshFields'] = [21, 24];
         } else {
             $scene = $this->reader->scenes()[$descriptor['color']] ?? throw new TuyaCloudException('preset_not_configured');
             unset($expected[24]);
@@ -525,11 +607,13 @@ class CloudContinuousCoordinator implements LightingExecutor
         $effect['phase'] = 'commit_wait';
         $effect['committed'] = $descriptor;
         $effect['notBefore'] = $now + $this->settleMargin();
-        if ($descriptor['operation'] === 'white') {
-            $effect['output'] = ['kind' => 'white', 'channels' => $this->profileChannels($descriptor['profile']), 'approximate' => false];
+        if (in_array($descriptor['operation'], ['white', 'white_anchor'], true)) {
+            $effect['output'] = ['kind' => 'white',
+                'channels' => $descriptor['operation'] === 'white' ? $this->profileChannels($descriptor['profile']) : $descriptor['channels'],
+                'approximate' => false];
         } elseif ($descriptor['operation'] === 'static_colour') {
             $effect['output'] = ['kind' => 'colour', 'channels' => $descriptor['channels'],
-                'approximate' => $effect['output']['approximate']];
+                'approximate' => isset($descriptor['profile']) ? false : $effect['output']['approximate']];
         } else {
             $effect['output'] = ['kind' => 'scene', 'channels' => $this->sceneChannels($descriptor['color']),
                 'color' => $descriptor['color'], 'mythosSessionId' => $effect['target']['mythosSessionId'], 'approximate' => true];
@@ -556,6 +640,9 @@ class CloudContinuousCoordinator implements LightingExecutor
         $effect['phase'] = 'plan';
         if (($effect['committed']['profile'] ?? null) === 'dark') {
             $effect['notBefore'] = $now + max(0, (int) config('lighting.dark_hold_ms', 150));
+            if ($effect['encounterTransition'] ?? false) {
+                $effect['encounterMinimum'] = true;
+            }
         }
         $this->save($effect);
         $this->observe($effect, $now, true);
@@ -573,7 +660,11 @@ class CloudContinuousCoordinator implements LightingExecutor
             $effect['phase'] = 'complete';
             $state->native_effect = $effect;
             $state->applied_revision = $state->revision;
-            $state->stage = $effect['target']['kind'] === 'white' ? 'white' : ($effect['target']['color'] === null ? 'dark' : 'scene');
+            $state->stage = match ($effect['target']['kind']) {
+                'white' => 'white',
+                'colour' => 'colour',
+                default => $effect['target']['color'] === null ? 'dark' : 'scene',
+            };
             $this->store->event($state, 'continuous_completed', $effect['target']);
             $this->applyObservation($state, $effect, $now, true);
 
@@ -647,6 +738,15 @@ class CloudContinuousCoordinator implements LightingExecutor
         } elseif ($output['kind'] === 'scene') {
             $state->observed = array_merge($state->observed, ['color' => $output['color'],
                 'mythosSessionId' => $output['mythosSessionId'] ?? null]);
+        } elseif ($output['kind'] === 'colour') {
+            $colourObservation = ['hsv' => array_intersect_key($channels, array_flip(['h', 's', 'v'])), 'profile' => null];
+            foreach ($this->reader->colours() as $alias => $colour) {
+                if ($colourObservation['hsv'] === $colour) {
+                    $colourObservation['profile'] = $alias;
+                    break;
+                }
+            }
+            $state->observed = array_merge($state->observed, $colourObservation);
         }
         $dark = $settled && $output['kind'] === 'white' && $channels === $this->profileChannels('dark');
         $state->color_barrier = ! $dark;
@@ -717,6 +817,34 @@ class CloudContinuousCoordinator implements LightingExecutor
         return $this->whiteChannels($profile['brightness'], $profile['temperature']);
     }
 
+    private function colourChannels(string $name): array
+    {
+        $colour = $this->reader->colours()[$name] ?? throw new TuyaCloudException('preset_not_configured');
+
+        return $colour + ['bright' => 0, 'temperature' => 0];
+    }
+
+    private function isEncounterOutput(array $output): bool
+    {
+        if ($output['kind'] === 'white') {
+            foreach ($this->reader->profiles() as $alias => $profile) {
+                if ($output['channels'] === $this->whiteChannels($profile['brightness'], $profile['temperature'])
+                    && LightingTransitionPolicy::isEncounter(['kind' => 'white', 'profile' => $alias])) {
+                    return true;
+                }
+            }
+        } elseif ($output['kind'] === 'colour') {
+            foreach ($this->reader->colours() as $alias => $colour) {
+                if ($output['channels'] === $colour + ['bright' => 0, 'temperature' => 0]
+                    && LightingTransitionPolicy::isEncounter(['kind' => 'colour', 'profile' => $alias])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private function knownScene(array $values): string
     {
         if ($values[21] === 'scene') {
@@ -759,6 +887,7 @@ class CloudContinuousCoordinator implements LightingExecutor
     {
         return match ($effect['fade']['purpose'] ?? '') {
             'scene_anchor', 'scene' => 'applying_scene',
+            'colour_anchor', 'colour' => 'applying_colour',
             'white' => 'fading_white_up',
             default => 'fading_to_dark',
         };

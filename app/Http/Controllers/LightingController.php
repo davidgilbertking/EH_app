@@ -6,6 +6,7 @@ use App\Lighting\LightingControl;
 use App\Lighting\LightingStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class LightingController extends Controller
@@ -35,16 +36,17 @@ class LightingController extends Controller
             'intentId' => ['required', 'uuid'],
             'controlEpoch' => ['required', 'string', 'max:128'],
             'clientSeq' => ['required', 'integer', 'min:1', 'max:9007199254740991'],
-            'target' => ['required', $kind === 'white' ? 'array:kind,profile' : 'array:kind,mythosSessionId,color'],
-            'target.kind' => ['required', 'in:white,mythos'],
-            'target.profile' => ['required_if:target.kind,white', 'prohibited_unless:target.kind,white', 'in:action,encounters'],
+            'target' => ['required', in_array($kind, ['white', 'colour'], true) ? 'array:kind,profile' : 'array:kind,mythosSessionId,color'],
+            'target.kind' => ['required', 'in:white,colour,mythos'],
+            'target.profile' => ['required_if:target.kind,white,colour', 'prohibited_unless:target.kind,white,colour',
+                Rule::in(array_keys(config($kind === 'colour' ? 'lighting.colour_profiles' : 'lighting.white_profiles', [])))],
             'target.mythosSessionId' => ['required_if:target.kind,mythos', 'prohibited_unless:target.kind,mythos', 'uuid'],
             'target.color' => ['present_if:target.kind,mythos', 'prohibited_unless:target.kind,mythos', 'nullable', 'in:green,yellow,blue'],
         ]);
         // Normalize key order and numbers before hashing idempotent payloads.
         $data['clientSeq'] = (int) $data['clientSeq'];
-        $data['target'] = $kind === 'white'
-            ? ['kind' => 'white', 'profile' => $data['target']['profile']]
+        $data['target'] = in_array($kind, ['white', 'colour'], true)
+            ? ['kind' => $kind, 'profile' => $data['target']['profile']]
             : ['kind' => 'mythos', 'mythosSessionId' => $data['target']['mythosSessionId'], 'color' => $data['target']['color']];
 
         return $this->result($control->intent($request->user()->id, $request->session()->getId(), $data), $status);

@@ -1,4 +1,5 @@
 import { createUuid } from '../utils/uuid.js';
+import { isEncounterLightingTarget, resolveLightingTarget } from './lightingTarget.js';
 
 export { createUuid as createSessionId } from '../utils/uuid.js';
 
@@ -21,12 +22,13 @@ export function resolveGameContext(folderSlug, explicitContext = null, url = nul
     return 'other';
 }
 
-/** User actions drive lighting; only the music handoff can wait for a color fade. */
+/** User actions drive lighting; music may wait for the selected transition policy. */
 export function createGameFlowController({
     audio,
     lighting,
     canControlLighting = () => false,
     getMusicDelayMs = () => 0,
+    getEncounterMusicDelayMs = () => 0,
     schedule = setTimeout,
     unschedule = clearTimeout,
     navigate = () => {},
@@ -49,6 +51,8 @@ export function createGameFlowController({
     let audioOperation = 0;
     let currentPath = pathname(initialUrl);
     let pendingMusic = null;
+    let selectedLightingTarget = null;
+    let lightHandoff = null;
 
     function cancelPendingMusic() {
         const pending = pendingMusic;
@@ -68,6 +72,7 @@ export function createGameFlowController({
 
     function sendTarget(target) {
         if (!canControlLighting()) return;
+        selectedLightingTarget = target;
         // Lighting owns its visible transport errors. A failed lamp never
         // prevents audio or navigation, including synchronous driver failures.
         try { Promise.resolve(lighting.requestTarget(target)).catch(() => {}); } catch (_) { /* isolated */ }
@@ -78,7 +83,7 @@ export function createGameFlowController({
         state.audioError = null;
         try {
             // Ordinary playback stays in the user gesture. A color exit can
-            // defer this call while the already-unlocked Mythos audio continues.
+            // defer this call while the already-unlocked current audio continues.
             const result = audio[method](options);
             Promise.resolve(result).then(() => {
                 if (operation !== audioOperation || method !== 'play') return;
@@ -103,36 +108,61 @@ export function createGameFlowController({
     function chooseContext(context) {
         state.selectedContext = context;
         clearMythos();
-        // Action is the only ordinary context with its own white profile.
-        // Every other music choice uses calibrated Encounters. Navigation does
-        // not select a context: the current music and light continue together.
-        state.lastWhiteProfile = ['action', 'action-muted'].includes(context) ? 'action' : 'encounters';
-        return { kind: 'white', profile: state.lastWhiteProfile };
     }
 
-    function selectOrdinaryMusic(context, method, options) {
-        let delay = 0;
-        const profile = ['action', 'action-muted'].includes(context) ? 'action' : 'encounters';
-        if (canControlLighting() && audio.state.playingFolder === 'mythos' && !audio.state.isPaused) {
-            if (pendingMusic && profile === state.lastWhiteProfile) {
-                // The same white target keeps its fade and original deadline.
-                delay = Math.max(0, pendingMusic.deadline - now());
-            } else if (pendingMusic || (state.selectedContext === 'mythos' && state.selectedMythosColor)) {
-                // Changing white profiles replans the lamp's color fade too.
-                const configured = Number(getMusicDelayMs());
-                delay = Number.isFinite(configured) ? Math.max(0, configured) : 0;
-            }
+    function retireSettledEncounterHandoff(preserveMusicDeadline = false) {
+        if (lightHandoff?.encounter && (!preserveMusicDeadline || lightHandoff.deadline <= now())
+            && lighting.isTargetSettled?.(selectedLightingTarget)) {
+            lightHandoff = null;
         }
+    }
+
+    function musicDelay(target) {
+        const immediate = { delay: 0, encounter: false };
+        if (!target || !canControlLighting()) return immediate;
+        retireSettledEncounterHandoff(true);
+        const key = JSON.stringify(target);
+        const encounterPending = lightHandoff?.encounter && lighting.isTargetSettled
+            && !lighting.isTargetSettled(selectedLightingTarget);
+        if (lightHandoff && lightHandoff.deadline <= now() && !encounterPending) {
+            lightHandoff = null;
+        }
+        // Keep the source policy while an encounter exit is still in flight,
+        // including after music starts but before the lamp confirms completion.
+        const encounter = isEncounterLightingTarget(selectedLightingTarget)
+            || isEncounterLightingTarget(target) || lightHandoff?.encounter === true;
+        if (!audio.state.playingFolder || audio.state.isPaused) return { delay: 0, encounter };
+        // Replacing music for the same light does not restart the lamp fade.
+        if (lightHandoff?.key === key) return { delay: Math.max(0, lightHandoff.deadline - now()), encounter };
+        if (!lightHandoff && JSON.stringify(selectedLightingTarget) === key) return { delay: 0, encounter };
+        const leavesColour = selectedLightingTarget?.kind === 'colour'
+            || (selectedLightingTarget?.kind === 'mythos' && selectedLightingTarget.color);
+        if (!encounter && !lightHandoff && !leavesColour) return immediate;
+        const configured = Number(encounter ? getEncounterMusicDelayMs() : getMusicDelayMs());
+        return { delay: Number.isFinite(configured) ? Math.max(0, configured) : 0, encounter };
+    }
+
+    function playWithTarget(method, options, target, keepAudio = false) {
+        const { delay, encounter } = musicDelay(target);
         cancelPendingMusic();
-        const target = chooseContext(context);
-        if (delay === 0) {
+        // Death changes music only. Keep both the current target and any lamp
+        // transition while cancelling music that would otherwise replace it.
+        if (!target) {
             runAudio(method, options);
+            return;
+        }
+        if (target.kind === 'white') state.lastWhiteProfile = target.profile;
+        if (delay === 0 || keepAudio) {
+            lightHandoff = encounter
+                ? { key: JSON.stringify(target), deadline: now() + delay, encounter } : null;
+            if (!keepAudio) runAudio(method, options);
             sendTarget(target);
             return;
         }
 
+        lightHandoff = { key: JSON.stringify(target), deadline: now() + delay, encounter };
         sendTarget(target);
-        const pending = { deadline: now() + delay, timer: null };
+        const pending = { timer: null };
         pendingMusic = pending;
         state.pendingMusicFolder = options?.folderSlug ?? null;
         pending.timer = schedule(() => {
@@ -141,6 +171,11 @@ export function createGameFlowController({
             state.pendingMusicFolder = null;
             if (canControlLighting()) runAudio(method, options);
         }, delay);
+    }
+
+    function selectOrdinaryMusic(context, method, options) {
+        chooseContext(context);
+        playWithTarget(method, options, resolveLightingTarget(options.folderSlug));
     }
 
     function enterMythos(audioOptions = {}) {
@@ -159,12 +194,19 @@ export function createGameFlowController({
             state.mythosSessionId = uuid();
             state.selectedMythosColor = null;
         }
-        // Returning during a color exit keeps the current Mythos track intact.
-        if (!(cancelledMusic && audio.state.playingFolder === 'mythos')) {
-            if (!isNewSession && audio.state.playingFolder === 'mythos') runAudio('stop');
-            else runAudio('play', { folderSlug: 'mythos', label: 'Mythos', crossfade: true, ...audioOptions });
+        const options = { folderSlug: 'mythos', label: 'Mythos', crossfade: true, ...audioOptions };
+        if (isNewSession) {
+            // Returning during a color exit keeps the current Mythos track intact.
+            playWithTarget('play', options,
+                { kind: 'mythos', mythosSessionId: state.mythosSessionId, color: null },
+                Boolean(cancelledMusic && audio.state.playingFolder === 'mythos'));
+        } else if (cancelledMusic && audio.state.playingFolder !== 'mythos') {
+            playWithTarget('play', options, selectedLightingTarget);
+        } else if (audio.state.playingFolder === 'mythos') {
+            runAudio('stop');
+        } else {
+            runAudio('play', options);
         }
-        if (isNewSession) sendTarget({ kind: 'mythos', mythosSessionId: state.mythosSessionId, color: null });
         if (currentPath !== '/mythos') navigate('/mythos');
         return true;
     }
@@ -176,6 +218,9 @@ export function createGameFlowController({
         const target = { kind: 'mythos', mythosSessionId: sessionId, color };
         if (color === state.selectedMythosColor && (!lighting.hasTarget || lighting.hasTarget(target))) return false;
         if (!accept(`mythos.color:${sessionId}:${color}`)) return false;
+        // Check completion against the previous target before the new colour
+        // starts another request and makes its own completion pending again.
+        retireSettledEncounterHandoff();
         state.selectedMythosColor = color;
         sendTarget(target);
         return true;
@@ -237,6 +282,8 @@ export function createGameFlowController({
         cancelPendingMusic();
         state.selectedContext = null;
         clearMythos();
+        selectedLightingTarget = null;
+        lightHandoff = null;
         const fadePromise = Promise.resolve(runAudio('fadeOutCurrent')).catch(() => {});
         let releasePromise;
         try { releasePromise = canControlLighting() ? Promise.resolve(lighting.releaseForLogout()).catch(() => {}) : Promise.resolve(); }

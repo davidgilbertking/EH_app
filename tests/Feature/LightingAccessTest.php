@@ -69,6 +69,31 @@ class LightingAccessTest extends TestCase
         $this->assertSame($fadeMs, config('lighting.scene_fade_out_ms'));
     }
 
+    public static function encounterMusicDelaySettings(): array
+    {
+        return [[2500, 0.6, 1500], [4000, 0.25, 1000], [2500, 0.0, 0],
+            [2500, -1.0, 0], [-10, 0.6, 0], [40000, 0.6, 18000]];
+    }
+
+    #[DataProvider('encounterMusicDelaySettings')]
+    public function test_encounter_music_delay_uses_its_own_rise_and_multiplier(int $fadeMs, float $multiplier, int $delayMs): void
+    {
+        $owner = User::factory()->create();
+        config()->set([
+            'lighting.allowed_user_ids' => [$owner->id],
+            'lighting.encounter_fade_in_ms' => $fadeMs,
+            'lighting.encounter_music_delay_multiplier' => $multiplier,
+            'lighting.scene_fade_out_ms' => 2500,
+            'lighting.music_delay_multiplier' => 1.8,
+        ]);
+
+        $this->actingAs($owner)->get('/mythos')->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('lighting.musicDelayMs', 4500)
+            ->where('lighting.encounterMusicDelayMs', $delayMs));
+        $this->assertSame($fadeMs, config('lighting.encounter_fade_in_ms'));
+        $this->assertSame(2500, config('lighting.scene_fade_out_ms'));
+    }
+
     public function test_other_account_cannot_read_take_over_release_or_submit_an_intent(): void
     {
         $owner = User::factory()->create();

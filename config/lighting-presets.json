@@ -1,0 +1,465 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "antarctica": {
+      "name": "Антарктическое поле",
+      "kind": "white",
+      "ui": {
+        "brightness": 90,
+        "temperature": 45
+      }
+    },
+    "egypt": {
+      "name": "Египетское поле",
+      "kind": "white",
+      "ui": {
+        "brightness": 90,
+        "temperature": 25
+      }
+    },
+    "dreamlands-board": {
+      "name": "Поле Мира Грёз",
+      "kind": "white",
+      "ui": {
+        "brightness": 90,
+        "temperature": 35
+      }
+    },
+    "detained": {
+      "name": "Тюрьма",
+      "kind": "colour",
+      "ui": {
+        "hue": 25,
+        "brightness": 100,
+        "balance": 85
+      },
+      "transitionGroup": "encounter"
+    },
+    "lost": {
+      "name": "Затерян вне времени и пространства",
+      "kind": "colour",
+      "ui": {
+        "hue": 273,
+        "brightness": 100,
+        "balance": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "carcosa": {
+      "name": "Каркоза",
+      "kind": "colour",
+      "ui": {
+        "hue": 60,
+        "brightness": 100,
+        "balance": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "great-race": {
+      "name": "Великая Раса",
+      "kind": "colour",
+      "ui": {
+        "hue": 20,
+        "brightness": 80,
+        "balance": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "yuggoth": {
+      "name": "Юггот",
+      "kind": "colour",
+      "ui": {
+        "hue": 210,
+        "brightness": 90,
+        "balance": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "celaeno": {
+      "name": "Целено",
+      "kind": "colour",
+      "ui": {
+        "hue": 240,
+        "brightness": 75,
+        "balance": 30
+      },
+      "transitionGroup": "encounter"
+    },
+    "leng": {
+      "name": "Ленг",
+      "kind": "colour",
+      "ui": {
+        "hue": 242,
+        "brightness": 100,
+        "balance": 40
+      },
+      "transitionGroup": "encounter"
+    },
+    "dreamlands-gate": {
+      "name": "Мир Грёз во вратах",
+      "kind": "colour",
+      "ui": {
+        "hue": 185,
+        "brightness": 90,
+        "balance": 55
+      },
+      "transitionGroup": "encounter"
+    },
+    "kadath": {
+      "name": "Кадат",
+      "kind": "colour",
+      "ui": {
+        "hue": 105,
+        "brightness": 95,
+        "balance": 90
+      },
+      "transitionGroup": "encounter"
+    },
+    "underworld": {
+      "name": "Подземный мир",
+      "kind": "colour",
+      "ui": {
+        "hue": 250,
+        "brightness": 15,
+        "balance": 67
+      },
+      "transitionGroup": "encounter"
+    },
+    "abyss": {
+      "name": "Бездна",
+      "kind": "colour",
+      "ui": {
+        "hue": 175,
+        "brightness": 50,
+        "balance": 80
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-1": {
+      "name": "Прошлое №1: Щели в чулане",
+      "kind": "colour",
+      "ui": {
+        "hue": 0,
+        "brightness": 100,
+        "balance": 80
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-2": {
+      "name": "Прошлое №2: Старинное оборудование",
+      "kind": "colour",
+      "ui": {
+        "hue": 40,
+        "brightness": 90,
+        "balance": 60
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-3": {
+      "name": "Прошлое №3: Безумец среди барханов",
+      "kind": "colour",
+      "ui": {
+        "hue": 35,
+        "brightness": 100,
+        "balance": 90
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-4": {
+      "name": "Прошлое №4: Провиденс 60 лет назад",
+      "kind": "colour",
+      "ui": {
+        "hue": 156,
+        "brightness": 100,
+        "balance": 83
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-5": {
+      "name": "Прошлое №5: Континент Му",
+      "kind": "colour",
+      "ui": {
+        "hue": 223,
+        "brightness": 79,
+        "balance": 63
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-6": {
+      "name": "Прошлое №6: Пустой зелёный город",
+      "kind": "colour",
+      "ui": {
+        "hue": 137,
+        "brightness": 100,
+        "balance": 90
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-7": {
+      "name": "Прошлое №7: Ритуал молодого себя",
+      "kind": "colour",
+      "ui": {
+        "hue": 323,
+        "brightness": 50,
+        "balance": 50
+      },
+      "transitionGroup": "encounter"
+    },
+    "past-8": {
+      "name": "Прошлое №8: Охота на ведьм",
+      "kind": "colour",
+      "ui": {
+        "hue": 75,
+        "brightness": 67,
+        "balance": 75
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-1": {
+      "name": "Будущее №1: Таймс-сквер",
+      "kind": "white",
+      "ui": {
+        "brightness": 20,
+        "temperature": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-2": {
+      "name": "Будущее №2: Город без электричества",
+      "kind": "colour",
+      "ui": {
+        "hue": 97,
+        "brightness": 93,
+        "balance": 84
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-3": {
+      "name": "Будущее №3: Следы пожара",
+      "kind": "colour",
+      "ui": {
+        "hue": 25,
+        "brightness": 100,
+        "balance": 90
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-4": {
+      "name": "Будущее №4: Карантин",
+      "kind": "colour",
+      "ui": {
+        "hue": 326,
+        "brightness": 100,
+        "balance": 67
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-5": {
+      "name": "Будущее №5: Река времени",
+      "kind": "colour",
+      "ui": {
+        "hue": 231,
+        "brightness": 96,
+        "balance": 93
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-6": {
+      "name": "Будущее №6: Утраченные цивилизации",
+      "kind": "white",
+      "ui": {
+        "brightness": 15,
+        "temperature": 15
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-7": {
+      "name": "Будущее №7: Техно-эпоха",
+      "kind": "colour",
+      "ui": {
+        "hue": 36,
+        "brightness": 79,
+        "balance": 100
+      },
+      "transitionGroup": "encounter"
+    },
+    "future-8": {
+      "name": "Будущее №8: Умирающий в гостинице",
+      "kind": "colour",
+      "ui": {
+        "hue": 112,
+        "brightness": 61,
+        "balance": 35
+      },
+      "transitionGroup": "encounter"
+    },
+    "ancient-one": {
+      "name": "Любой Древний",
+      "kind": "white",
+      "ui": {
+        "brightness": 80,
+        "temperature": 40
+      }
+    },
+    "defeat": {
+      "name": "Поражение",
+      "kind": "white",
+      "ui": {
+        "brightness": 100,
+        "temperature": 100
+      }
+    },
+    "victory": {
+      "name": "Победа",
+      "kind": "white",
+      "ui": {
+        "brightness": 100,
+        "temperature": 20
+      }
+    },
+    "awakening": {
+      "name": "Пробуждение",
+      "kind": "white",
+      "ui": {
+        "brightness": 100,
+        "temperature": 50
+      }
+    },
+    "sacrifice": {
+      "name": "Жертва",
+      "kind": "white",
+      "ui": {
+        "brightness": 85,
+        "temperature": 30
+      }
+    },
+    "intro-investigators": {
+      "name": "Интро и все сыщики",
+      "kind": "white",
+      "ui": {
+        "brightness": 100,
+        "temperature": 25
+      }
+    },
+    "disaster-city": {
+      "name": "Бедствия городов",
+      "kind": "white",
+      "ui": {
+        "brightness": 50,
+        "temperature": 10
+      }
+    },
+    "disaster-weather": {
+      "name": "Погодные бедствия",
+      "kind": "white",
+      "ui": {
+        "brightness": 67,
+        "temperature": 67
+      }
+    },
+    "disaster-location": {
+      "name": "Бедствия локаций",
+      "kind": "white",
+      "ui": {
+        "brightness": 70,
+        "temperature": 30
+      }
+    },
+    "combat": {
+      "name": "Драка",
+      "kind": "white",
+      "ui": {
+        "brightness": 90,
+        "temperature": 15
+      }
+    },
+    "combat-epic": {
+      "name": "Эпическая драка",
+      "kind": "white",
+      "ui": {
+        "brightness": 95,
+        "temperature": 0
+      }
+    },
+    "action": {
+      "name": "Действие",
+      "kind": "white",
+      "ui": {
+        "brightness": 100,
+        "temperature": 33
+      }
+    },
+    "action-muted": {
+      "name": "Действие muted",
+      "kind": "white",
+      "ui": {
+        "brightness": 95,
+        "temperature": 40
+      }
+    },
+    "encounters": {
+      "name": "Остальные контакты",
+      "kind": "white",
+      "ui": {
+        "brightness": 90,
+        "temperature": 20
+      }
+    }
+  },
+  "bindings": {
+    "exact": {
+      "action": "action",
+      "action-muted": "action-muted",
+      "combat": "combat",
+      "combat-epic": "combat-epic",
+      "contacts/obstruction/detained": "detained",
+      "contacts/obstruction/lost": "lost",
+      "contacts/other-world/carcosa": "carcosa",
+      "contacts/other-world/great-race": "great-race",
+      "contacts/other-world/yuggoth": "yuggoth",
+      "contacts/other-world/celaeno": "celaeno",
+      "contacts/other-world/leng": "leng",
+      "contacts/other-world/kadath": "kadath",
+      "contacts/other-world/underworld": "underworld",
+      "contacts/other-world/abyss": "abyss",
+      "contacts/other-world/dreamlands": "dreamlands-gate",
+      "contacts/other-world/past/1": "past-1",
+      "contacts/other-world/past/2": "past-2",
+      "contacts/other-world/past/3": "past-3",
+      "contacts/other-world/past/4": "past-4",
+      "contacts/other-world/past/5": "past-5",
+      "contacts/other-world/past/6": "past-6",
+      "contacts/other-world/past/7": "past-7",
+      "contacts/other-world/past/8": "past-8",
+      "contacts/other-world/future/1": "future-1",
+      "contacts/other-world/future/2": "future-2",
+      "contacts/other-world/future/3": "future-3",
+      "contacts/other-world/future/4": "future-4",
+      "contacts/other-world/future/5": "future-5",
+      "contacts/other-world/future/6": "future-6",
+      "contacts/other-world/future/7": "future-7",
+      "contacts/other-world/future/8": "future-8",
+      "special/defeat": "defeat",
+      "special/victory": "victory",
+      "special/awakening": "awakening",
+      "special/death-sacrifice": "sacrifice",
+      "special/honey-pie": "intro-investigators"
+    },
+    "prefix": {
+      "contacts/antarctica": "antarctica",
+      "contacts/egypt": "egypt",
+      "contacts/dreamlands": "dreamlands-board",
+      "ancient": "ancient-one",
+      "special/characters": "intro-investigators",
+      "special/disaster/city": "disaster-city",
+      "special/disaster/weather": "disaster-weather",
+      "special/disaster/location": "disaster-location"
+    },
+    "preserve": [
+      "special/death-sanity",
+      "special/death-health",
+      "special/devoured"
+    ]
+  },
+  "fallback": "encounters"
+}

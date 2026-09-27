@@ -72,6 +72,14 @@ class CloudNativeCoordinator implements LightingExecutor
             if ($effect !== null && ($effect['pending'] ?? null) !== null) {
                 return $this->reconcile($effect, $now);
             }
+            // Static colour transitions require the continuously powered engine.
+            // Reject before planning any legacy OFF/ON barrier or interruption.
+            if (($state['desired_target']['kind'] ?? null) === 'colour'
+                || LightingTransitionPolicy::isEncounter($state['desired_target'])
+                || ($this->active($state, $now) && $effect !== null
+                    && (LightingTransitionPolicy::isEncounter($effect['target']) || $this->isEncounterSnapshot($effect['snapshot'])))) {
+                throw new TuyaCloudException('unsupported_transition');
+            }
             if ($effect !== null && ! $this->sameIntent($state, $effect) && $this->active($state, $now)
                 && $effect['target'] === $state['desired_target'] && $effect['flow'] !== 'barrier') {
                 // Repeated intent for the same destination adopts the running effect.
@@ -138,6 +146,9 @@ class CloudNativeCoordinator implements LightingExecutor
     private function begin(array $state, int $now): bool
     {
         $snapshot = $this->driver->readSnapshot();
+        if ($this->isEncounterSnapshot($snapshot)) {
+            throw new TuyaCloudException('unsupported_transition');
+        }
         $values = $snapshot['values'];
         $target = $state['desired_target'];
         $profile = $target['kind'] === 'white' ? $target['profile'] : 'dark';
@@ -518,6 +529,21 @@ class CloudNativeCoordinator implements LightingExecutor
     private function whiteValues(array $profile, bool $on): array
     {
         return [20 => $on, 21 => 'white', 22 => $profile['brightness'], 23 => $profile['temperature']];
+    }
+
+    private function isEncounterSnapshot(array $snapshot): bool
+    {
+        if (($snapshot['values'][20] ?? null) !== true || ($snapshot['values'][21] ?? null) !== 'white') {
+            return false;
+        }
+        foreach ($this->driver->profiles() as $alias => $profile) {
+            if (LightingTransitionPolicy::isEncounter(['kind' => 'white', 'profile' => $alias])
+                && $this->matchesWhite($snapshot, $profile)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function knownScene(mixed $raw): bool

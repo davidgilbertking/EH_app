@@ -10,6 +10,7 @@ export function createLightingState() {
     return {
         canControl: false,
         musicDelayMs: 0,
+        encounterMusicDelayMs: 0,
         linked: false, remoteEnabled: false, controlPending: false,
         driver: 'mock', simulated: true, controlGeneration: null,
         revision: 0, appliedRevision: null, statusVersion: -1,
@@ -42,6 +43,7 @@ export function createLightingClient({
     let releaseOperation = null;
     let loggedOut = false;
     let lastTargetKey = null;
+    let targetRequest = null;
 
     // Permission comes from the authenticated page. Revocation/account changes
     // discard pending work locally; only the server can authorize lamp access.
@@ -78,6 +80,7 @@ export function createLightingClient({
         epoch = null;
         state.linked = false;
         lastTargetKey = null;
+        targetRequest = null;
     }
 
     function applyStatus(data) {
@@ -210,32 +213,38 @@ export function createLightingClient({
         lastTargetKey = targetKey;
         const generation = lifecycle;
         const payload = { intentId: uuid(), controlEpoch: epoch, clientSeq: ++seq, target };
+        const request = { generation, clientSeq: payload.clientSeq };
+        targetRequest = request;
         const current = () => generation === lifecycle && payload.clientSeq === seq && epoch === payload.controlEpoch;
         // One transport retry uses the SAME identity. A newer choice prevents an
         // old timed-out request from being retried or changing the displayed state.
-        for (let attempt = 0; attempt < 2; attempt++) {
-            try {
-                const { data } = await http.post('/lighting/intents', payload, { timeout: 5000 });
-                if (!current()) return false;
-                applyStatus(data);
-                if (!data.accepted) {
+        try {
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    const { data } = await http.post('/lighting/intents', payload, { timeout: 5000 });
+                    if (!current()) return false;
+                    applyStatus(data);
+                    if (!data.accepted) {
+                        lastTargetKey = null;
+                        if (data.error) state.error = data.error;
+                    }
+                    return Boolean(data.accepted);
+                } catch (error) {
+                    if (!current()) return false;
+                    if (attempt === 0 && !error?.response) continue;
+                    state.error = safeError(error);
                     lastTargetKey = null;
-                    if (data.error) state.error = data.error;
+                    if (state.error === 'control_lost') {
+                        discardPendingTarget();
+                        forgetControl();
+                    }
+                    return false;
                 }
-                return Boolean(data.accepted);
-            } catch (error) {
-                if (!current()) return false;
-                if (attempt === 0 && !error?.response) continue;
-                state.error = safeError(error);
-                lastTargetKey = null;
-                if (state.error === 'control_lost') {
-                    discardPendingTarget();
-                    forgetControl();
-                }
-                return false;
             }
+            return false;
+        } finally {
+            if (targetRequest === request) targetRequest = null;
         }
-        return false;
     }
 
     async function pollLoop(generation) {
@@ -312,5 +321,13 @@ export function createLightingClient({
             && lastTargetKey === JSON.stringify(target);
     }
 
-    return { state, setAccess, enable, disable, requestTarget, sendTarget, hasTarget, poll, startPolling, stopPolling, releaseForLogout };
+    function isTargetSettled(target) {
+        return Boolean(target) && state.canControl && state.linked && !state.error
+            && !state.controlPending && !userAcquisition && !targetRequest
+            && lastTargetKey === JSON.stringify(target) && JSON.stringify(state.target) === JSON.stringify(target)
+            && state.appliedRevision === state.revision;
+    }
+
+    return { state, setAccess, enable, disable, requestTarget, sendTarget, hasTarget, isTargetSettled,
+        poll, startPolling, stopPolling, releaseForLogout };
 }

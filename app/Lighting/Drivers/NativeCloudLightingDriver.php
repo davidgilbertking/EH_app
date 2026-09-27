@@ -24,7 +24,7 @@ class NativeCloudLightingDriver implements LightingDriver
     public function capabilities(): array
     {
         if ($this->settings['continuous_transitions'] ?? false) {
-            return ['readState' => true, 'setWhite' => true, 'applyCapturedScene' => true,
+            return ['readState' => true, 'setWhite' => true, 'setColour' => true, 'applyCapturedScene' => true,
                 'sceneCapture' => false, 'nativeWhiteTransition' => false,
                 'nativeTransitionCancellation' => false, 'safeSceneExit' => false,
                 'continuousTransitions' => true, 'visualVerificationRequired' => true,
@@ -33,7 +33,7 @@ class NativeCloudLightingDriver implements LightingDriver
                 'reportedStateReadback' => true, 'nativeSwitchGradient' => false, 'simulated' => false];
         }
 
-        return ['readState' => true, 'setWhite' => true, 'applyCapturedScene' => true,
+        return ['readState' => true, 'setWhite' => true, 'setColour' => false, 'applyCapturedScene' => true,
             'sceneCapture' => false, 'nativeWhiteTransition' => true,
             'nativeTransitionCancellation' => (bool) ($this->settings['native_interruptions'] ?? false),
             'safeSceneExit' => true, 'orderedCommands' => false, 'transitionCompletionSignal' => false,
@@ -48,6 +48,11 @@ class NativeCloudLightingDriver implements LightingDriver
     public function scenes(): array
     {
         return $this->configuration()->scenes;
+    }
+
+    public function colours(): array
+    {
+        return $this->configuration()->colours;
     }
 
     /** One properties read after a once-per-instance read-only model preflight. */
@@ -207,6 +212,15 @@ class NativeCloudLightingDriver implements LightingDriver
             'reportedAt' => max($snapshot['times']), 'rgbSuppressed' => $mode === 'white'];
         if ($mode === 'white') {
             $result += $this->configuration()->whitePercentages($values[22], $values[23]);
+        } elseif ($mode === 'colour') {
+            $channels = self::colourChannels($snapshot);
+            $result += ['hsv' => array_intersect_key($channels, array_flip(['h', 's', 'v'])), 'profile' => null];
+            foreach ($this->colours() as $alias => $colour) {
+                if ($result['hsv'] === $colour) {
+                    $result['profile'] = $alias;
+                    break;
+                }
+            }
         } elseif ($mode === 'scene') {
             $result += ['color' => null, 'sceneLevel' => 1.0, 'mythosSessionId' => null];
             foreach ($this->scenes() as $alias => $scene) {

@@ -82,6 +82,13 @@ class LightingCoordinator implements LightingExecutor
 
         try {
             $capabilities = $this->driver->capabilities();
+            if ($snapshot['desired_target']['kind'] === 'colour' && ! ($capabilities['setColour'] ?? false)) {
+                throw new \RuntimeException('unsupported_transition');
+            }
+            if (($capabilities['simulated'] ?? false) !== true && $this->planner->usesEncounterPolicy($snapshot, config('lighting'))) {
+                // Physical encounter commands require the continuous executor.
+                throw new \RuntimeException('unsupported_transition');
+            }
             if (config('lighting.driver') === 'cloud' && ($capabilities['simulated'] ?? true) !== false) {
                 $this->fail($snapshot, 'not_configured');
 
@@ -96,11 +103,11 @@ class LightingCoordinator implements LightingExecutor
                     if (! $this->current($state, $snapshot)) {
                         return;
                     }
-                    $fields = array_flip(['mode', 'brightnessPct', 'temperaturePct', 'sceneLevel', 'color', 'rgbSuppressed']);
+                    $fields = array_flip(['mode', 'brightnessPct', 'temperaturePct', 'sceneLevel', 'color', 'rgbSuppressed', 'profile', 'hsv']);
                     if (array_intersect_key($observed, $fields) != array_intersect_key($snapshot['observed'] ?? [], $fields)) {
                         // Manual edits and late device effects invalidate the old
                         // interpolation origin. Continue from what is actually read.
-                        $state->transition = null;
+                        $state->transition = ($state->transition['policy'] ?? null) === 'encounter' ? ['policy' => 'encounter'] : null;
                         $state->dark_since_ms = null;
                     }
                     $state->observed = $observed;
@@ -120,6 +127,9 @@ class LightingCoordinator implements LightingExecutor
             }
 
             $plan = $this->planner->next($snapshot, $now, config('lighting'));
+            if (isset($plan['command']) && ($capabilities['simulated'] ?? false) === true) {
+                $plan['command']['lightingTarget'] = $plan['complete'] ? $snapshot['desired_target'] : ($snapshot['observed']['lightingTarget'] ?? null);
+            }
             if (($plan['requiresSafeSceneExit'] ?? false) && ($capabilities['safeSceneExit'] ?? false) !== true) {
                 throw new \RuntimeException('unsupported_transition');
             }
@@ -129,7 +139,7 @@ class LightingCoordinator implements LightingExecutor
                 }
                 $state->stage = $plan['stage'];
                 $state->transition = $plan['transition'];
-                if (($plan['command']['operation'] ?? null) === 'scene') {
+                if (in_array($plan['command']['operation'] ?? null, ['scene', 'colour'], true)) {
                     // Commit BEFORE anything that might enable RGB. This survives
                     // process death, timeout, unlink and a newer desired revision.
                     $state->color_barrier = true;
@@ -137,6 +147,7 @@ class LightingCoordinator implements LightingExecutor
                 }
                 if (! isset($plan['command']) && $plan['complete']) {
                     $state->applied_revision = $state->revision;
+                    $state->observed = array_merge($state->observed ?? [], ['lightingTarget' => $state->desired_target, 'encounterTransition' => false]);
                 }
 
                 return true;
@@ -178,6 +189,9 @@ class LightingCoordinator implements LightingExecutor
                 }
                 $state->observed = $observed;
                 $state->stage = $plan['afterStage'] ?? $plan['stage'];
+                if (($plan['clearColorBarrier'] ?? false) && $this->planner->isWhiteOrigin($observed)) {
+                    $state->color_barrier = false;
+                }
                 if ($plan['darkReached'] ?? false) {
                     if (! $this->planner->isDark($observed)) {
                         $state->error = 'unsupported_transition';
@@ -229,6 +243,9 @@ class LightingCoordinator implements LightingExecutor
                 && ($observed['color'] ?? null) === $command['color']
                 && ($observed['mythosSessionId'] ?? null) === $command['mythosSessionId']
                 && ($observed['sceneLevel'] ?? 0) >= 1.0,
+            'colour' => ($observed['mode'] ?? null) === 'colour'
+                && ($observed['profile'] ?? null) === $command['profile']
+                && ($observed['hsv'] ?? null) === $command['hsv'],
             default => false,
         };
     }

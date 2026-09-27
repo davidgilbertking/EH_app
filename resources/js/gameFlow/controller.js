@@ -11,6 +11,7 @@ export const gameFlow = createGameFlowController({
     lighting,
     canControlLighting: () => lighting.state.canControl,
     getMusicDelayMs: () => lighting.state.musicDelayMs,
+    getEncounterMusicDelayMs: () => lighting.state.encounterMusicDelayMs,
     reactive,
     navigate: (url) => router.get(url),
     initialUrl: typeof window === 'undefined' ? '/' : window.location.pathname,

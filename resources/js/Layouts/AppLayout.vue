@@ -13,11 +13,12 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 const page = usePage();
 watch(
     () => [page.props.auth?.user?.id ?? null, page.props.lighting?.canControl === true,
-        page.props.lighting?.musicDelayMs ?? 0],
-    ([userId, allowed, musicDelayMs], previous = []) => {
+        page.props.lighting?.musicDelayMs ?? 0, page.props.lighting?.encounterMusicDelayMs ?? 0],
+    ([userId, allowed, musicDelayMs, encounterMusicDelayMs], previous = []) => {
         if (userId !== previous[0] || allowed !== previous[1]) gameFlow.cancelPendingMusic();
         lighting.setAccess(allowed, userId);
         lighting.state.musicDelayMs = musicDelayMs;
+        lighting.state.encounterMusicDelayMs = encounterMusicDelayMs;
         if (allowed) lighting.startPolling();
     },
     { immediate: true, flush: 'sync' },

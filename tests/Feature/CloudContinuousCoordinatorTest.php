@@ -13,6 +13,7 @@ use App\Models\User;
 use Closure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CloudContinuousCoordinatorTest extends TestCase
@@ -37,6 +38,7 @@ class CloudContinuousCoordinatorTest extends TestCase
         config()->set(['lighting.driver' => 'cloud', 'lighting.cloud.continuous_transitions' => true,
             'lighting.white_fade_down_ms' => 4000, 'lighting.white_fade_up_ms' => 12000,
             'lighting.scene_fade_in_ms' => 4000, 'lighting.scene_fade_out_ms' => 4000,
+            'lighting.encounter_fade_in_ms' => 2500,
             'lighting.cloud.onboard_fades' => false, 'lighting.cloud.native_fade_timing_byte' => 30,
             'lighting.cloud.native_fade_wait_ms' => 5000,
             'lighting.cloud.white_up_curve' => 'perceptual',
@@ -89,6 +91,11 @@ class CloudContinuousCoordinatorTest extends TestCase
         return ['kind' => 'mythos', 'color' => $color, 'mythosSessionId' => 'continuous-mythos'];
     }
 
+    private function colour(string $profile = 'detained'): array
+    {
+        return ['kind' => 'colour', 'profile' => $profile];
+    }
+
     private function tick(int $advance = 100): LightingState
     {
         $this->now += $advance;
@@ -136,6 +143,259 @@ class CloudContinuousCoordinatorTest extends TestCase
     private function nativePrograms(): array
     {
         return array_values(array_filter($this->commits(), fn ($write) => count($write['commands'][0]['value']['scene_units'] ?? []) === 2));
+    }
+
+    public static function colourFades(): array
+    {
+        return ['software' => [false], 'onboard' => [true]];
+    }
+
+    #[DataProvider('colourFades')]
+    public function test_encounter_colour_uses_direct_minima_and_fixed_software_rise_even_with_onboard_enabled(bool $onboard): void
+    {
+        config()->set('lighting.cloud.onboard_fades', $onboard);
+        $this->send($this->colour());
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertSame('colour', $state->native_effect['fade']['purpose']);
+        $this->assertSame([], $this->frames(), 'Dimming and hue selection use direct endpoints, never a gradient');
+        $this->assertTrue($state->native_effect['encounterTransition']);
+        $state = $this->finish();
+        $expected = $this->fixture->colours()['detained'] + ['bright' => 0, 'temperature' => 0];
+        $this->assertSame('colour', $state->stage);
+        $this->assertSame('detained', $state->observed['profile']);
+        $this->assertSame($this->fixture->colours()['detained'], $state->observed['hsv']);
+        $this->assertFalse($state->observed['scenePhaseApproximate']);
+        $this->assertFalse($state->observed['physicalConfirmed']);
+        $this->assertSame(array_replace($expected, ['v' => 10]), $this->colourHolds()[0]['channels']);
+        $this->assertSame($expected, $this->colourHolds()[1]['channels']);
+        $this->assertSame([10], array_values(array_filter(array_column($this->commits(), 'brightness'), fn ($v) => $v !== null)));
+        $rgb = array_values(array_filter($this->frames(), fn ($frame) => $frame['channels']['v'] > 0));
+        foreach ($rgb as $frame) {
+            $this->assertSame(25, $frame['channels']['h']);
+            $this->assertSame(853, $frame['channels']['s']);
+            $this->assertGreaterThanOrEqual(10, $frame['channels']['v']);
+            $this->assertSame(0, $frame['channels']['bright']);
+        }
+        $this->assertSame([], $this->nativePrograms());
+        $this->assertSame($expected, end($rgb)['channels']);
+        $writes = count($this->fixture->writes);
+        $this->coordinator->recover();
+        $this->tick(10000);
+        $this->assertCount($writes, $this->fixture->writes);
+    }
+
+    #[DataProvider('colourFades')]
+    public function test_static_colour_switch_dims_old_hue_to_one_percent_before_changing_hue(bool $onboard): void
+    {
+        config()->set('lighting.cloud.onboard_fades', $onboard);
+        $this->fixture->values[21] = 'colour';
+        $this->fixture->values[24] = '0019035503e8'; // Exact captured detained HSV.
+        $this->send($this->colour('underworld'));
+        $state = $this->finish();
+        $this->assertSame('underworld', $state->observed['profile']);
+        $this->assertSame(['h' => 250, 's' => 670, 'v' => 150], $state->observed['hsv']);
+        $this->assertCount(3, $this->colourHolds());
+        $this->assertSame([10], array_values(array_filter(array_column($this->commits(), 'brightness'), fn ($v) => $v !== null)));
+        $oldMinimum = $this->colourHolds()[0];
+        $this->assertSame(25, $oldMinimum['channels']['h']);
+        $this->assertSame(10, $oldMinimum['channels']['v']);
+        $anchor = $this->colourHolds()[1];
+        $this->assertSame(250, $anchor['channels']['h']);
+        $this->assertSame(10, $anchor['channels']['v']);
+        $this->assertSame(0, $anchor['channels']['bright']);
+        $this->assertLessThan($anchor['at'], $oldMinimum['at']);
+        $this->assertSame([], $this->nativePrograms());
+        $this->assertSame([], array_values(array_filter($this->frames(), fn ($frame) => $frame['channels']['h'] === 25)));
+        $this->send($this->white());
+        $state = $this->finish();
+        $this->assertSame('white', $state->stage);
+        $this->assertTrue($this->fixture->values[20]);
+        $this->assertSame([1000, 332], [$this->fixture->values[22], $this->fixture->values[23]]);
+    }
+
+    public function test_retarget_during_colour_rise_never_commits_superseded_colour(): void
+    {
+        $this->fixture->white('dark');
+        $this->send($this->colour());
+        $state = $this->until(fn ($state) => ($state->native_effect['fade']['purpose'] ?? null) === 'colour'
+            && $state->native_effect['output']['channels']['v'] > 10 && $state->native_effect['pending'] === null);
+        $this->send($this->colour('underworld'));
+        $this->coordinator->recover();
+        $state = $this->finish();
+        $this->assertSame('underworld', $state->observed['profile']);
+        $endpoints = array_values(array_filter($this->colourHolds(), fn ($hold) => $hold['channels']['v'] > 10));
+        $this->assertCount(1, $endpoints);
+        $this->assertSame(250, $endpoints[0]['channels']['h']);
+        $this->assertTrue($state->native_effect['encounterTransition']);
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+    }
+
+    public function test_unknown_colour_endpoint_post_is_reconciled_once_by_fresh_exact_readback(): void
+    {
+        $this->fixture->white('dark');
+        $this->send($this->colour());
+        $this->until(fn ($state) => $state->native_effect['phase'] === 'settle'
+            && $state->native_effect['fade']['purpose'] === 'colour');
+        $this->fixture->throwAt = count($this->fixture->writes) + 1;
+        $this->fixture->applyBeforeThrow = true;
+        $state = $this->until(fn () => count($this->colourHolds()) === 2);
+        $this->assertSame('transport_timeout', $state->error);
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame('detained', $state->observed['profile']);
+        $this->assertCount(2, $this->colourHolds());
+    }
+
+    public function test_static_colour_can_enter_and_leave_existing_mythos_breathing_scenes(): void
+    {
+        $this->fixture->values[21] = 'colour';
+        $this->fixture->values[24] = '00fa029e0096';
+        $this->send($this->mythos('blue'));
+        $state = $this->finish();
+        $this->assertSame('scene', $state->stage);
+        $this->assertSame('blue', $state->observed['color']);
+        $this->assertSame($this->fixture->scenes()['blue']['raw'], $this->fixture->values[25]);
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->send($this->colour());
+        $state = $this->finish();
+        $this->assertSame('detained', $state->observed['profile']);
+        $this->assertFalse($state->observed['scenePhaseApproximate']);
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+    }
+
+    public function test_completed_colour_adopts_external_white_on_next_intent_and_reaches_low_white_captures(): void
+    {
+        $this->send($this->colour());
+        $state = $this->finish();
+        $oldId = $state->native_effect['id'];
+        $this->fixture->white('future-1');
+        $writes = count($this->fixture->writes);
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $this->tick(1000);
+        $this->assertCount($writes, $this->fixture->writes, 'Restart does not overwrite manual light');
+        $this->send($this->white('future-6'));
+        $state = $this->tick();
+        $this->assertNotSame($oldId, $state->native_effect['id']);
+        $this->assertSame('white', $state->native_effect['output']['kind']);
+        $this->assertSame(200, $state->native_effect['output']['channels']['bright']);
+        $this->assertTrue($state->native_effect['encounterTransition']);
+        $this->assertCount($writes, $this->fixture->writes, 'Rebase itself only reads');
+        $state = $this->finish();
+        $this->assertSame('white', $state->stage);
+        $this->assertSame([150, 151], [$this->fixture->values[22], $this->fixture->values[23]]);
+
+        $this->send($this->colour('underworld'));
+        $this->finish();
+        $this->send($this->white('future-1'));
+        $this->finish();
+        $this->assertSame([200, 1000], [$this->fixture->values[22], $this->fixture->values[23]]);
+    }
+
+    public function test_missing_colour_capture_is_rejected_before_the_first_write(): void
+    {
+        $this->send($this->colour('absent-capture'));
+        $state = $this->until(fn ($state) => $state->error !== null);
+        $this->assertSame('preset_not_configured', $state->error);
+        $this->assertSame([], $this->fixture->writes);
+    }
+
+    public static function encounterWhites(): array
+    {
+        return [['future-1', false], ['future-1', true], ['future-6', false], ['future-6', true]];
+    }
+
+    #[DataProvider('encounterWhites')]
+    public function test_white_encounter_entry_and_exit_change_temperature_at_minimum_before_fixed_rise(string $profile, bool $onboard): void
+    {
+        config()->set('lighting.cloud.onboard_fades', $onboard);
+        $this->send($this->white($profile));
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $fade = $state->native_effect['fade'];
+        $temperature = $this->fixture->profiles()[$profile]['temperature'];
+        $this->assertSame(2500, $fade['duration'], 'Low target brightness must not shorten the encounter rise');
+        $this->assertSame(10, $fade['from']['bright']);
+        $this->assertSame($temperature, $fade['from']['temperature']);
+        $this->assertSame($temperature, $fade['to']['temperature']);
+        $this->assertSame([10, 10], array_column($this->commits(), 'brightness'));
+        $this->assertSame([], $this->frames());
+        $this->assertSame([], $this->nativePrograms());
+        $state = $this->finish();
+        $this->assertSame('white', $state->stage);
+        $this->assertCount(3, $this->commits(), 'Exactly one dim, one temperature anchor, and one final endpoint');
+        $writes = count($this->fixture->writes);
+        $this->send($this->white($profile));
+        $this->finish();
+        $this->assertCount($writes, $this->fixture->writes, 'Repeating a completed target never dips');
+
+        $this->send($this->white());
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertSame(10, $state->native_effect['fade']['from']['bright']);
+        $this->assertSame(332, $state->native_effect['fade']['from']['temperature']);
+        $this->finish();
+        $this->assertSame([], $this->nativePrograms());
+
+        config()->set('lighting.cloud.onboard_fades', false);
+        $this->send($this->mythos());
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertFalse($state->native_effect['encounterTransition']);
+        $this->assertSame(4000, $state->native_effect['fade']['duration'], 'A completed exit does not alter later ordinary Mythos transitions');
+    }
+
+    public function test_encounter_origin_survives_dark_intermediate_retarget_and_worker_restart(): void
+    {
+        $this->fixture->white('future-6');
+        $this->send($this->white());
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'plan'
+            && ($state->native_effect['encounterMinimum'] ?? false));
+        $this->assertSame(10, $state->native_effect['output']['channels']['bright']);
+        $this->send($this->mythos('blue'));
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertTrue($state->native_effect['encounterTransition']);
+        $this->assertSame('scene', $state->native_effect['fade']['purpose']);
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertSame(10, $state->native_effect['fade']['from']['v']);
+        $this->assertSame([], $this->nativePrograms());
+        $state = $this->finish();
+        $this->assertSame('scene', $state->stage);
+    }
+
+    public function test_manual_normal_white_override_discards_a_completed_encounter_policy(): void
+    {
+        $this->send($this->colour());
+        $this->finish();
+        $this->fixture->white('action');
+        $this->send($this->mythos());
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertFalse($state->native_effect['encounterTransition']);
+        $this->assertSame(4000, $state->native_effect['fade']['duration']);
+    }
+
+    public function test_encounter_retarget_interrupts_qualified_native_wait_with_direct_minimum(): void
+    {
+        config()->set('lighting.cloud.onboard_fades', true);
+        $this->fixture->white('dark');
+        $this->send($this->mythos('blue'));
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'onboard_wait');
+        $oldDeadline = $state->native_effect['notBefore'];
+        $before = count($this->fixture->writes);
+        $this->send($this->white('future-1'));
+        $state = $this->until(fn () => count($this->fixture->writes) > $before);
+        $this->assertLessThan($oldDeadline, $this->now);
+        $last = end($this->fixture->writes);
+        $this->assertSame('static_colour', $last['operation']);
+        $this->assertSame(199, $last['channels']['h']);
+        $this->assertSame(10, $last['channels']['v']);
+        $state = $this->finish();
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertCount(1, $this->nativePrograms(), 'No new native program is issued for the encounter transition');
+        $this->assertSame([200, 1000], [$this->fixture->values[22], $this->fixture->values[23]]);
     }
 
     public function test_onboard_dark_sends_one_target_only_program_and_waits_before_recording_its_output(): void
@@ -1018,6 +1278,8 @@ class ContinuousCloudFixture extends TuyaCloudClient
     {
         return ['dark' => ['brightness' => 10, 'temperature' => 0, 'brightnessPct' => 1.0, 'temperaturePct' => 0.0],
             'action' => ['brightness' => 1000, 'temperature' => 332, 'brightnessPct' => 100.0, 'temperaturePct' => 33.0],
+            'future-1' => ['brightness' => 200, 'temperature' => 1000, 'brightnessPct' => 20.0, 'temperaturePct' => 100.0],
+            'future-6' => ['brightness' => 150, 'temperature' => 151, 'brightnessPct' => 15.0, 'temperaturePct' => 15.0],
             'encounters' => ['brightness' => 901, 'temperature' => 197, 'brightnessPct' => 90.0, 'temperaturePct' => 20.0]];
     }
 
@@ -1032,6 +1294,12 @@ class ContinuousCloudFixture extends TuyaCloudClient
         }
 
         return $result;
+    }
+
+    public function colours(): array
+    {
+        return ['detained' => ['h' => 25, 's' => 853, 'v' => 1000],
+            'underworld' => ['h' => 250, 's' => 670, 'v' => 150]];
     }
 
     public function white(string $profile): void
@@ -1157,6 +1425,11 @@ class ContinuousSnapshotFixture extends NativeCloudLightingDriver
     public function scenes(): array
     {
         return $this->fixture->scenes();
+    }
+
+    public function colours(): array
+    {
+        return $this->fixture->colours();
     }
 
     public function readSnapshot(): array

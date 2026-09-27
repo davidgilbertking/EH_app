@@ -11,7 +11,11 @@ class CloudLightingFiles
 
     public readonly array $profiles;
 
+    public readonly array $colours;
+
     public readonly array $scenes;
+
+    private readonly array $calibrationProfiles;
 
     private const TYPES = ['switch_led' => 'Boolean', 'work_mode' => 'Enum', 'bright_value_v2' => 'Integer',
         'temp_value_v2' => 'Integer', 'control_data' => 'Json', 'scene_data_v2' => 'Json'];
@@ -25,15 +29,15 @@ class CloudLightingFiles
         $schema = [];
         foreach ($document['response']['result']['functions'] ?? [] as $entry) {
             $code = $entry['code'] ?? null;
-            if (! is_string($code) || ! isset(self::TYPES[$code])) {
+            if (! is_string($code) || (! isset(self::TYPES[$code]) && $code !== 'colour_data_v2')) {
                 continue;
             }
-            if (isset($schema[$code]) || ($entry['type'] ?? null) !== self::TYPES[$code]) {
+            if (isset($schema[$code]) || ($entry['type'] ?? null) !== (self::TYPES[$code] ?? 'Json')) {
                 self::fail();
             }
             $schema[$code] = self::object($entry['values'] ?? null);
         }
-        if (count($schema) !== count(self::TYPES) || ! in_array('white', $schema['work_mode']['range'] ?? [], true)
+        if (array_diff_key(self::TYPES, $schema) !== [] || ! in_array('white', $schema['work_mode']['range'] ?? [], true)
             || ! in_array('scene', $schema['work_mode']['range'] ?? [], true)
             || ! in_array('gradient', $schema['control_data']['change_mode']['range'] ?? [], true)) {
             self::fail();
@@ -63,7 +67,10 @@ class CloudLightingFiles
         if ($profiles['dark']['brightness'] !== 10 || $profiles['dark']['temperature'] !== 0) {
             self::fail();
         }
-        $this->profiles = $profiles;
+        // Captured targets can share slider percentages while retaining different
+        // raw values. They must never become interpolation calibration anchors.
+        $this->calibrationProfiles = $profiles;
+        [$this->profiles, $this->colours] = $this->loadCaptures($directory, $deviceId, $profiles);
         $this->scenes = $this->loadScenes($directory, $deviceId);
     }
 
@@ -144,7 +151,7 @@ class CloudLightingFiles
     private function interpolate(float $value, string $field, bool $inverse): float
     {
         $points = [];
-        foreach ($this->profiles as $profile) {
+        foreach ($this->calibrationProfiles as $profile) {
             $points[] = [$profile[$field.'Pct'], $profile[$field]];
         }
         if ($field === 'temperature') {
@@ -168,6 +175,119 @@ class CloudLightingFiles
             }
         }
         self::fail();
+    }
+
+    private function loadCaptures(string $directory, string $deviceId, array $profiles): array
+    {
+        $path = $directory.'/preset-captures.json';
+        if (! file_exists($path) && ! is_link($path)) {
+            return [$profiles, []];
+        }
+        $saved = self::readJson($path);
+        $configured = config('lighting.presets', []);
+        if (($saved['schema_version'] ?? null) !== 1 || ($saved['device_id'] ?? null) !== $deviceId
+            || ! is_array($saved['presets'] ?? null) || ! is_array($configured)) {
+            self::fail();
+        }
+        $colours = [];
+        foreach ($saved['presets'] as $alias => $capture) {
+            $preset = $configured[$alias] ?? null;
+            $kind = $capture['kind'] ?? null;
+            if (! is_string($alias) || ! is_array($capture) || ! is_array($preset)
+                || ! in_array($kind, ['white', 'colour'], true) || ($preset['kind'] ?? null) !== $kind
+                || ! self::sameFields($capture['ui'] ?? null, $preset['ui'] ?? null)
+                || ($capture['user_confirmed'] ?? null) !== true || ! is_bool($capture['replay_verified'] ?? null)
+                || ! is_bool($capture['integrated'] ?? null)) {
+                self::fail();
+            }
+            $ui = $capture['ui'];
+            $fields = $kind === 'white' ? ['brightness', 'temperature'] : ['hue', 'brightness', 'balance'];
+            if (count($ui) !== count($fields)) {
+                self::fail();
+            }
+            foreach ($fields as $field) {
+                self::range($ui[$field] ?? null, ['min' => $field === 'brightness' ? 1 : 0,
+                    'max' => $field === 'hue' ? 360 : 100, 'scale' => 0, 'step' => 1]);
+            }
+            $dps = $capture['dps'] ?? null;
+            if (! is_array($dps) || count($dps) !== ($kind === 'white' ? 4 : 3)
+                || ($dps['20'] ?? null) !== true || ($dps['21'] ?? null) !== $kind) {
+                self::fail();
+            }
+            $this->validateCaptureSource($capture, $alias, $profiles);
+            if ($kind === 'white') {
+                self::range($dps['22'] ?? null, $this->schema['bright_value_v2']);
+                self::range($dps['23'] ?? null, $this->schema['temp_value_v2']);
+                $profile = ['brightnessPct' => (float) $ui['brightness'], 'temperaturePct' => (float) $ui['temperature'],
+                    'brightness' => $dps['22'], 'temperature' => $dps['23']];
+                if (isset($profiles[$alias]) && $profiles[$alias] !== $profile) {
+                    self::fail();
+                }
+                $profiles[$alias] = $profile;
+            } else {
+                $raw = $dps['24'] ?? null;
+                if (! in_array('colour', $this->schema['work_mode']['range'] ?? [], true)
+                    || ! is_string($raw) || ! preg_match('/\A[0-9a-fA-F]{12}\z/D', $raw)) {
+                    self::fail();
+                }
+                $hsv = [];
+                foreach (['h', 's', 'v'] as $index => $field) {
+                    $hsv[$field] = hexdec(substr($raw, $index * 4, 4));
+                    // DP24 uses the colour/scene scale (0..1000), never the
+                    // unrelated control_data scale (0..255).
+                    self::range($hsv[$field], $this->schema['colour_data_v2'][$field]
+                        ?? $this->schema['scene_data_v2']['scene_units'][$field] ?? null);
+                }
+                if ($hsv['h'] > 360 || $hsv['s'] > 1000 || $hsv['v'] < 10 || $hsv['v'] > 1000
+                    || ! self::sameFields($capture['hsv'] ?? null, $hsv)) {
+                    self::fail();
+                }
+                $colours[$alias] = $hsv;
+            }
+        }
+
+        return [$profiles, $colours];
+    }
+
+    private function validateCaptureSource(array $capture, string $alias, array $profiles): void
+    {
+        if (! is_string($capture['source_snapshot'] ?? null)
+            || ! preg_match('/\A[A-Za-z0-9][A-Za-z0-9_.-]*\.json\z/D', $capture['source_snapshot'])
+            || ! is_string($capture['captured_at'] ?? null)
+            || ! preg_match('/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\z/D', $capture['captured_at'])
+            || strtotime($capture['captured_at']) === false) {
+            self::fail();
+        }
+        if (($capture['source'] ?? null) === 'existing_calibration') {
+            if (! isset($profiles[$alias]) || ($capture['kind'] ?? null) !== 'white'
+                || ($capture['source_calibration'] ?? null) !== 'calibration.json'
+                || ($capture['replay_verified'] ?? null) !== true) {
+                self::fail();
+            }
+
+            return;
+        }
+        if (($capture['source'] ?? null) !== 'cloud_properties' || ! is_array($capture['reported_times'] ?? null)
+            || count($capture['reported_times']) !== count($capture['dps'])) {
+            self::fail();
+        }
+        foreach ($capture['dps'] as $dp => $value) {
+            $time = $capture['reported_times'][$dp] ?? null;
+            if (! is_int($time) || $time < 0 || $time > (strtotime($capture['captured_at']) + 1) * 1000) {
+                self::fail();
+            }
+        }
+    }
+
+    private static function sameFields(mixed $actual, mixed $expected): bool
+    {
+        if (! is_array($actual) || ! is_array($expected)) {
+            return false;
+        }
+        ksort($actual);
+        ksort($expected);
+
+        return $actual === $expected;
     }
 
     private function loadScenes(string $directory, string $deviceId): array

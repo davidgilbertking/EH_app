@@ -560,7 +560,7 @@ test('navigation cannot replace a pending Action lighting target with Encounters
     await flush();
 });
 
-test('only a terminal music choice after leaving Mythos sends the Encounters lighting intent', async () => {
+test('only a terminal music choice after leaving Mythos sends its configured lighting intent', async () => {
     const { client, requests } = setup();
     const audio = { state: { playingFolder: null },
         play(options) { this.state.playingFolder = options.folderSlug; } };
@@ -579,9 +579,82 @@ test('only a terminal music choice after leaving Mythos sends the Encounters lig
     assert.equal(flow.state.mythosSessionId, 'session');
     flow.playUserChoice({ folderSlug: 'special/victory' }, 'other');
     assert.equal(requests.length, 3);
-    assert.deepEqual(requests[2].body.target, { kind: 'white', profile: 'encounters' });
+    assert.deepEqual(requests[2].body.target, { kind: 'white', profile: 'victory' });
     requests[2].resolve({ data: status(3, { accepted: true }) });
     await flush();
     assert.equal(audio.state.playingFolder, 'special/victory');
     assert.equal(flow.state.mythosSessionId, null);
+});
+
+test('death during acquisition preserves the pending static colour intent and sends no replacement', async () => {
+    const { client, requests } = setup();
+    const audio = { state: { playingFolder: null },
+        play(options) { this.state.playingFolder = options.folderSlug; } };
+    const flow = createGameFlowController({ audio, lighting: client, canControlLighting: () => client.state.canControl });
+    flow.playUserChoice({ folderSlug: 'contacts/obstruction/detained' });
+    flow.playUserChoice({ folderSlug: 'special/death-health' });
+    assert.equal(audio.state.playingFolder, 'special/death-health');
+    assert.equal(requests.length, 1);
+    requests[0].resolve({ data: status(1, { controlEpoch: 'epoch' }) });
+    await flush();
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[1].body.target, { kind: 'colour', profile: 'detained' });
+    requests[1].resolve({ data: status(2, { accepted: true }) });
+    await flush();
+    flow.playUserChoice({ folderSlug: 'special/devoured' });
+    assert.equal(requests.length, 2);
+    assert.equal(audio.state.playingFolder, 'special/devoured');
+});
+
+test('target settlement requires its applied revision and rejects stale completion while newer POSTs are pending', async () => {
+    const { client, requests, enable } = setup();
+    const action = { kind: 'white', profile: 'action' };
+    const combat = { kind: 'white', profile: 'combat' };
+    assert.equal(client.isTargetSettled(action), false);
+    await enable();
+    const first = client.requestTarget(action);
+    assert.equal(client.isTargetSettled(action), false);
+    requests.at(-1).resolve({ data: status(2, { accepted: true, target: action, appliedRevision: 1 }) });
+    await first;
+    assert.equal(client.isTargetSettled(action), false);
+    const read = client.poll();
+    requests.at(-1).resolve({ data: status(3, { target: action, appliedRevision: 3 }) });
+    await read;
+    assert.equal(client.isTargetSettled(action), true);
+
+    const second = client.requestTarget(combat);
+    const combatRequest = requests.at(-1);
+    const third = client.requestTarget(action);
+    const actionRequest = requests.at(-1);
+    // The reported target/revisions still describe the earlier completed Action.
+    assert.equal(client.isTargetSettled(action), false);
+    combatRequest.resolve({ data: status(4, { accepted: true, target: combat, appliedRevision: 4 }) });
+    await second;
+    assert.equal(client.isTargetSettled(action), false);
+    actionRequest.resolve({ data: status(5, { accepted: true, target: action, appliedRevision: 4 }) });
+    await third;
+    assert.equal(client.isTargetSettled(action), false);
+    const finalRead = client.poll();
+    requests.at(-1).resolve({ data: status(6, { target: action, appliedRevision: 6 }) });
+    await finalRead;
+    assert.equal(client.isTargetSettled(action), true);
+    assert.equal(client.isTargetSettled(combat), false);
+    client.setAccess(true, 42);
+    assert.equal(client.isTargetSettled(action), false);
+});
+
+test('status reporting an old completed target cannot settle a new pending acquisition', async () => {
+    const { client, requests } = setup();
+    const target = { kind: 'white', profile: 'action' };
+    const pending = client.requestTarget(target);
+    requests[0].resolve({ data: status(10, { controlEpoch: 'new-epoch', target, appliedRevision: 10 }) });
+    await flush();
+    assert.equal(client.isTargetSettled(target), false);
+    requests[1].resolve({ data: status(11, { accepted: true, target, appliedRevision: 10 }) });
+    await pending;
+    assert.equal(client.isTargetSettled(target), false);
+    const read = client.poll();
+    requests.at(-1).resolve({ data: status(12, { target, appliedRevision: 12 }) });
+    await read;
+    assert.equal(client.isTargetSettled(target), true);
 });

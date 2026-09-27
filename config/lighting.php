@@ -1,5 +1,23 @@
 <?php
 
+$catalog = json_decode(file_get_contents(__DIR__.'/lighting-presets.json'), true, 512, JSON_THROW_ON_ERROR);
+$whiteProfiles = $colourProfiles = [];
+foreach ($catalog['profiles'] as $name => $profile) {
+    if ($profile['kind'] === 'white') {
+        $whiteProfiles[$name] = [
+            'brightnessPct' => $profile['ui']['brightness'],
+            'temperaturePct' => $profile['ui']['temperature'],
+        ];
+    } elseif ($profile['kind'] === 'colour') {
+        // Simulation uses UI values. Physical output uses the exact private capture.
+        $colourProfiles[$name] = [
+            'h' => $profile['ui']['hue'],
+            's' => $profile['ui']['balance'] * 10,
+            'v' => $profile['ui']['brightness'] * 10,
+        ];
+    }
+}
+
 return [
     // Empty allowlist disables all account access, including persisted leases.
     'allowed_user_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('LIGHTING_ALLOWED_USER_IDS', ''))))),
@@ -11,6 +29,9 @@ return [
     'white_fade_up_ms' => (int) env('LIGHTING_WHITE_FADE_UP_MS', env('LIGHTING_WHITE_FADE_MS', 4000)),
     'scene_fade_out_ms' => (int) env('LIGHTING_SCENE_FADE_OUT_MS', 2000),
     'music_delay_multiplier' => (float) env('LIGHTING_MUSIC_DELAY_MULTIPLIER', 1.8),
+    // Restriction / Other World: direct minimum, then a fixed rise for either mode.
+    'encounter_fade_in_ms' => (int) env('LIGHTING_ENCOUNTER_FADE_IN_MS', 2500),
+    'encounter_music_delay_multiplier' => (float) env('LIGHTING_ENCOUNTER_MUSIC_DELAY_MULTIPLIER', 0.6),
     'scene_fade_in_ms' => (int) env('LIGHTING_SCENE_FADE_IN_MS', 4000),
     'dark_hold_ms' => (int) env('LIGHTING_DARK_HOLD_MS', 150),
     'curve' => env('LIGHTING_CURVE', 'smoothstep'), // smoothstep | linear
@@ -21,10 +42,9 @@ return [
     'control_lease_ms' => (int) env('LIGHTING_CONTROL_LEASE_MS', 43200000),
     'observation_max_age_ms' => 10000,
     'history_limit' => 256,
-    'white_profiles' => [
-        'action' => ['brightnessPct' => 100, 'temperaturePct' => 33],
-        'encounters' => ['brightnessPct' => 90, 'temperaturePct' => 20],
-    ],
+    'presets' => $catalog['profiles'],
+    'white_profiles' => $whiteProfiles,
+    'colour_profiles' => $colourProfiles,
     'cloud' => [
         'continuous_transitions' => (bool) env('LIGHTING_CLOUD_CONTINUOUS_TRANSITIONS', false),
         // Local candidate: the lamp interpolates down/RGB fades in DP25.
