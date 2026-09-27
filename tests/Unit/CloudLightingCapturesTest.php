@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Lighting\Drivers\CloudLightingFiles;
+use App\Lighting\Drivers\TuyaCloudClient;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -85,6 +86,35 @@ class CloudLightingCapturesTest extends TestCase
         $this->assertSame(['brightnessPct' => 15.0, 'temperaturePct' => 15.0, 'brightness' => 153, 'temperature' => 153], $files->profiles['future-6']);
         $this->assertArrayNotHasKey('future-1', $files->colours);
         $this->assertArrayNotHasKey('future-6', $files->colours);
+        $this->assertSame($before, hash_file('sha256', $this->directory.'/preset-captures.json'));
+    }
+
+    public function test_rebound_device_preserves_expanded_captures_and_their_provenance(): void
+    {
+        $original = new CloudLightingFiles($this->directory, self::DEVICE);
+        $before = hash_file('sha256', $this->directory.'/preset-captures.json');
+        $functions = $this->read('cloud-functions-inspection.json')['response']['result']['functions'];
+        $range = static fn (int $min): array => ['type' => 'value', 'min' => $min, 'max' => 1000, 'step' => 1, 'scale' => 0];
+        $properties = [];
+        foreach ([20 => ['switch_led', ['type' => 'bool']],
+            21 => ['work_mode', ['type' => 'enum', 'range' => ['white', 'colour', 'scene']]],
+            22 => ['bright_value', $range(10)], 23 => ['temp_value', $range(0)],
+            24 => ['colour_data', ['type' => 'string', 'maxlen' => 255]],
+            25 => ['scene_data', ['type' => 'string', 'maxlen' => 255]],
+            28 => ['control_data', ['type' => 'string', 'maxlen' => 255]],
+            35 => ['switch_gradient', ['type' => 'raw', 'maxlen' => 128]]] as $id => [$code, $spec]) {
+            $properties[] = ['abilityId' => $id, 'code' => $code, 'accessMode' => $id === 28 ? 'wr' : 'rw', 'typeSpec' => $spec];
+        }
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_fixture_device');
+        $client->expects($this->once())->method('readFunctions')->willReturn($functions);
+        $client->expects($this->once())->method('readModel')->willReturn(['services' => [['code' => '', 'properties' => $properties]]]);
+        $client->expects($this->never())->method('sendCommands');
+        $client->expects($this->never())->method('sendStaticColour');
+        $files = new CloudLightingFiles($this->directory, 'rebound_fixture_device', $client);
+        $this->assertSame(self::DEVICE, $files->sourceDeviceId);
+        $this->assertSame($original->profiles, $files->profiles);
+        $this->assertSame($original->colours, $files->colours);
         $this->assertSame($before, hash_file('sha256', $this->directory.'/preset-captures.json'));
     }
 

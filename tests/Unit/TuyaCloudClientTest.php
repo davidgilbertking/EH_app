@@ -71,6 +71,37 @@ class TuyaCloudClientTest extends TestCase
         $this->fail('Expected a sanitized TuyaCloudException.');
     }
 
+    public function test_compatibility_schema_uses_only_the_selected_device_read_endpoint(): void
+    {
+        $functions = [['code' => 'switch_led', 'type' => 'Boolean', 'values' => '{}']];
+        Http::fake([
+            self::ENDPOINT.'/v1.0/token?grant_type=1' => Http::response($this->token()),
+            self::ENDPOINT.'/v1.1/devices/'.self::DEVICE.'/specifications' => Http::response([
+                'success' => true, 'result' => ['functions' => $functions],
+            ]),
+        ]);
+        $this->assertSame($functions, $this->client()->readFunctions());
+        Http::assertSentCount(2);
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'GET'
+            && $request->url() === self::ENDPOINT.'/v1.1/devices/'.self::DEVICE.'/specifications');
+        Http::assertNotSent(fn (Request $request): bool => $request->method() !== 'GET');
+    }
+
+    public function test_malformed_compatibility_schema_fails_without_writes(): void
+    {
+        Http::fake([
+            self::ENDPOINT.'/v1.0/token?grant_type=1' => Http::response($this->token()),
+            self::ENDPOINT.'/v1.1/devices/'.self::DEVICE.'/specifications' => Http::response([
+                'success' => true, 'result' => ['functions' => ['switch_led' => 'Boolean']],
+            ]),
+        ]);
+        $error = $this->failure(fn () => $this->client()->readFunctions());
+        $this->assertSame('configuration_error', $error->getMessage());
+        $this->assertFalse($error->writeOutcomeUnknown);
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn (Request $request): bool => $request->method() !== 'GET');
+    }
+
     public function test_known_hmac_vectors_sign_the_exact_token_shadow_and_unicode_json_bodies(): void
     {
         $requests = [];

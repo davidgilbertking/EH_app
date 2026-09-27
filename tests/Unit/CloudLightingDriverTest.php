@@ -91,6 +91,8 @@ class CloudLightingDriverTest extends TestCase
     {
         $client = $this->createMock(TuyaCloudClient::class);
         $client->method('deviceId')->willReturn($this->deviceId);
+        $client->expects($this->never())->method('readFunctions');
+        $client->expects($this->never())->method('readModel');
 
         return $client;
     }
@@ -296,5 +298,131 @@ class CloudLightingDriverTest extends TestCase
             $this->assertGreaterThan($previous, $value);
             $previous = $value;
         }
+    }
+
+    private function capturedFunctions(): array
+    {
+        return json_decode(file_get_contents($this->directory.'/cloud-functions-inspection.json'), true, flags: JSON_THROW_ON_ERROR)['response']['result']['functions'];
+    }
+
+    private function reboundModel(): array
+    {
+        $range = static fn (int $min): array => ['type' => 'value', 'min' => $min, 'max' => 1000, 'step' => 1, 'scale' => 0];
+        $properties = [];
+        foreach ([20 => ['switch_led', ['type' => 'bool']],
+            21 => ['work_mode', ['type' => 'enum', 'range' => ['white', 'colour', 'scene', 'music']]],
+            22 => ['bright_value', $range(10)], 23 => ['temp_value', $range(0)],
+            24 => ['colour_data', ['type' => 'string', 'maxlen' => 255]],
+            25 => ['scene_data', ['type' => 'string', 'maxlen' => 255]],
+            28 => ['control_data', ['type' => 'string', 'maxlen' => 255]],
+            35 => ['switch_gradient', ['type' => 'raw', 'maxlen' => 128]]] as $id => [$code, $spec]) {
+            $properties[] = ['abilityId' => $id, 'code' => $code, 'accessMode' => $id === 28 ? 'wr' : 'rw', 'typeSpec' => $spec];
+        }
+
+        return ['services' => [['code' => '', 'properties' => $properties]]];
+    }
+
+    public function test_new_device_id_reuses_exact_profiles_and_scenes_without_rewriting_the_capture(): void
+    {
+        $original = new CloudLightingFiles($this->directory, $this->deviceId);
+        $bytes = array_map('file_get_contents', glob($this->directory.'/*.json'));
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_device_456');
+        $functions = array_reverse($this->capturedFunctions());
+        foreach ($functions as &$function) {
+            $values = json_decode($function['values'], true, flags: JSON_THROW_ON_ERROR);
+            if (isset($values['range'])) {
+                $values['range'] = array_reverse($values['range']);
+            }
+            $function['values'] = array_reverse($values, true);
+        }
+        unset($function);
+        $client->expects($this->once())->method('readFunctions')->willReturn($functions);
+        $client->expects($this->once())->method('readModel')->willReturn($this->reboundModel());
+        $client->expects($this->never())->method('sendCommands');
+        $files = new CloudLightingFiles($this->directory, 'rebound_device_456', $client);
+        $this->assertSame($this->deviceId, $files->sourceDeviceId);
+        $this->assertSame($this->deviceId, CloudLightingFiles::capturedDeviceId($this->directory));
+        $this->assertSame($original->profiles, $files->profiles);
+        $this->assertSame($original->scenes, $files->scenes);
+        $this->assertSame($original->schema, $files->schema);
+        $this->assertSame($bytes, array_map('file_get_contents', glob($this->directory.'/*.json')));
+    }
+
+    public function test_new_id_without_live_client_remains_strictly_rejected(): void
+    {
+        $this->expectExceptionMessage('configuration_error');
+        new CloudLightingFiles($this->directory, 'rebound_device_456');
+    }
+
+    public function test_rebound_cloud_driver_preflights_once_and_keeps_the_exact_white_payload(): void
+    {
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_device_456');
+        $client->expects($this->once())->method('readFunctions')->willReturn($this->capturedFunctions());
+        $client->expects($this->once())->method('readModel')->willReturn($this->reboundModel());
+        $client->expects($this->exactly(2))->method('sendCommands')->with([
+            ['code' => 'switch_led', 'value' => true], ['code' => 'bright_value_v2', 'value' => 901],
+            ['code' => 'temp_value_v2', 'value' => 197], ['code' => 'work_mode', 'value' => 'white'],
+        ])->willReturn(['sentAt' => 100000]);
+        $client->expects($this->exactly(2))->method('readProperties')->willReturn($this->report([22 => 901, 23 => 197]));
+        $driver = $this->driver($client);
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $result = $driver->execute(['operation' => 'white', 'brightnessPct' => 90, 'temperaturePct' => 20,
+                'commit' => true], $this->white(), 50);
+            $this->assertSame('cloud_readback', $result['completion']);
+        }
+    }
+
+    #[DataProvider('incompatibleRebound')]
+    public function test_new_id_with_incompatible_schema_or_native_map_never_writes(string $failure): void
+    {
+        $functions = $this->capturedFunctions();
+        $model = $this->reboundModel();
+        if ($failure === 'range') {
+            $functions[2]['values'] = json_encode(['min' => 10, 'max' => 255, 'scale' => 0, 'step' => 1], JSON_THROW_ON_ERROR);
+        } elseif ($failure === 'type') {
+            $functions[2]['type'] = 'String';
+        } elseif ($failure === 'missing') {
+            array_pop($functions);
+        } elseif ($failure === 'duplicate') {
+            $functions[] = $functions[2];
+        } elseif ($failure === 'native dp') {
+            $model['services'][0]['properties'][2]['abilityId'] = 122;
+        } elseif ($failure === 'native range') {
+            $model['services'][0]['properties'][2]['typeSpec']['max'] = 255;
+        } elseif ($failure === 'native access') {
+            $model['services'][0]['properties'][6]['accessMode'] = 'ro';
+        } elseif ($failure === 'native length') {
+            $model['services'][0]['properties'][5]['typeSpec']['maxlen'] = 10;
+        }
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_device_456');
+        $client->expects($this->once())->method('readFunctions')->willReturn($functions);
+        $client->expects(str_starts_with($failure, 'native') ? $this->once() : $this->never())
+            ->method('readModel')->willReturn($model);
+        $client->expects($this->never())->method('readProperties');
+        $client->expects($this->never())->method('sendCommands');
+        $this->expectExceptionMessage('configuration_error');
+        $this->driver($client)->execute(['operation' => 'dark_anchor'], $this->white(), 10);
+    }
+
+    public static function incompatibleRebound(): array
+    {
+        return array_map(static fn (string $failure): array => [$failure], [
+            'range', 'type', 'missing', 'duplicate', 'native dp', 'native range', 'native access', 'native length',
+        ]);
+    }
+
+    public function test_mixed_capture_ids_fail_before_rebinding_network_checks(): void
+    {
+        $this->edit('scene-presets.json', static fn (array $saved): array => array_replace($saved, ['device_id' => 'unrelated_capture']));
+        $client = $this->createMock(TuyaCloudClient::class);
+        $client->method('deviceId')->willReturn('rebound_device_456');
+        $client->expects($this->never())->method('readFunctions');
+        $client->expects($this->never())->method('readModel');
+        $client->expects($this->never())->method('sendCommands');
+        $this->expectExceptionMessage('configuration_error');
+        $this->driver($client)->execute(['operation' => 'dark_anchor'], $this->white(), 10);
     }
 }

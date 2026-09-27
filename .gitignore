@@ -49,4 +49,5 @@ snapshot.json
 /storage/app/private/lighting/
 /storage/framework/lighting-sender.lock
 /storage/framework/lighting-sender-*.lock
+/storage/framework/lighting-worker-*.lock
 /scripts/lighting/**/__pycache__/
