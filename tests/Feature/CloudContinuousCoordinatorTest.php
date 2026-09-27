@@ -196,7 +196,10 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame('underworld', $state->observed['profile']);
         $this->assertSame(['h' => 250, 's' => 670, 'v' => 150], $state->observed['hsv']);
         $this->assertCount(3, $this->colourHolds());
-        $this->assertSame([10], array_values(array_filter(array_column($this->commits(), 'brightness'), fn ($v) => $v !== null)));
+        $this->assertSame([], $this->commits(), 'Colour-to-colour must never enter white mode');
+        foreach ($this->frames() as $frame) {
+            $this->assertSame(0, $frame['channels']['bright']);
+        }
         $oldMinimum = $this->colourHolds()[0];
         $this->assertSame(25, $oldMinimum['channels']['h']);
         $this->assertSame(10, $oldMinimum['channels']['v']);
@@ -229,6 +232,164 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame(250, $endpoints[0]['channels']['h']);
         $this->assertTrue($state->native_effect['encounterTransition']);
         $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertSame([], $this->commits(), 'Retargeting and restart must not add a white bridge');
+    }
+
+    private function droppedColourEndpoint(): LightingState
+    {
+        $this->fixture->white('dark');
+        $this->send($this->colour('underworld'));
+        $this->until(fn ($state) => $state->native_effect['phase'] === 'settle'
+            && $state->native_effect['fade']['purpose'] === 'colour');
+        $this->fixture->discardedWrites[] = count($this->fixture->writes) + 1;
+
+        return $this->until(fn ($state) => ($state->native_effect['pending']['descriptor']['profile'] ?? null) === 'underworld');
+    }
+
+    public function test_acknowledged_but_unreported_colour_endpoint_retries_once_after_restart(): void
+    {
+        $this->droppedColourEndpoint();
+        $writes = count($this->fixture->writes);
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->tick(16000);
+        $this->assertCount($writes + 1, $this->fixture->writes);
+        $this->assertSame(1, $state->native_effect['pending']['descriptor']['readbackRetries']);
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame('underworld', $state->observed['profile']);
+        $this->assertCount(3, $this->colourHolds());
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'continuous_endpoint_retry']);
+    }
+
+    public function test_newest_target_replaces_expired_acknowledged_endpoint_without_replaying_old_colour(): void
+    {
+        $this->droppedColourEndpoint();
+        $writes = count($this->fixture->writes);
+        $this->send($this->white());
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->tick(16000);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertCount($writes, $this->fixture->writes);
+        $this->assertTrue($state->native_effect['encounterTransition']);
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame($this->white(), $state->native_effect['target']);
+        $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $this->assertCount(2, $this->colourHolds(), 'No resend of the obsolete colour');
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'continuous_endpoint_unconfirmed']);
+    }
+
+    public function test_retry_limit_preserves_error_but_does_not_block_a_later_gesture_forever(): void
+    {
+        $this->droppedColourEndpoint();
+        $this->fixture->discardedWrites[] = count($this->fixture->writes) + 1;
+        $this->tick(16000);
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->tick(16000);
+        $this->assertSame('transport_timeout', $state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertNotNull($state->native_effect['unconfirmedEndpoint']);
+        $this->assertNotSame($state->revision, $state->applied_revision);
+        $writes = count($this->fixture->writes);
+        $reads = $this->fixture->reads;
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $this->tick(60000);
+        $this->assertCount($writes, $this->fixture->writes);
+        $this->assertSame($reads, $this->fixture->reads);
+        $this->send($this->white());
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame($this->white(), $state->native_effect['target']);
+    }
+
+    public function test_revocation_prevents_retry_of_an_acknowledged_endpoint(): void
+    {
+        $this->droppedColourEndpoint();
+        app(LightingControl::class)->revokeSession($this->user, 'continuous-fixture');
+        $writes = count($this->fixture->writes);
+        $state = $this->tick(16000);
+        $this->assertFalse($state->enabled);
+        $this->assertNull($state->native_effect['pending']);
+        $this->tick(16000);
+        $this->assertCount($writes, $this->fixture->writes);
+    }
+
+    public function test_external_device_change_prevents_automatic_endpoint_retry(): void
+    {
+        $this->droppedColourEndpoint();
+        $this->fixture->white('action');
+        $writes = count($this->fixture->writes);
+        $state = $this->tick(16000);
+        $this->assertSame('transport_timeout', $state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertCount($writes, $this->fixture->writes);
+        $this->assertSame(1000, $this->fixture->values[22]);
+    }
+
+    public function test_new_intent_during_confirmation_read_cannot_retry_an_obsolete_endpoint(): void
+    {
+        $this->droppedColourEndpoint();
+        $writes = count($this->fixture->writes);
+        $this->fixture->beforeRead = function () {
+            $this->fixture->beforeRead = null;
+            $this->send($this->white('future-1'));
+        };
+        $state = $this->tick(16000);
+        $this->assertCount($writes, $this->fixture->writes);
+        $this->assertSame($this->white('future-1'), $state->native_effect['target']);
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame(200, $this->fixture->values[22]);
+    }
+
+    public function test_unknown_endpoint_readback_is_throttled_after_its_deadline(): void
+    {
+        $this->fixture->scene('blue');
+        $this->fixture->throwAt = 1;
+        $this->send($this->white());
+        $this->until(fn () => count($this->colourHolds()) === 1);
+        $this->tick(16000);
+        $reads = $this->fixture->reads;
+        $this->tick(100);
+        $this->assertSame($reads, $this->fixture->reads);
+        $this->tick(500);
+        $this->assertSame($reads + 1, $this->fixture->reads);
+        $this->assertCount(1, $this->fixture->writes);
+    }
+
+    public function test_colour_to_mythos_darkness_still_selects_white_minimum(): void
+    {
+        $this->fixture->values[21] = 'colour';
+        $this->fixture->values[24] = '0019035503e8';
+        $this->send($this->mythos());
+        $state = $this->finish();
+        $this->assertSame('dark', $state->stage);
+        $this->assertSame('white', $this->fixture->values[21]);
+        $this->assertSame(10, $this->fixture->values[22]);
+        $this->assertSame([], $this->frames());
+        $this->assertCount(1, $this->colourHolds());
+    }
+
+    public function test_late_confirmation_clears_white_endpoint_timeout_after_restart(): void
+    {
+        $this->fixture->white('dark');
+        $this->send($this->white());
+        $this->until(fn ($state) => $state->native_effect['phase'] === 'settle'
+            && $state->native_effect['fade']['purpose'] === 'white');
+        $this->fixture->throwAt = count($this->fixture->writes) + 1;
+        $this->fixture->applyBeforeThrow = true;
+        $state = $this->until(fn ($state) => ($state->native_effect['pending']['descriptor']['profile'] ?? null) === 'action');
+        $this->assertSame('transport_timeout', $state->error);
+        $writes = count($this->fixture->writes);
+        $this->coordinator = $this->makeCoordinator();
+        $this->coordinator->recover();
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertCount($writes, $this->fixture->writes);
     }
 
     public function test_unknown_colour_endpoint_post_is_reconciled_once_by_fresh_exact_readback(): void
@@ -264,6 +425,8 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame('detained', $state->observed['profile']);
         $this->assertFalse($state->observed['scenePhaseApproximate']);
         $this->assertSame(2500, $state->native_effect['fade']['duration']);
+        $whiteCommands = array_filter($this->commits(), fn ($write) => $write['brightness'] !== null);
+        $this->assertSame([], $whiteCommands, 'RGB encounter/Mythos switches must remain in RGB');
     }
 
     public function test_completed_colour_adopts_external_white_on_next_intent_and_reaches_low_white_captures(): void
@@ -754,10 +917,12 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame($this->fixture->scenes()['green']['value'], $sceneCommits[0]['commands'][0]['value']);
     }
 
-    public function test_stale_static_colour_readback_blocks_all_frames_and_is_never_reposted(): void
+    public function test_unknown_static_colour_post_with_stale_readback_is_never_reposted(): void
     {
         $this->fixture->scene('blue');
         $this->fixture->staleTimes = true;
+        $this->fixture->throwAt = 1;
+        $this->fixture->applyBeforeThrow = true;
         $this->send($this->white());
         $this->until(fn () => count($this->colourHolds()) === 1);
         $state = $this->tick(16000);
@@ -1094,9 +1259,15 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame([], $this->fixture->writes);
     }
 
-    public function test_endpoint_requires_fresh_property_times_and_is_never_reposted(): void
+    public function test_unknown_endpoint_requires_fresh_property_times_and_is_never_reposted(): void
     {
         $this->fixture->staleTimes = true;
+        $this->fixture->applyBeforeThrow = true;
+        $this->fixture->beforeWrite = function () {
+            if ((LightingState::findOrFail(1)->native_effect['pending']['descriptor']['operation'] ?? null) === 'white') {
+                $this->fixture->throwAt = count($this->fixture->writes) + 1;
+            }
+        };
         $this->send($this->mythos());
         $this->until(fn () => count($this->commits()) === 1);
         $state = $this->tick(16000);
@@ -1262,6 +1433,8 @@ class ContinuousCloudFixture extends TuyaCloudClient
 
     public bool $applyBeforeThrow = false;
 
+    public array $discardedWrites = [];
+
     public ?Closure $beforeWrite = null;
 
     public ?Closure $afterWrite = null;
@@ -1371,6 +1544,9 @@ class ContinuousCloudFixture extends TuyaCloudClient
 
     private function applyUpdates(array $updates): void
     {
+        if (in_array(count($this->writes), $this->discardedWrites, true)) {
+            return;
+        }
         $this->values = array_replace($this->values, $updates);
         if (! $this->staleTimes) {
             foreach ($updates as $dp => $value) {

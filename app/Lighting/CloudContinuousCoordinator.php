@@ -327,14 +327,17 @@ class CloudContinuousCoordinator implements LightingExecutor
                     // hue directly to 1%; DP28 always encodes a device gradient.
                     return $this->commit($effect, ['operation' => 'static_colour', 'channels' => $minimum], $now);
                 }
-            }
-            if ($output['kind'] !== 'white' || ! $this->matchesWhite($effect['snapshot'], 'dark')
+            } elseif ($output['kind'] !== 'white' || ! $this->matchesWhite($effect['snapshot'], 'dark')
                 || $channels !== $this->profileChannels('dark')) {
                 return $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now);
             }
             $effect['encounterMinimum'] = true;
         }
         if ($target['kind'] === 'mythos' && $target['color'] === null) {
+            if ($output['kind'] !== 'white' || $channels !== $destination) {
+                return $this->commit($effect, ['operation' => 'white', 'profile' => 'dark'], $now);
+            }
+
             return $this->complete($effect, $now);
         }
         $white = $target['kind'] === 'white';
@@ -499,6 +502,12 @@ class CloudContinuousCoordinator implements LightingExecutor
             $state->dark_since_ms = null;
             $state->observed = array_merge($state->observed ?? [], ['quality' => 'commanded', 'completion' => 'cloud_pending',
                 'outputSettled' => false, 'physicalConfirmed' => false]);
+            if (($pending['descriptor']['readbackRetries'] ?? 0) > 0) {
+                if (in_array($state->error, ['transport_timeout', 'offline'], true)) {
+                    $state->error = null;
+                }
+                $this->store->event($state, 'continuous_endpoint_retry', $effect['target']);
+            }
 
             return true;
         });
@@ -565,6 +574,9 @@ class CloudContinuousCoordinator implements LightingExecutor
         if ($now < $pending['nextReadAt']) {
             return false;
         }
+        // Back off even when reads fail or the confirmation deadline has passed.
+        $effect['pending']['nextReadAt'] = $now + max(300, (int) config('lighting.cloud.poll_interval_ms', 500));
+        $this->save($effect);
         $snapshot = $this->reader->readSnapshot();
         $sentAt = $pending['receipt']['sentAt'] ?? $pending['attemptedAt'];
         $fresh = false;
@@ -573,10 +585,8 @@ class CloudContinuousCoordinator implements LightingExecutor
         }
         if (! $fresh || ! $this->matches($snapshot, $descriptor['expected'])) {
             if ($now >= $pending['deadline']) {
-                throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+                return $this->recoverExpiredEndpoint($effect, $snapshot, $now);
             }
-            $effect['pending']['nextReadAt'] = $now + max(300, (int) config('lighting.cloud.poll_interval_ms', 500));
-            $this->save($effect);
 
             return false;
         }
@@ -595,7 +605,7 @@ class CloudContinuousCoordinator implements LightingExecutor
             $this->store->atomic(function (LightingState $state) use ($effect, $pending) {
                 if ($this->ownsEffect($state, $effect) && ($state->native_effect['pending']['id'] ?? null) === $pending['id']) {
                     $state->native_effect = $effect;
-                    if ($state->error === 'transport_timeout') {
+                    if (in_array($state->error, ['transport_timeout', 'offline'], true)) {
                         $state->error = null;
                     }
                 }
@@ -618,20 +628,71 @@ class CloudContinuousCoordinator implements LightingExecutor
             $effect['output'] = ['kind' => 'scene', 'channels' => $this->sceneChannels($descriptor['color']),
                 'color' => $descriptor['color'], 'mythosSessionId' => $effect['target']['mythosSessionId'], 'approximate' => true];
         }
-        if ($descriptor['operation'] === 'static_colour') {
-            $this->store->atomic(function (LightingState $state) use ($effect, $pending) {
-                if ($this->ownsEffect($state, $effect) && ($state->native_effect['pending']['id'] ?? null) === $pending['id']) {
-                    $state->native_effect = $effect;
-                    if ($state->error === 'transport_timeout') {
-                        $state->error = null;
-                    }
+        $this->store->atomic(function (LightingState $state) use ($effect, $pending) {
+            if ($this->ownsEffect($state, $effect) && ($state->native_effect['pending']['id'] ?? null) === $pending['id']) {
+                $state->native_effect = $effect;
+                if (in_array($state->error, ['transport_timeout', 'offline'], true)) {
+                    $state->error = null;
                 }
-            });
-        } else {
-            $this->save($effect);
-        }
+            }
+        });
 
         return true;
+    }
+
+    private function recoverExpiredEndpoint(array $effect, array $snapshot, int $now): bool
+    {
+        $pending = $effect['pending'];
+        $descriptor = $pending['descriptor'];
+        // Only acknowledged, absolute white/RGB endpoints are repeatable. Never
+        // replay an unknown POST, a realtime frame, or an autonomous program.
+        if ($pending['receipt'] === null || ! in_array($descriptor['operation'], ['white', 'white_anchor', 'static_colour'], true)) {
+            throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+        }
+        $compatible = $this->matches($snapshot, $this->sourceValues($effect['snapshot']))
+            || $this->matches($snapshot, $descriptor['expected']);
+        $retry = $this->store->atomic(function (LightingState $state) use ($effect, $pending, $descriptor, $snapshot, $now, $compatible) {
+            if (! $this->ownsEffect($state, $effect) || ($state->native_effect['pending']['id'] ?? null) !== $pending['id']) {
+                return null;
+            }
+            $current = $state->toArray();
+            $active = $this->active($current, $now);
+            $sameIntent = $this->sameIntent($current, $effect);
+            $recoverable = in_array($state->error, [null, 'transport_timeout', 'offline'], true);
+            if ($active && $sameIntent && $recoverable && $compatible && ($descriptor['readbackRetries'] ?? 0) < 1) {
+                $effect['snapshot'] = $snapshot;
+                // dispatch replaces the old journal atomically with the retry.
+                // A crash before that point must retain the original attempt.
+
+                return $effect;
+            }
+
+            // Retain the failed attempt for diagnosis, but do not leave every
+            // future gesture queued behind an already acknowledged old endpoint.
+            // A fresh snapshot is an interpolation origin, not physical proof.
+            $current['desired_target'] ??= $effect['target'];
+            $replacement = $this->effectFromSnapshot($current, $snapshot, $now);
+            $replacement['encounterTransition'] = $replacement['encounterTransition']
+                || ($effect['encounterTransition'] ?? false) || LightingTransitionPolicy::isEncounter($effect['target']);
+            $replacement['unconfirmedEndpoint'] = $pending;
+            $state->native_effect = $replacement;
+            $state->observed = $this->reader->observationFromSnapshot($snapshot, $now);
+            $state->color_barrier = true;
+            $state->dark_since_ms = null;
+            if ($active && $recoverable) {
+                $state->error = $sameIntent ? 'transport_timeout' : null;
+                $state->stage = $sameIntent ? 'error' : 'queued';
+            }
+            $this->store->event($state, 'continuous_endpoint_unconfirmed', $effect['target']);
+
+            return null;
+        });
+        if ($retry === null) {
+            return true;
+        }
+        $descriptor['readbackRetries'] = ($descriptor['readbackRetries'] ?? 0) + 1;
+
+        return $this->commit($retry, $descriptor, $now);
     }
 
     private function finishCommit(array $effect, int $now): bool
