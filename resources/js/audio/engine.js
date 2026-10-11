@@ -114,8 +114,10 @@ class AudioEngine {
      *                                     buttons (Action/Combat/Mythos/etc.)
      *                                     where overlap between phases is
      *                                     undesirable.
+     * @param {Object}  [opts.pick]        Already-fetched pick response; skips
+     *                                     the server request.
      */
-    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = true }) {
+    async play({ folderSlug, mode, label, hardSwitch = false, crossfade = true, pick: prefetchedPick = null }) {
         if (!folderSlug) return;
         const requestToken = ++this._playRequestToken;
         this._cancelPauseTransition();
@@ -168,14 +170,10 @@ class AudioEngine {
 
         this.state.isLoading = true;
         try {
-            const res = await fetch(
-                `/audio/folder/${encodeURIComponent(folderSlug)}/random`,
-                { headers: { Accept: 'application/json' } }
-            );
+            const pick = prefetchedPick || await this._fetchPick(folderSlug);
             if (requestToken !== this._playRequestToken) return;
 
-            if (!res.ok) {
-                console.warn('[engine] pick failed', folderSlug, res.status);
+            if (!pick) {
                 this.state.isLoading = false;
                 this._clearActiveState();
                 // If we promised a crossfade and never started a new track,
@@ -186,11 +184,10 @@ class AudioEngine {
                 }
                 return;
             }
-            const pick = await res.json();
-            if (requestToken !== this._playRequestToken) return;
             const effectiveMode = mode || pick.mode || MODE_RANDOM_POS_FADE;
 
             this._startTrack({
+                trackId: pick.trackId ?? null,
                 streamUrl: pick.streamUrl,
                 durationSec: pick.durationSec,
                 mode: effectiveMode,
@@ -216,6 +213,79 @@ class AudioEngine {
                 this.state.isLoading = false;
             }
         }
+    }
+
+    /** Ask the server for a random track in the folder; null when none can be picked. */
+    async _fetchPick(folderSlug) {
+        const res = await fetch(
+            `/audio/folder/${encodeURIComponent(folderSlug)}/random`,
+            { headers: { Accept: 'application/json' } }
+        );
+        if (!res.ok) {
+            console.warn('[engine] pick failed', folderSlug, res.status);
+            return null;
+        }
+        return res.json();
+    }
+
+    /**
+     * Auto-continue after a track finished naturally: pick the next track from
+     * the same folder. If the pick is the track that just ended (always the
+     * case for single-track folders such as most Investigators), replay the
+     * ended element instead of opening the same stream URL in a new <audio>.
+     * In production (Android Chrome) re-opening the same, already cached URL
+     * stayed silent, while a different track continued fine — most likely the
+     * cached load never reaches canplaythrough with preload=metadata.
+     */
+    async _continueFolder(track) {
+        // Any user play/stop/logout bumps the token and cancels the continuation.
+        const requestToken = this._playRequestToken;
+        let pick = null;
+        try {
+            pick = await this._fetchPick(track.folderSlug);
+        } catch (e) {
+            console.warn('[engine] continue pick failed', e);
+        }
+        if (
+            requestToken !== this._playRequestToken
+            || this.current !== track
+            || this.state.isPaused
+        ) {
+            return;
+        }
+        if (pick && track.trackId != null && pick.trackId === track.trackId && this._restartTrack(track)) {
+            return;
+        }
+        // Do NOT hardcode a mode here — let the backend / folder decide.
+        // Example: 'action' folder = from_start_no_fade so the next
+        // track plays from 00:00; random_pos_fade folders stay random.
+        this.play({ folderSlug: track.folderSlug, label: track.label, pick });
+    }
+
+    /** Replay the current (ended) track on its existing audio element. */
+    _restartTrack(track) {
+        const { howl } = track;
+        const fromStart = track.mode === MODE_FROM_START_NO_FADE;
+        const startSec = fromStart ? 0 : (this._pickRandomStartSec(howl.duration()) ?? 0);
+        let id;
+        try {
+            if (!fromStart) {
+                // onplay fades random-position folders back in from silence.
+                this._setTrackVolumeImmediate(howl, track.soundId ?? null, 0);
+            }
+            if (track.soundId != null) {
+                howl.seek(startSec, track.soundId);
+                id = howl.play(track.soundId);
+            } else {
+                howl.seek(startSec);
+                id = howl.play();
+            }
+        } catch (_) {
+            return false;
+        }
+        if (typeof id !== 'number') return false;
+        track.soundId = id;
+        return true;
     }
 
     /** Stop the currently-playing track with fade-out. */
@@ -417,6 +487,7 @@ class AudioEngine {
 
     /** Internal: kick off a new Howl instance and crossfade with current if any. */
     _startTrack({
+        trackId = null,
         streamUrl,
         durationSec,
         mode,
@@ -607,11 +678,7 @@ class AudioEngine {
             // or pressed stop).
             onend: () => {
                 if (this.current?.howl !== howl) return;
-                // Auto-continue: pick another random track from the same folder.
-                // Do NOT hardcode a mode here — let the backend / folder decide.
-                // Example: 'action' folder = from_start_no_fade so the next
-                // track plays from 00:00; random_pos_fade folders stay random.
-                this.play({ folderSlug, label });
+                this._continueFolder(this.current);
             },
             onplayerror: (id, err) => {
                 console.warn('[engine] play error', err);
@@ -653,6 +720,7 @@ class AudioEngine {
         this.current = {
             howl,
             soundId: null,
+            trackId,
             folderSlug,
             label,
             mode,
