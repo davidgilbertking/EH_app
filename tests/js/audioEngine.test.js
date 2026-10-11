@@ -64,3 +64,54 @@ test('Android and desktop retain the native Howler volume path', () => {
     assert.equal(node.volume, 0.4);
     assert.equal(audio._appleMobileGraphByHowl.has(howl), false);
 });
+
+function setupContinuation({ pickTrackId, mode = 'from_start_no_fade' }) {
+    const audio = new engine.constructor();
+    const calls = [];
+    const howl = {
+        duration: () => 300,
+        seek(sec, id) { calls.push(['seek', sec, id]); return this; },
+        play(id) { calls.push(['play', id]); return id; },
+    };
+    const track = { howl, soundId: 7, trackId: 11, folderSlug: 'special/characters/agnes-baker', label: 'Agnes', mode };
+    audio.current = track;
+    audio._setTrackVolumeImmediate = (_howl, _id, value) => calls.push(['volume', value]);
+    audio._fetchPick = async () => ({ trackId: pickTrackId, streamUrl: `/audio/track/${pickTrackId}/stream` });
+    const played = [];
+    audio.play = (opts) => { played.push(opts); };
+    return { audio, track, calls, played };
+}
+
+test('auto-continue replays the ended element when the same track is picked again', async () => {
+    const { audio, track, calls, played } = setupContinuation({ pickTrackId: 11 });
+    await audio._continueFolder(track);
+    assert.deepEqual(calls, [['seek', 0, 7], ['play', 7]]);
+    assert.equal(played.length, 0);
+});
+
+test('auto-continue fades random-position folders back in when replaying the same track', async () => {
+    const { audio, track, calls } = setupContinuation({ pickTrackId: 11, mode: 'random_pos_fade' });
+    await audio._continueFolder(track);
+    assert.deepEqual(calls[0], ['volume', 0]);
+    assert.equal(calls[1][0], 'seek');
+    assert.ok(calls[1][1] >= 0 && calls[1][1] <= 180);
+    assert.deepEqual(calls[2], ['play', 7]);
+});
+
+test('auto-continue starts a new track with the already-fetched pick', async () => {
+    const { audio, track, calls, played } = setupContinuation({ pickTrackId: 12 });
+    await audio._continueFolder(track);
+    assert.equal(calls.length, 0);
+    assert.equal(played.length, 1);
+    assert.equal(played[0].folderSlug, track.folderSlug);
+    assert.equal(played[0].pick.trackId, 12);
+});
+
+test('auto-continue is cancelled when the user switched music during the pick', async () => {
+    const { audio, track, calls, played } = setupContinuation({ pickTrackId: 11 });
+    const pending = audio._continueFolder(track);
+    audio._playRequestToken += 1;
+    await pending;
+    assert.equal(calls.length, 0);
+    assert.equal(played.length, 0);
+});
