@@ -346,19 +346,29 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame(200, $this->fixture->values[22]);
     }
 
-    public function test_unknown_endpoint_readback_is_throttled_after_its_deadline(): void
+    public function test_unknown_endpoint_readback_is_throttled_then_replanned_from_fresh_report_after_deadline(): void
     {
         $this->fixture->scene('blue');
         $this->fixture->throwAt = 1;
         $this->send($this->white());
         $this->until(fn () => count($this->colourHolds()) === 1);
-        $this->tick(16000);
+        $this->tick(5000);
         $reads = $this->fixture->reads;
         $this->tick(100);
         $this->assertSame($reads, $this->fixture->reads);
         $this->tick(500);
         $this->assertSame($reads + 1, $this->fixture->reads);
+        $this->assertCount(1, $this->fixture->writes, 'No resend while the lost POST may still land');
+
+        $state = $this->tick(11000);
+        $this->assertNull($state->error);
+        $this->assertNull($state->native_effect['pending']);
         $this->assertCount(1, $this->fixture->writes);
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'continuous_endpoint_unconfirmed']);
+        $state = $this->finish();
+        $this->assertSame($this->white(), $state->native_effect['target']);
+        $this->assertSame([20 => true, 21 => 'white', 22 => 1000, 23 => 332],
+            array_intersect_key($this->fixture->values, array_flip([20, 21, 22, 23])));
     }
 
     public function test_colour_to_mythos_darkness_still_selects_white_minimum(): void
@@ -712,14 +722,15 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->send($this->mythos());
         $this->until(fn () => count($this->fixture->writes) === 1);
         $state = $this->tick(16000);
-        $this->assertSame('transport_timeout', $state->error);
+        // The report shows an uncaptured onboard program: it is never adopted as an origin.
+        $this->assertSame('unsupported_transition', $state->error);
         $this->assertNotNull($state->native_effect['pending']);
         $this->send($this->white());
         $this->tick();
         $this->assertCount(1, $this->fixture->writes);
     }
 
-    public function test_onboard_unknown_unreported_post_survives_restart_and_new_intent_without_resend(): void
+    public function test_onboard_unknown_unreported_post_expires_and_newest_intent_continues_without_resend(): void
     {
         config()->set('lighting.cloud.onboard_fades', true);
         $this->fixture->throwAt = 1;
@@ -729,11 +740,17 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->send($this->white());
         $this->coordinator = $this->makeCoordinator();
         $this->coordinator->recover();
-        $state = $this->tick(16000);
-        $this->assertSame('transport_timeout', $state->error);
-        $this->assertSame($attempt, $state->native_effect['pending']['id']);
-        $this->assertSame(1000, $state->native_effect['output']['channels']['bright']);
+        $state = $this->tick(5000);
+        $this->assertSame($attempt, $state->native_effect['pending']['id'], 'Held until its deadline');
         $this->assertCount(1, $this->fixture->writes);
+
+        $state = $this->tick(11000);
+        $this->assertNull($state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertSame($attempt, $state->native_effect['unconfirmedEndpoint']['id']);
+        $state = $this->finish();
+        $this->assertSame($this->white(), $state->native_effect['target']);
+        $this->assertCount(1, $this->fixture->writes, 'The lost program is never resent');
     }
 
     public function test_onboard_revocation_during_post_permits_only_readback_reconciliation(): void
@@ -917,7 +934,7 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame($this->fixture->scenes()['green']['value'], $sceneCommits[0]['commands'][0]['value']);
     }
 
-    public function test_unknown_static_colour_post_with_stale_readback_is_never_reposted(): void
+    public function test_unknown_static_colour_post_with_stale_readback_is_adopted_after_deadline_without_repost(): void
     {
         $this->fixture->scene('blue');
         $this->fixture->staleTimes = true;
@@ -925,16 +942,18 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->fixture->applyBeforeThrow = true;
         $this->send($this->white());
         $this->until(fn () => count($this->colourHolds()) === 1);
-        $state = $this->tick(16000);
-        $attempt = $state->native_effect['pending']['id'];
+        $state = $this->tick(5000);
         $this->assertSame('transport_timeout', $state->error);
-        $this->send($this->mythos('green'));
-        $this->coordinator = $this->makeCoordinator();
-        $this->coordinator->recover();
-        $state = $this->tick();
-        $this->assertSame($attempt, $state->native_effect['pending']['id']);
-        $this->assertCount(1, $this->fixture->writes);
-        $this->assertSame([], $this->frames());
+        $this->assertNotNull($state->native_effect['pending'], 'Stale times never confirm before the deadline');
+
+        $state = $this->tick(11000);
+        $this->assertNull($state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertSame('colour', $state->native_effect['output']['kind']);
+        $this->fixture->staleTimes = false;
+        $state = $this->finish();
+        $this->assertSame($this->white(), $state->native_effect['target']);
+        $this->assertCount(1, $this->colourHolds(), 'The hold already in the report is never reposted');
     }
 
     public function test_owned_static_colour_can_resume_as_source_without_a_second_hold(): void
@@ -1049,7 +1068,7 @@ class CloudContinuousCoordinatorTest extends TestCase
         }
     }
 
-    public function test_attempt_is_durable_before_post_and_unknown_frame_blocks_new_intent_and_restart(): void
+    public function test_unknown_frame_holds_until_its_deadline_then_newest_intent_resumes_after_restart(): void
     {
         $this->fixture->throwAt = 1;
         $this->fixture->beforeWrite = function () {
@@ -1059,19 +1078,93 @@ class CloudContinuousCoordinatorTest extends TestCase
         };
         $this->send($this->mythos());
         $this->until(fn () => count($this->fixture->writes) === 1);
+        $this->fixture->beforeWrite = null;
         $state = LightingState::findOrFail(1);
         $attempt = $state->native_effect['pending']['id'];
         $this->assertSame('transport_timeout', $state->error);
         $this->send($this->white('encounters'));
         $this->coordinator = $this->makeCoordinator();
         $this->coordinator->recover();
-        for ($i = 0; $i < 5; $i++) {
-            $state = $this->tick(10000);
+        for ($i = 0; $i < 2; $i++) {
+            $state = $this->tick(5000);
         }
         $this->assertCount(1, $this->fixture->writes);
         $this->assertSame($attempt, $state->native_effect['pending']['id']);
         $this->assertSame('transport_timeout', $state->error);
-        $this->assertNotSame($state->revision, $state->applied_revision);
+
+        // Production incident 2026-10-11: this frame previously blocked every later gesture forever.
+        $state = $this->tick(6000);
+        $this->assertNull($state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'continuous_frame_unconfirmed']);
+        $state = $this->finish();
+        $this->assertSame($this->white('encounters'), $state->native_effect['target']);
+        $this->assertSame(901, $this->fixture->values[22]);
+    }
+
+    public function test_lost_frame_mid_fade_resumes_the_same_gesture_without_a_new_click(): void
+    {
+        $this->send($this->mythos());
+        $this->until(fn () => count($this->frames()) === 3);
+        $this->fixture->throwAt = count($this->fixture->writes) + 1;
+        $state = $this->until(fn ($state) => $state->error === 'transport_timeout');
+        $writes = count($this->fixture->writes);
+        $lost = end($this->fixture->writes)['channels'];
+        $origin = $state->native_effect['output']['channels'];
+        $this->assertSame('transport_uncertain', $state->observed['completion']);
+
+        $state = $this->tick(5000);
+        $this->assertCount($writes, $this->fixture->writes, 'The lost frame is never resent');
+        $state = $this->tick(11000);
+        $this->assertNull($state->error);
+        $state = $this->until(fn ($state) => $state->native_effect['phase'] === 'fade');
+        $this->assertSame($origin, $state->native_effect['fade']['from'], 'Resume from the last acknowledged frame');
+        $this->assertNotSame($lost, $origin);
+        $state = $this->finish();
+        $this->assertSame('dark', $state->stage);
+        $this->assertSame(10, $this->fixture->values[22]);
+    }
+
+    public function test_read_timeout_before_an_endpoint_resumes_by_itself_after_a_short_pause(): void
+    {
+        $this->send($this->mythos());
+        $this->until(fn ($state) => $state->native_effect['phase'] === 'settle');
+        $this->fixture->beforeRead = function () {
+            $this->fixture->beforeRead = null;
+            throw new TuyaCloudException('transport_timeout');
+        };
+        $state = $this->tick(500);
+        $this->assertSame('transport_timeout', $state->error);
+        $this->assertNotSame('transport_uncertain', $state->observed['completion'] ?? null, 'A failed read is not a lost write');
+        $writes = count($this->fixture->writes);
+        $state = $this->tick(1000);
+        $this->assertSame('transport_timeout', $state->error);
+        $this->assertCount($writes, $this->fixture->writes);
+
+        $state = $this->tick(1100);
+        $this->assertNull($state->error);
+        $state = $this->finish();
+        $this->assertSame('dark', $state->stage);
+        $this->assertSame(10, $this->fixture->values[22]);
+    }
+
+    public function test_read_timeout_before_the_first_write_never_poisons_later_gestures(): void
+    {
+        $this->fixture->beforeRead = function () {
+            $this->fixture->beforeRead = null;
+            throw new TuyaCloudException('transport_timeout');
+        };
+        $this->send($this->white('encounters'));
+        $state = $this->tick();
+        $this->assertSame('transport_timeout', $state->error);
+        $this->assertNull($state->native_effect);
+        $this->assertSame([], $this->fixture->writes);
+
+        $state = $this->tick(2100);
+        $this->assertNull($state->error);
+        $state = $this->finish();
+        $this->assertSame($this->white('encounters'), $state->native_effect['target']);
+        $this->assertSame(901, $this->fixture->values[22]);
     }
 
     public function test_restart_with_known_receipt_rebases_from_last_frame_without_catching_up_to_endpoint(): void
@@ -1218,7 +1311,7 @@ class CloudContinuousCoordinatorTest extends TestCase
         }
     }
 
-    public function test_new_intent_cannot_discard_realtime_origin_when_stored_white_changes(): void
+    public function test_new_intent_adopts_externally_changed_white_instead_of_blocking(): void
     {
         $this->send($this->mythos());
         $state = $this->until(fn ($state) => $state->native_effect['output']['kind'] === 'realtime'
@@ -1228,9 +1321,30 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->fixture->values[22] = 464;
         $this->send($this->white());
         $state = $this->tick();
-        $this->assertSame('unsupported_transition', $state->error);
-        $this->assertSame($effect, $state->native_effect);
+        $this->assertNull($state->error);
+        $this->assertNotSame($effect['id'], $state->native_effect['id']);
+        $this->assertSame(['kind' => 'white', 'channels' => ['h' => 0, 's' => 0, 'v' => 0, 'bright' => 464, 'temperature' => 332],
+            'approximate' => false], $state->native_effect['output']);
         $this->assertCount($writes, $this->fixture->writes);
+        $this->assertDatabaseHas('lighting_events', ['operation' => 'continuous_external_state_adopted']);
+        $this->finish();
+        $this->assertSame(1000, $this->fixture->values[22]);
+    }
+
+    public function test_lamp_switched_off_mid_fade_recovers_on_the_next_gesture_once_it_is_on(): void
+    {
+        $this->send($this->mythos());
+        $this->until(fn ($state) => $state->native_effect['phase'] === 'settle');
+        $this->fixture->values[20] = false;
+        $state = $this->tick(500);
+        $this->assertSame('unsupported_transition', $state->error);
+        $this->assertSame([], $this->commits());
+
+        $this->fixture->values = array_replace($this->fixture->values, [20 => true, 21 => 'white', 22 => 500, 23 => 0]);
+        $this->send($this->white());
+        $state = $this->finish();
+        $this->assertNull($state->error);
+        $this->assertSame(1000, $this->fixture->values[22]);
     }
 
     public function test_rebase_read_cannot_overwrite_a_newer_intent_or_released_ownership(): void
@@ -1259,7 +1373,7 @@ class CloudContinuousCoordinatorTest extends TestCase
         $this->assertSame([], $this->fixture->writes);
     }
 
-    public function test_unknown_endpoint_requires_fresh_property_times_and_is_never_reposted(): void
+    public function test_unknown_endpoint_requires_fresh_times_until_deadline_then_adopts_report_without_repost(): void
     {
         $this->fixture->staleTimes = true;
         $this->fixture->applyBeforeThrow = true;
@@ -1270,13 +1384,17 @@ class CloudContinuousCoordinatorTest extends TestCase
         };
         $this->send($this->mythos());
         $this->until(fn () => count($this->commits()) === 1);
-        $state = $this->tick(16000);
+        $state = $this->tick(5000);
         $this->assertSame('transport_timeout', $state->error);
         $this->assertNotNull($state->native_effect['pending']);
         $this->assertNotSame($state->revision, $state->applied_revision);
-        $this->send($this->white());
-        $this->tick(1000);
-        $this->assertCount(1, $this->commits());
+
+        $state = $this->tick(11000);
+        $this->assertNull($state->error);
+        $this->assertNull($state->native_effect['pending']);
+        $state = $this->finish();
+        $this->assertSame('dark', $state->stage);
+        $this->assertCount(1, $this->commits(), 'The endpoint already in the report is never reposted');
     }
 
     public function test_frames_are_paced_skip_backlog_and_do_not_read_before_each_post(): void
