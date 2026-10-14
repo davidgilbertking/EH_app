@@ -397,6 +397,22 @@
         "temperature": 40
       }
     },
+    "defeated-health": {
+      "name": "Повержен: здоровье",
+      "kind": "white",
+      "ui": {
+        "brightness": 60,
+        "temperature": 40
+      }
+    },
+    "defeated-sanity": {
+      "name": "Повержен: рассудок",
+      "kind": "white",
+      "ui": {
+        "brightness": 40,
+        "temperature": 60
+      }
+    },
     "encounters": {
       "name": "Остальные контакты",
       "kind": "white",
@@ -439,6 +455,8 @@
       "contacts/other-world/future/6": "future-6",
       "contacts/other-world/future/7": "future-7",
       "contacts/other-world/future/8": "future-8",
+      "contacts/defeated/health": "defeated-health",
+      "contacts/defeated/sanity": "defeated-sanity",
       "special/defeat": "defeat",
       "special/victory": "victory",
       "special/awakening": "awakening",

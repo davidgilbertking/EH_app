@@ -709,6 +709,7 @@ test('Other terminal buttons and disaster branches resolve their configured whit
         ['special/characters/akachi-onyele', 'intro-investigators'], ['ancient/azathoth', 'ancient-one'],
         ['special/disaster/city/rome', 'disaster-city'], ['special/disaster/weather/polar-vortex', 'disaster-weather'],
         ['special/disaster/location/meteor-showers', 'disaster-location'],
+        ['contacts/defeated/health', 'defeated-health'], ['contacts/defeated/sanity', 'defeated-sanity'],
     ]) {
         flow.playUserChoice({ folderSlug }, 'other');
         assert.deepEqual(lights().at(-1), { kind: 'white', profile }, folderSlug);
@@ -718,7 +719,7 @@ test('Other terminal buttons and disaster branches resolve their configured whit
 test('prefix boundaries and unconfigured encounters preserve the generic preset', () => {
     const { flow, lights } = setup();
     for (const folderSlug of ['contacts/antarctica-extra/frozen-waste', 'contacts/general/sea/antarctica',
-        'contacts/general/wilderness/pyramids', 'contacts/defeated/sanity', 'contacts/devastation',
+        'contacts/general/wilderness/pyramids', 'contacts/defeated/other', 'contacts/devastation',
         'contacts/expedition/ruins', 'contacts/big-city/rome', 'constructor']) {
         flow.playUserChoice({ folderSlug });
         assert.deepEqual(lights().at(-1), { kind: 'white', profile: 'encounters' }, folderSlug);
