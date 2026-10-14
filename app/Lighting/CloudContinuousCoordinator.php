@@ -17,6 +17,9 @@ use Throwable;
  */
 class CloudContinuousCoordinator implements LightingExecutor
 {
+    /** Pause before a network failure resumes the same gesture without a click. */
+    private const ERROR_RETRY_MS = 2000;
+
     private NativeCloudLightingDriver $reader;
 
     public function __construct(private LightingStore $store, private TuyaCloudClient $client, ?NativeCloudLightingDriver $reader = null)
@@ -89,8 +92,13 @@ class CloudContinuousCoordinator implements LightingExecutor
             if (($effect['pending'] ?? null) !== null) {
                 return $this->reconcile($effect, $now);
             }
-            if (! $this->active($state, $now) || $state['error'] !== null) {
+            if (! $this->active($state, $now)) {
                 return false;
+            }
+            if ($state['error'] !== null) {
+                // A network failure resumes the same gesture by itself after a
+                // short pause; other errors still wait for the next gesture.
+                return $this->resumeAfterError($state, $now);
             }
             if ($effect === null) {
                 return $state['revision'] === $state['applied_revision'] ? false : $this->begin($state, $now);
@@ -107,7 +115,12 @@ class CloudContinuousCoordinator implements LightingExecutor
                         return $this->rebaseCompleted($state, $effect, $snapshot, $now);
                     }
                 } else {
-                    $snapshot = $this->boundary($effect);
+                    $snapshot = $this->reader->readSnapshot();
+                    if (! $this->matches($snapshot, $this->sourceValues($effect['snapshot']))) {
+                        // No write is pending, so the lamp was changed outside this
+                        // journal (app, power cycle). Its report is the only origin.
+                        return $this->adoptExternalState($state, $effect, $snapshot, $now);
+                    }
                 }
                 $sameTarget = $effect['target'] === $state['desired_target'];
                 $sameOwner = $effect['generation'] === $state['control_generation'];
@@ -155,10 +168,53 @@ class CloudContinuousCoordinator implements LightingExecutor
                 default => throw new TuyaCloudException('configuration_error'),
             };
         } catch (Throwable $error) {
-            $this->fail($effect, $error, $state);
+            $this->fail($effect, $error, $state, $now);
 
             return false;
         }
+    }
+
+    private function resumeAfterError(array $state, int $now): bool
+    {
+        $retryAt = $state['observed']['retryAt'] ?? null;
+        if (! in_array($state['error'], ['transport_timeout', 'offline'], true) || ! is_int($retryAt) || $now < $retryAt) {
+            return false;
+        }
+
+        return $this->store->atomic(function (LightingState $fresh) use ($state) {
+            if ($fresh->error !== $state['error'] || $fresh->revision !== $state['revision']
+                || $fresh->native_effect !== $state['native_effect']) {
+                return false;
+            }
+            if ($fresh->native_effect !== null) {
+                // Continue from a fresh report, never from a pre-failure origin.
+                $fresh->native_effect = array_replace($fresh->native_effect, ['needsBoundary' => true]);
+            }
+            $fresh->observed = array_replace($fresh->observed, ['retryAt' => null]);
+            $fresh->error = null;
+            $fresh->stage = 'queued';
+
+            return true;
+        });
+    }
+
+    private function adoptExternalState(array $state, array $previous, array $snapshot, int $now): bool
+    {
+        $effect = $this->effectFromSnapshot($state, $snapshot, $now);
+
+        return $this->store->atomic(function (LightingState $fresh) use ($previous, $effect, $now) {
+            if ($fresh->native_effect !== $previous || ! $this->sameIntent($fresh->toArray(), $effect)
+                || ! $this->active($fresh->toArray(), $now) || $fresh->error !== null) {
+                return false;
+            }
+            $fresh->native_effect = $effect;
+            $fresh->read_revision = $effect['revision'];
+            $this->applyObservation($fresh, $effect, $now, false);
+            $fresh->observed = array_replace($fresh->observed, ['quality' => 'reported', 'completion' => 'cloud_readback']);
+            $this->store->event($fresh, 'continuous_external_state_adopted', $effect['target']);
+
+            return true;
+        });
     }
 
     private function begin(array $state, int $now): bool
@@ -541,7 +597,7 @@ class CloudContinuousCoordinator implements LightingExecutor
             if ($knownPrewrite) {
                 $this->clearAttempt($effect, $pending['id']);
             }
-            $this->fail($effect, $error, $knownPrewrite ? $fresh : null);
+            $this->fail($effect, $error, $knownPrewrite ? $fresh : null, $now);
         }
 
         return true;
@@ -554,7 +610,13 @@ class CloudContinuousCoordinator implements LightingExecutor
         if ($descriptor['operation'] === 'realtime') {
             if ($pending['receipt'] === null) {
                 // Stored brightness cannot confirm DP28, even after restart.
-                throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+                // After the deadline the lost frame is never resent: continue
+                // from the last acknowledged channels via a fresh boundary.
+                if ($now < $pending['deadline']) {
+                    throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
+                }
+
+                return $this->abandonFrame($effect);
             }
             $effect['output'] = ['kind' => 'realtime', 'channels' => $descriptor['channels'],
                 'approximate' => $effect['output']['approximate']];
@@ -640,18 +702,37 @@ class CloudContinuousCoordinator implements LightingExecutor
         return true;
     }
 
+    private function abandonFrame(array $effect): bool
+    {
+        return $this->store->atomic(function (LightingState $state) use ($effect) {
+            $saved = $state->native_effect;
+            if (! $this->ownsEffect($state, $effect) || ($saved['pending']['id'] ?? null) !== $effect['pending']['id']) {
+                return false;
+            }
+            $saved['pending'] = null;
+            $saved['needsBoundary'] = true;
+            $state->native_effect = $saved;
+            if (in_array($state->error, ['transport_timeout', 'offline'], true)) {
+                $state->error = null;
+                $state->stage = 'queued';
+            }
+            $this->store->event($state, 'continuous_frame_unconfirmed', $effect['target']);
+
+            return true;
+        });
+    }
+
     private function recoverExpiredEndpoint(array $effect, array $snapshot, int $now): bool
     {
         $pending = $effect['pending'];
         $descriptor = $pending['descriptor'];
         // Only acknowledged, absolute white/RGB endpoints are repeatable. Never
-        // replay an unknown POST, a realtime frame, or an autonomous program.
-        if ($pending['receipt'] === null || ! in_array($descriptor['operation'], ['white', 'white_anchor', 'static_colour'], true)) {
-            throw new TuyaCloudException('transport_timeout', writeOutcomeUnknown: true);
-        }
+        // replay an unknown POST, a realtime frame, or an autonomous program:
+        // after the deadline the fresh report replaces them as the origin.
+        $repeatable = $pending['receipt'] !== null && in_array($descriptor['operation'], ['white', 'white_anchor', 'static_colour'], true);
         $compatible = $this->matches($snapshot, $this->sourceValues($effect['snapshot']))
             || $this->matches($snapshot, $descriptor['expected']);
-        $retry = $this->store->atomic(function (LightingState $state) use ($effect, $pending, $descriptor, $snapshot, $now, $compatible) {
+        $retry = $this->store->atomic(function (LightingState $state) use ($effect, $pending, $descriptor, $snapshot, $now, $compatible, $repeatable) {
             if (! $this->ownsEffect($state, $effect) || ($state->native_effect['pending']['id'] ?? null) !== $pending['id']) {
                 return null;
             }
@@ -659,7 +740,7 @@ class CloudContinuousCoordinator implements LightingExecutor
             $active = $this->active($current, $now);
             $sameIntent = $this->sameIntent($current, $effect);
             $recoverable = in_array($state->error, [null, 'transport_timeout', 'offline'], true);
-            if ($active && $sameIntent && $recoverable && $compatible && ($descriptor['readbackRetries'] ?? 0) < 1) {
+            if ($repeatable && $active && $sameIntent && $recoverable && $compatible && ($descriptor['readbackRetries'] ?? 0) < 1) {
                 $effect['snapshot'] = $snapshot;
                 // dispatch replaces the old journal atomically with the retry.
                 // A crash before that point must retain the original attempt.
@@ -680,8 +761,12 @@ class CloudContinuousCoordinator implements LightingExecutor
             $state->color_barrier = true;
             $state->dark_since_ms = null;
             if ($active && $recoverable) {
-                $state->error = $sameIntent ? 'transport_timeout' : null;
-                $state->stage = $sameIntent ? 'error' : 'queued';
+                // A lost POST continues the same gesture from the fresh report.
+                // An acknowledged endpoint the lamp still did not report stays
+                // visible until the next gesture.
+                $halt = $sameIntent && $pending['receipt'] !== null;
+                $state->error = $halt ? 'transport_timeout' : null;
+                $state->stage = $halt ? 'error' : 'queued';
             }
             $this->store->event($state, 'continuous_endpoint_unconfirmed', $effect['target']);
 
@@ -814,11 +899,14 @@ class CloudContinuousCoordinator implements LightingExecutor
         $state->dark_since_ms = $dark ? $now : null;
     }
 
-    private function fail(?array $effect, Throwable $error, ?array $origin = null): void
+    private function fail(?array $effect, Throwable $error, ?array $origin, int $now): void
     {
         $code = in_array($error->getMessage(), ['offline', 'transport_timeout', 'preset_not_configured', 'unsupported_transition'], true)
             ? $error->getMessage() : 'configuration_error';
-        $this->store->atomic(function (LightingState $state) use ($effect, $origin, $code) {
+        // Only a lost POST makes the output uncertain; a failed read does not.
+        $uncertain = $error instanceof TuyaCloudException && $error->writeOutcomeUnknown;
+        $retryAt = in_array($code, ['transport_timeout', 'offline'], true) ? $now + self::ERROR_RETRY_MS : null;
+        $this->store->atomic(function (LightingState $state) use ($effect, $origin, $code, $uncertain, $retryAt) {
             if (($effect !== null && ! $this->ownsEffect($state, $effect))
                 || ($origin !== null && ($state->revision !== $origin['revision'] || $state->control_generation !== $origin['control_generation']))) {
                 return;
@@ -828,7 +916,7 @@ class CloudContinuousCoordinator implements LightingExecutor
             $state->color_barrier = true;
             $state->dark_since_ms = null;
             $state->observed = array_merge($state->observed ?? [], ['quality' => 'unknown', 'outputSettled' => false,
-                'completion' => 'transport_uncertain', 'physicalConfirmed' => false]);
+                'physicalConfirmed' => false, 'retryAt' => $retryAt], $uncertain ? ['completion' => 'transport_uncertain'] : []);
         });
     }
 

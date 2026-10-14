@@ -2,6 +2,8 @@
 Description=The Yellow Sign lighting executor
 Wants=network-online.target
 After=network-online.target
+# Never give up restarting: a burst of crashes (e.g. SQLite locks) must not stop the lights.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
