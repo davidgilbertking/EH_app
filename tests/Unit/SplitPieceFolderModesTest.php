@@ -13,10 +13,10 @@ class SplitPieceFolderModesTest extends TestCase
         $folders = Pages::allFolders();
         foreach (['special/characters/akachi-onyele', 'special/characters/dexter-drake', 'special/characters/silas-marsh',
             'special/characters/vincent-lee', 'special/characters/william-yorick', 'special/characters/zoey-samaras',
-            'special/disaster/location/otherworldly-rifts', 'special/characters/agatha-crane'] as $slug) {
+            'special/characters/agatha-crane'] as $slug) {
             $this->assertSame(SoundFolder::MODE_RANDOM_POS_FADE, $folders[$slug]['mode'], $slug);
         }
-        foreach (['special/characters/mark-harrigan', 'special/disaster/location/upheaval'] as $slug) {
+        foreach (['special/characters/mark-harrigan', 'special/disaster/location/otherworldly-rifts'] as $slug) {
             $this->assertSame(SoundFolder::MODE_FROM_START_NO_FADE, $folders[$slug]['mode'], $slug);
         }
     }
