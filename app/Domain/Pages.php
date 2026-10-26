@@ -155,8 +155,6 @@ class Pages
             ['special/disaster/location/destructive-cyclone', 'Destructive Cyclone'],
             ['special/disaster/location/otherworldly-rifts', 'Otherworldly Rifts'],
         ], self::MODE_FROM_START);
-        // A long piece split into __part files: play it from a random position.
-        $folders['special/disaster/location/otherworldly-rifts']['mode'] = self::MODE_RANDOM;
 
         // special/disaster/city/* — disaster-specific tracks per big city.
         // Reuses the main board for picking, but tracks are separate from Encounters › Named Cities.
