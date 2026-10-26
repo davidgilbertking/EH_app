@@ -76,11 +76,37 @@ function setupContinuation({ pickTrackId, mode = 'from_start_no_fade' }) {
     const track = { howl, soundId: 7, trackId: 11, folderSlug: 'special/characters/agnes-baker', label: 'Agnes', mode };
     audio.current = track;
     audio._setTrackVolumeImmediate = (_howl, _id, value) => calls.push(['volume', value]);
-    audio._fetchPick = async () => ({ trackId: pickTrackId, streamUrl: `/audio/track/${pickTrackId}/stream` });
+    const picks = [];
+    audio._fetchPick = async (...args) => {
+        picks.push(args);
+        return { trackId: pickTrackId, streamUrl: `/audio/track/${pickTrackId}/stream` };
+    };
     const played = [];
     audio.play = (opts) => { played.push(opts); };
-    return { audio, track, calls, played };
+    return { audio, track, calls, played, picks };
 }
+
+test('auto-continue tells the server which track ended so split pieces continue', async () => {
+    const { audio, track, picks, played } = setupContinuation({ pickTrackId: 12 });
+    await audio._continueFolder(track);
+    assert.deepEqual(picks, [['special/characters/agnes-baker', 11]]);
+    assert.equal(played[0].pick.trackId, 12);
+});
+
+test('pick requests add the ended track id only for auto-continue', async (t) => {
+    const audio = new engine.constructor();
+    const urls = [];
+    t.mock.method(globalThis, 'fetch', async (url) => {
+        urls.push(url);
+        return { ok: true, json: async () => ({ trackId: 1 }) };
+    });
+    await audio._fetchPick('special/characters/vincent-lee');
+    await audio._fetchPick('special/characters/vincent-lee', 1253);
+    assert.deepEqual(urls, [
+        '/audio/folder/special%2Fcharacters%2Fvincent-lee/random',
+        '/audio/folder/special%2Fcharacters%2Fvincent-lee/random?after=1253',
+    ]);
+});
 
 test('auto-continue replays the ended element when the same track is picked again', async () => {
     const { audio, track, calls, played } = setupContinuation({ pickTrackId: 11 });
