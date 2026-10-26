@@ -215,15 +215,10 @@ class AudioEngine {
         }
     }
 
-    /**
-     * Ask the server for a random track in the folder; null when none can be
-     * picked. `afterTrackId` (the track that just ended) lets the server
-     * continue a split long piece with its next `__partNN` file.
-     */
-    async _fetchPick(folderSlug, afterTrackId = null) {
-        const after = afterTrackId != null ? `?after=${encodeURIComponent(afterTrackId)}` : '';
+    /** Ask the server for a random track in the folder; null when none can be picked. */
+    async _fetchPick(folderSlug) {
         const res = await fetch(
-            `/audio/folder/${encodeURIComponent(folderSlug)}/random${after}`,
+            `/audio/folder/${encodeURIComponent(folderSlug)}/random`,
             { headers: { Accept: 'application/json' } }
         );
         if (!res.ok) {
@@ -247,7 +242,7 @@ class AudioEngine {
         const requestToken = this._playRequestToken;
         let pick = null;
         try {
-            pick = await this._fetchPick(track.folderSlug, track.trackId);
+            pick = await this._fetchPick(track.folderSlug);
         } catch (e) {
             console.warn('[engine] continue pick failed', e);
         }

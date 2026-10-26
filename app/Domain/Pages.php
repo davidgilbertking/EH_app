@@ -30,12 +30,21 @@ use App\Models\SoundFolder;
 class Pages
 {
     public const MODE_RANDOM = SoundFolder::MODE_RANDOM_POS_FADE;
+
     public const MODE_FROM_START = SoundFolder::MODE_FROM_START_NO_FADE;
+
     private const SPECIAL_CHARACTER_RANDOM_MODE_SLUGS = [
         'patrice-hathaway',
         'agatha-crane',
         'lola-hayes',
         'calvin-wright',
+        // Long pieces split into __part files: never start on a quiet opening.
+        'akachi-onyele',
+        'dexter-drake',
+        'silas-marsh',
+        'vincent-lee',
+        'william-yorick',
+        'zoey-samaras',
     ];
 
     /** All folder slugs that must exist with their default mode and display name. */
@@ -146,6 +155,8 @@ class Pages
             ['special/disaster/location/destructive-cyclone', 'Destructive Cyclone'],
             ['special/disaster/location/otherworldly-rifts', 'Otherworldly Rifts'],
         ], self::MODE_FROM_START);
+        // A long piece split into __part files: play it from a random position.
+        $folders['special/disaster/location/otherworldly-rifts']['mode'] = self::MODE_RANDOM;
 
         // special/disaster/city/* — disaster-specific tracks per big city.
         // Reuses the main board for picking, but tracks are separate from Encounters › Named Cities.
@@ -159,7 +170,7 @@ class Pages
 
         // per-character folders (one per investigator).
         // Exceptions that play by general rules (random pos + fade-in):
-        // Patrice Hathaway, Agatha Crane, Lola Hayes, Calvin Wright.
+        // SPECIAL_CHARACTER_RANDOM_MODE_SLUGS.
         foreach (self::investigators() as [$slug, $name]) {
             $folders["special/characters/$slug"] = [
                 'name' => $name,
@@ -186,6 +197,7 @@ class Pages
         foreach ($pairs as [$slug, $label]) {
             $out[$slug] = ['name' => $label, 'mode' => $mode];
         }
+
         return $out;
     }
 
@@ -350,7 +362,7 @@ class Pages
             ['Mandy Thompson', 'F'],   ['Marie Lambeau', 'F'],   ['Mark Harrigan', 'M'],   ['Michael McGlen', 'M'],
             ['Minh Thi Phan', 'F'],    ['Monterey Jack', 'M'],   ['Norman Withers', 'M'],  ['Patrice Hathaway', 'F'],
             ['Preston Fairmont', 'M'], ['Rex Murphy', 'M'],      ['Rita Young', 'F'],      ['Roland Banks', 'M'],
-            ['Sefina Rousseau', 'F'],  ['Silas Marsh', 'M'],     ['Simon Fishbourne', 'M'],['Sister Mary', 'F'],
+            ['Sefina Rousseau', 'F'],  ['Silas Marsh', 'M'],     ['Simon Fishbourne', 'M'], ['Sister Mary', 'F'],
             ['Skids O\'Toole', 'M'],   ['Tommy Muldoon', 'M'],   ['Tony Morgan', 'M'],     ['Trish Scarborough', 'F'],
             ['Ursula Downs', 'F'],     ['Vincent Lee', 'M'],     ['Wendy Adams', 'F'],     ['William Yorick', 'M'],
             ['Wilson Richards', 'M'],  ['Zadoc Allen', 'M'],     ['Zoey Samaras', 'F'],
@@ -360,6 +372,7 @@ class Pages
         foreach ($rows as [$name, $gender]) {
             $out[] = [self::slugify($name), $name, $gender];
         }
+
         return $out;
     }
 
@@ -377,6 +390,7 @@ class Pages
         foreach ($names as $name) {
             $out[] = [self::slugify($name), $name];
         }
+
         return $out;
     }
 
@@ -385,6 +399,7 @@ class Pages
         $s = mb_strtolower($s, 'UTF-8');
         $s = str_replace(['"', "'", '.'], '', $s);
         $s = preg_replace('/[^a-z0-9]+/u', '-', $s);
+
         return trim($s, '-');
     }
 }

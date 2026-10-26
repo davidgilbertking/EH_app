@@ -15,12 +15,8 @@ class AudioController extends Controller
     /**
      * Pick a random track from the given folder slug. Returns track metadata
      * (id, stream URL, duration, default mode). Frontend then plays via Howler.
-     *
-     * Long pieces are stored as `__part01`, `__part02`, ... files. `after` (the
-     * track that just ended naturally) continues such a piece with its next
-     * part; a from-start folder never begins a piece in the middle.
      */
-    public function pick(string $slug, Request $request): JsonResponse
+    public function pick(string $slug): JsonResponse
     {
         $aliases = $this->worldSlugAliases($slug);
         $folders = SoundFolder::whereIn('slug', $aliases)->get()->keyBy('slug');
@@ -30,11 +26,6 @@ class AudioController extends Controller
                 'error' => 'Folder not found',
                 'folderSlug' => $slug,
             ], 404);
-        }
-
-        $next = $this->nextPart($request->integer('after'));
-        if ($next && ($nextFolder = $folders->firstWhere('id', $next->sound_folder_id))) {
-            return $this->pickResponse($nextFolder, $next);
         }
 
         $orderedSlugs = array_values(array_unique([$slug, ...$aliases]));
@@ -47,14 +38,9 @@ class AudioController extends Controller
                 continue;
             }
 
-            $candidates = SoundTrack::where('sound_folder_id', $candidateFolder->id)->get();
-            if ($candidateFolder->mode === SoundFolder::MODE_FROM_START_NO_FADE) {
-                // Start split pieces at their first part, unless only later parts exist.
-                $starts = $candidates->reject(fn (SoundTrack $candidate) => preg_match('/__part(\d+)/', $candidate->file_path, $part)
-                    && (int) $part[1] > 1);
-                $candidates = $starts->isNotEmpty() ? $starts : $candidates;
-            }
-            $candidateTrack = $candidates->isNotEmpty() ? $candidates->random() : null;
+            $candidateTrack = SoundTrack::where('sound_folder_id', $candidateFolder->id)
+                ->inRandomOrder()
+                ->first();
 
             if ($candidateTrack) {
                 $folder = $candidateFolder;
@@ -65,18 +51,13 @@ class AudioController extends Controller
 
         if (! $track) {
             $fallbackFolder = $folders->get($slug) ?? $folders->first();
-
             return response()->json([
                 'error' => 'No tracks indexed in folder',
                 'folderSlug' => $fallbackFolder?->slug ?? $slug,
             ], 404);
         }
 
-        return $this->pickResponse($folder, $track);
-    }
 
-    private function pickResponse(SoundFolder $folder, SoundTrack $track): JsonResponse
-    {
         $normalizationGainDb = $track->normalization_gain_db;
         $normalizationGain = $this->gainDbToLinear($normalizationGainDb);
 
@@ -97,20 +78,6 @@ class AudioController extends Controller
             // so the client can pass `format: [ext]` to <audio>.
             'format' => strtolower(pathinfo($track->file_path, PATHINFO_EXTENSION)),
         ]);
-    }
-
-    /** The following `__partNN` file of the same piece in the same folder, if any. */
-    private function nextPart(int $trackId): ?SoundTrack
-    {
-        $track = $trackId > 0 ? SoundTrack::find($trackId) : null;
-        if (! $track || ! preg_match('/\A(.*__part)(\d+)(.*)\z/s', $track->file_path, $match)) {
-            return null;
-        }
-        $number = str_pad((string) ((int) $match[2] + 1), strlen($match[2]), '0', STR_PAD_LEFT);
-
-        return SoundTrack::where('sound_folder_id', $track->sound_folder_id)
-            ->where('file_path', $match[1].$number.$match[3])
-            ->first();
     }
 
     /**
@@ -233,7 +200,6 @@ class AudioController extends Controller
         if (! is_finite($linear) || $linear <= 0) {
             return 1.0;
         }
-
         // Keep response bounded for client-side safety.
         return min(6.0, max(0.01, $linear));
     }
@@ -261,7 +227,6 @@ class AudioController extends Controller
         if (str_contains($path, '/outer-world/')) {
             return str_replace('/outer-world/', '/other-world/', $path);
         }
-
         return null;
     }
 
