@@ -364,6 +364,7 @@ class Pages
             ['Skids O\'Toole', 'M'],   ['Tommy Muldoon', 'M'],   ['Tony Morgan', 'M'],     ['Trish Scarborough', 'F'],
             ['Ursula Downs', 'F'],     ['Vincent Lee', 'M'],     ['Wendy Adams', 'F'],     ['William Yorick', 'M'],
             ['Wilson Richards', 'M'],  ['Zadoc Allen', 'M'],     ['Zoey Samaras', 'F'],
+            ['Laura Cruise', 'F'],    ['Roger Little', 'M'],    ['Sheridan Hope', 'M'],   ['Sofia Merluzzo', 'F'],
         ];
         usort($rows, fn ($a, $b) => strnatcasecmp($a[0], $b[0]));
         $out = [];
@@ -379,7 +380,7 @@ class Pages
     {
         $names = [
             'Abhoth', 'Antediluvium', 'Atlach-Nacha', 'Azathoth',
-            'Cthulhu', 'Dagon', 'Hastur', 'Hypnos',
+            'Chaugnar Faugn', 'Cthulhu', 'Dagon', 'Hastur', 'Hypnos',
             'Ithaqua', 'Nephren-Ka', 'Nyarlathotep', 'Rise of the Elder Things',
             'Shub-Niggurath', 'Shudde M\'ell', 'Syzygy', 'Yig', 'Yog-Sothoth',
         ];

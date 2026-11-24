@@ -34,7 +34,7 @@ echo 'EH_USER_EMAIL=you@example.com'      >> .env
 echo 'EH_USER_PASSWORD=your-strong-pass'   >> .env
 
 php artisan migrate
-php artisan db:seed                                    # creates user + 173 sound folders + 17 ancients + 59 investigators
+php artisan db:seed                                    # creates user + 199 sound folders + 18 ancients + 63 investigators
 php artisan storage:link                               # for ancient-one images
 php artisan audio:init                                 # scaffolds storage/app/private/audio/<slug>/ trees
 
