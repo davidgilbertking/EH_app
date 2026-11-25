@@ -12,6 +12,7 @@ const props = defineProps({
 
 const page = usePage();
 const canControlLighting = computed(() => page.props.lighting?.canControl === true);
+const isXmasSeason = computed(() => page.props.ui?.xmasSeason === true);
 const url = computed(() => page.url || '/');
 const playingFolder = computed(() => engine.state.playingFolder);
 const phaseFolder = computed(() =>
@@ -91,6 +92,7 @@ const mythosBindings = useLongPress({
             class="group relative flex-1 rounded-lg text-center font-semibold tracking-wide active:scale-[0.98] transition ui-header-btn whitespace-normal break-words leading-tight"
             :class="[
                 actionClass,
+                isXmasSeason ? 'xmas-snowflakes' : '',
                 isActionActive ? 'ring-2 ring-amber-400' : '',
                 isActionPaused ? 'paused-amber-dash' : '',
             ]"

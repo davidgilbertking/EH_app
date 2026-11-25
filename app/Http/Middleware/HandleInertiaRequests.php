@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\XmasSeason;
 use App\Lighting\LightingTransitionPolicy;
 use App\Models\AncientOne;
 use App\Models\Investigator;
@@ -52,6 +53,7 @@ class HandleInertiaRequests extends Middleware
                 'encounterMusicDelayMs' => LightingTransitionPolicy::encounterMusicDelayMs(),
             ],
             'ui' => [
+                'xmasSeason' => XmasSeason::isActive(),
                 'yellowSignSeed' => $yellowSignSeed,
                 'yellowSignImageUrl' => route('ui.yellowSignIcon', [
                     'seed' => $yellowSignSeed,

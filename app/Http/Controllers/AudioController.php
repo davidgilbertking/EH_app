@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\XmasSeason;
 use App\Models\SoundFolder;
 use App\Models\SoundTrack;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,12 @@ class AudioController extends Controller
     public function pick(string $slug): JsonResponse
     {
         $aliases = $this->worldSlugAliases($slug);
+        // New Year season: Action plays the Christmas folder first, regular
+        // folder stays as fallback while the Christmas one is empty.
+        $xmasSlug = XmasSeason::folderFor($slug);
+        if ($xmasSlug !== null && XmasSeason::isActive()) {
+            $aliases = [$xmasSlug, ...$aliases];
+        }
         $folders = SoundFolder::whereIn('slug', $aliases)->get()->keyBy('slug');
 
         if ($folders->isEmpty()) {
@@ -28,7 +35,7 @@ class AudioController extends Controller
             ], 404);
         }
 
-        $orderedSlugs = array_values(array_unique([$slug, ...$aliases]));
+        $orderedSlugs = array_values(array_unique($aliases));
         $folder = null;
         $track = null;
 

@@ -4,6 +4,8 @@ import HomeButton from '@/Components/App/HomeButton.vue';
 import BackButton from '@/Components/App/BackButton.vue';
 import PauseToggleButton from '@/Components/App/PauseToggleButton.vue';
 import VolumeSlider from '@/Components/App/VolumeSlider.vue';
+import XmasSnow from '@/Components/App/XmasSnow.vue';
+import { engine } from '@/audio/engine';
 import { gameFlow } from '@/gameFlow/controller';
 import { lighting } from '@/lighting/state';
 import { warmImageCache } from '@/composables/useImageCacheWarmup';
@@ -26,6 +28,10 @@ watch(
 const url = computed(() => page.url || '/');
 const path = computed(() => url.value.split('?')[0]);
 const isHome = computed(() => url.value === '/');
+const showXmasSnow = computed(() =>
+    page.props.ui?.xmasSeason === true
+    && ['action', 'action-muted'].includes(engine.state.playingFolder)
+);
 const ancient = computed(() => page.props.gameState?.ancientOne ?? null);
 const blobs = computed(() => page.props.gameState?.blobs ?? []);
 const bgUrl = computed(() => ancient.value?.bgImageUrl || ancient.value?.imageUrl || null);
@@ -582,6 +588,10 @@ watch(preloadImageUrls, (urls) => {
         <PauseToggleButton />
         <VolumeSlider />
 
+        <Transition name="xmas-snow-fade">
+            <XmasSnow v-if="showXmasSnow" />
+        </Transition>
+
         <main ref="mainEl" :class="mainClass">
             <Transition name="ui-page-fade" mode="out-in">
                 <div :key="$page.url" class="min-h-full">
@@ -607,3 +617,14 @@ watch(preloadImageUrls, (urls) => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.xmas-snow-fade-enter-active,
+.xmas-snow-fade-leave-active {
+    transition: opacity 1.5s ease;
+}
+.xmas-snow-fade-enter-from,
+.xmas-snow-fade-leave-to {
+    opacity: 0;
+}
+</style>

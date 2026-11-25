@@ -61,6 +61,12 @@ class Pages
             ['mythos', 'Mythos'],
         ], self::MODE_RANDOM);
 
+        // header Action during New Year season (see XmasSeason)
+        $folders += self::row([
+            ['action-xmas', 'Christmas Action'],
+            ['action-muted-xmas', 'Christmas Muted Action'],
+        ], self::MODE_RANDOM);
+
         // contacts/general/city  — one folder per black city-space
         foreach (self::generalCityButtons() as [$slug, $label]) {
             $folders[$slug] = ['name' => $label, 'mode' => self::MODE_RANDOM];

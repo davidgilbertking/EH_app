@@ -29,6 +29,11 @@ return [
     'audio_loudness_max_boost_db' => (float) env('EH_AUDIO_LOUDNESS_MAX_BOOST_DB', 12.0),
     'audio_loudness_max_cut_db' => (float) env('EH_AUDIO_LOUDNESS_MAX_CUT_DB', 24.0),
 
+    // New Year season (Dec 18 – Jan 14): Christmas Action music + snow.
+    // Unset = by calendar; true/false forces it on/off.
+    'xmas_season' => env('EH_XMAS_SEASON'),
+    'xmas_timezone' => env('EH_XMAS_TIMEZONE', 'Europe/Moscow'),
+
     // Per-track ffmpeg loudness analysis timeout (seconds).
     'audio_loudness_analysis_timeout_sec' => (int) env('EH_AUDIO_LOUDNESS_ANALYSIS_TIMEOUT_SEC', 180),
 ];
