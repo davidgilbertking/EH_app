@@ -20,40 +20,63 @@ function resize() {
     canvas.height = Math.round(height * dpr);
     ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const target = Math.round(Math.min(140, Math.max(40, (width * height) / 14000)));
+    const target = Math.round(Math.min(90, Math.max(24, (width * height) / 22000)));
     while (flakes.length < target) flakes.push(makeFlake(true));
     flakes.length = target;
 }
 
 function makeFlake(anywhere) {
-    const r = 0.8 + Math.random() * 2.2;
+    const r = 4.5 + Math.random() * 2.5;
     return {
         x: Math.random() * width,
         y: anywhere ? Math.random() * height : -r * 2,
         r,
-        speed: 18 + r * 14 + Math.random() * 10, // px/s
+        speed: 16 + r * 5 + Math.random() * 10, // px/s
         drift: 6 + Math.random() * 14,
         phase: Math.random() * Math.PI * 2,
-        alpha: 0.35 + Math.random() * 0.5,
+        alpha: 0.45 + Math.random() * 0.4,
+        angle: Math.random() * Math.PI,
+        turn: (Math.random() - 0.5) * 0.5,
     };
+}
+
+function drawFlake(f) {
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.rotate(f.angle);
+    ctx.globalAlpha = f.alpha;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 0.8;
+    ctx.lineCap = 'round';
+    for (let arm = 0; arm < 6; arm++) {
+        ctx.rotate(Math.PI / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -f.r);
+        const branch = f.r * 0.55;
+        const twig = f.r * 0.25;
+        ctx.moveTo(0, -branch);
+        ctx.lineTo(-twig, -branch - twig);
+        ctx.moveTo(0, -branch);
+        ctx.lineTo(twig, -branch - twig);
+        ctx.stroke();
+    }
+    ctx.restore();
 }
 
 function frame(ts) {
     const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
     lastTs = ts;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#fff';
     for (const f of flakes) {
         f.phase += dt * 0.8;
         f.y += f.speed * dt;
         f.x += Math.sin(f.phase) * f.drift * dt;
+        f.angle += f.turn * dt;
         if (f.y - f.r > height) Object.assign(f, makeFlake(false));
         if (f.x < -5) f.x = width + 5;
         else if (f.x > width + 5) f.x = -5;
-        ctx.globalAlpha = f.alpha;
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        ctx.fill();
+        drawFlake(f);
     }
     raf = requestAnimationFrame(frame);
 }

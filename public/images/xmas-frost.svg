@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="ice"><stop stop-color="#fff" stop-opacity=".78"/><stop offset="1" stop-color="#d9f4ff" stop-opacity=".25"/></linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#ice)" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke-width="2.5">
+      <path d="M0 152 Q48 141 90 111 T190 83 M67 119 Q75 75 101 38 M115 98 Q132 119 158 124 M145 86 Q155 53 191 32 M32 144 Q45 180 66 201"/>
+      <path d="M800 15 Q736 36 713 72 T630 122 M745 31 Q739 4 722 -16 M713 73 Q746 89 766 119 M676 100 Q669 59 641 40 M636 119 Q616 154 577 169"/>
+      <path d="M800 222 Q758 195 713 199 T636 177 M741 198 Q748 161 777 143 M682 193 Q664 219 640 243 M0 14 Q48 23 72 45 T132 53"/>
+    </g>
+    <g stroke-width="1.2" opacity=".8">
+      <path d="M29 145l-10-17m10 17-6 18m40-34-13-20m13 20-1 22m35-41-12-17m12 17 3 19m35-27-2-18m2 18 11 12m28-29-5-13m5 13 13 9M82 79l-14-12m14 12 18-5m-8-19-10-10m10 10 15-4m43 52-3-15m3 15 14-2m-110 65-17-5m17 5 8 18"/>
+      <path d="M773 25l-8-14m8 14 13 8m-48 24-7-17m7 17 17 6m-42 12-16-13m16 13 3 19m-28 9-10-14m10 14 13 11m-43 11-8-16m8 16 10 11m-34 19-17-5m17 5 4 16m-70 42-13-14m13 14 18 2m120-73-7-15m7 15 14 11m-28 15-12-7m12 7 9 15m-60 38-13-13m13 13 15-1"/>
+    </g>
+    <g stroke-width=".8" opacity=".4">
+      <path d="M0 101q35 1 53-16m-53 108q37-20 53-12m131-181q-8 24-29 35M800 68q-25 16-37 44m37 55q-32 1-46 17M563 240q21-37 56-41"/>
+    </g>
+  </g>
+</svg>
