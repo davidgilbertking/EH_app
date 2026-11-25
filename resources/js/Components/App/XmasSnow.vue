@@ -26,17 +26,18 @@ function resize() {
 }
 
 function makeFlake(anywhere) {
-    const r = 4.5 + Math.random() * 2.5;
+    const r = 3.5 + Math.random() * 5;
     return {
         x: Math.random() * width,
         y: anywhere ? Math.random() * height : -r * 2,
         r,
-        speed: 16 + r * 5 + Math.random() * 10, // px/s
-        drift: 6 + Math.random() * 14,
+        speed: 12 + Math.random() * 46, // px/s, independent of size
+        drift: 4 + Math.random() * 18,
         phase: Math.random() * Math.PI * 2,
-        alpha: 0.45 + Math.random() * 0.4,
+        alpha: 0.4 + Math.random() * 0.5,
         angle: Math.random() * Math.PI,
-        turn: (Math.random() - 0.5) * 0.5,
+        turn: (Math.random() - 0.5) * 0.6,
+        shape: Math.floor(Math.random() * 3),
     };
 }
 
@@ -46,19 +47,40 @@ function drawFlake(f) {
     ctx.rotate(f.angle);
     ctx.globalAlpha = f.alpha;
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = f.r < 5 ? 0.7 : 0.9;
     ctx.lineCap = 'round';
+    if (f.shape === 2) {
+        ctx.beginPath();
+        for (let corner = 0; corner < 6; corner++) {
+            const a = corner * Math.PI / 3;
+            const x = Math.cos(a) * f.r * 0.28;
+            const y = Math.sin(a) * f.r * 0.28;
+            if (corner === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
     for (let arm = 0; arm < 6; arm++) {
         ctx.rotate(Math.PI / 3);
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -f.r);
-        const branch = f.r * 0.55;
-        const twig = f.r * 0.25;
-        ctx.moveTo(0, -branch);
-        ctx.lineTo(-twig, -branch - twig);
-        ctx.moveTo(0, -branch);
-        ctx.lineTo(twig, -branch - twig);
+        if (f.shape !== 0) {
+            const branch = f.r * (f.shape === 1 ? 0.55 : 0.72);
+            const twig = f.r * (f.shape === 1 ? 0.27 : 0.22);
+            ctx.moveTo(0, -branch);
+            ctx.lineTo(-twig, -branch - twig);
+            ctx.moveTo(0, -branch);
+            ctx.lineTo(twig, -branch - twig);
+            if (f.shape === 2) {
+                const inner = f.r * 0.43;
+                ctx.moveTo(0, -inner);
+                ctx.lineTo(-twig * 0.65, -inner - twig * 0.65);
+                ctx.moveTo(0, -inner);
+                ctx.lineTo(twig * 0.65, -inner - twig * 0.65);
+            }
+        }
         ctx.stroke();
     }
     ctx.restore();

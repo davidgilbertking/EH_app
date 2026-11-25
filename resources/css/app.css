@@ -382,7 +382,7 @@ body {
     opacity: 0;
 }
 
-/* Uneven frost branches growing in from the button edges. */
+/* Individual frost snowflakes, placed irregularly around the label. */
 .xmas-snowflakes {
     background-image: url('/images/xmas-frost.svg');
     background-repeat: no-repeat;
