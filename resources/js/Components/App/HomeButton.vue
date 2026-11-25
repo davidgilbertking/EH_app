@@ -1,11 +1,19 @@
 <script setup>
-import { useLongPress } from '@/composables/useLongPress';
 import { gameFlow } from '@/gameFlow/controller';
 import { router } from '@inertiajs/vue3';
+import { onUnmounted } from 'vue';
 
 const HOLD_TO_LOGOUT_MS = 3000;
+const HOLD_TO_XMAS_TOGGLE_MS = 7000;
+const MOVE_TOLERANCE_PX = 28;
 
 let isLoggingOut = false;
+let holdTimer = null;
+let pointerId = null;
+let pressedAt = 0;
+let startX = 0;
+let startY = 0;
+let xmasToggled = false;
 
 function goHome() {
     router.get('/');
@@ -31,27 +39,75 @@ function logout() {
     }));
 }
 
-const homeBindings = useLongPress({
-    onTap: () => {
-        goHome();
-    },
-    onLongPress: () => {
-        logout();
-    },
-    threshold: HOLD_TO_LOGOUT_MS,
-    preventDefaultOnStart: true,
-});
+function clearHold() {
+    if (holdTimer !== null) clearTimeout(holdTimer);
+    holdTimer = null;
+    pointerId = null;
+}
+
+function toggleXmasMode() {
+    if (xmasToggled) return;
+    xmasToggled = true;
+    router.post('/xmas-mode/toggle', {}, {
+        onSuccess: () => window.location.reload(),
+    });
+}
+
+function onPointerDown(event) {
+    if (pointerId !== null || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (event.cancelable) event.preventDefault();
+    pointerId = event.pointerId;
+    pressedAt = performance.now();
+    startX = event.clientX;
+    startY = event.clientY;
+    xmasToggled = false;
+    holdTimer = setTimeout(() => {
+        holdTimer = null;
+        toggleXmasMode();
+    }, HOLD_TO_XMAS_TOGGLE_MS);
+}
+
+function onPointerMove(event) {
+    if (event.pointerId !== pointerId) return;
+    if (Math.hypot(event.clientX - startX, event.clientY - startY) > MOVE_TOLERANCE_PX) {
+        clearHold();
+    }
+}
+
+function onPointerUp(event) {
+    if (event.pointerId !== pointerId) return;
+    const heldFor = performance.now() - pressedAt;
+    const didToggle = xmasToggled;
+    clearHold();
+    if (didToggle) return;
+    if (heldFor >= HOLD_TO_XMAS_TOGGLE_MS) {
+        toggleXmasMode();
+        return;
+    }
+    if (heldFor >= HOLD_TO_LOGOUT_MS) logout();
+    else goHome();
+}
+
+onUnmounted(clearHold);
 </script>
 
 <template>
     <button
         type="button"
         aria-label="Home"
-        title="Hold 3s to log out"
+        title="Hold 3–7s to log out; hold 7s to toggle New Year mode"
         class="ui-corner-btn fixed left-[var(--ui-corner-edge-gap)] bottom-[var(--ui-corner-edge-gap)] z-40 grid place-items-center rounded-full border border-neutral-700 bg-neutral-800/95 text-neutral-100 shadow-2xl backdrop-blur active:scale-95 transition hover:bg-neutral-700"
         @keyup.enter.prevent="goHome"
         @keyup.space.prevent="goHome"
-        v-bind="homeBindings"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="clearHold"
+        @pointerleave="clearHold"
+        @touchstart.prevent
+        @dragstart.prevent
+        @contextmenu.prevent
+        style="-webkit-touch-callout: none; user-select: none; touch-action: manipulation"
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"

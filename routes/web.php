@@ -6,6 +6,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\YellowSignIconController;
+use App\Domain\XmasSeason;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,14 @@ Route::middleware('auth')->group(function () {
     // ---- Pages ----
     Route::get('/', [PageController::class, 'home'])->name('home');
     Route::get('/mythos', [PageController::class, 'mythos'])->name('mythos');
+    Route::post('/xmas-mode/toggle', static function () {
+        $mode = XmasSeason::isActive() ? 'off' : 'on';
+
+        return redirect()->back()->cookie(cookie(
+            XmasSeason::MODE_COOKIE, $mode, 60 * 24 * 365, '/', null,
+            request()->isSecure(), true, false, 'lax'
+        ));
+    })->name('xmas.toggle');
 
     Route::prefix('lighting')->name('lighting.')->middleware('can:control-lighting')->group(function () {
         Route::get('/status', [LightingController::class, 'status'])->middleware('throttle:180,1,lighting-status:')->name('status');

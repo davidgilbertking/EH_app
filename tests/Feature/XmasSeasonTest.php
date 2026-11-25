@@ -81,6 +81,33 @@ class XmasSeasonTest extends TestCase
             ->assertJsonPath('folderSlug', 'action');
     }
 
+    public function test_manual_toggle_overrides_deployment_setting_and_changes_audio_folder(): void
+    {
+        $this->seedActionFolders();
+        config()->set('eh.xmas_season', true);
+        $this->actingAs(User::factory()->create());
+
+        $offResponse = $this->from('/')->post('/xmas-mode/toggle')->assertRedirect('/');
+        $offCookie = collect($offResponse->headers->getCookies())
+            ->first(fn ($cookie) => $cookie->getName() === XmasSeason::MODE_COOKIE);
+        $this->assertNotNull($offCookie);
+
+        $this->withCredentials()->withUnencryptedCookie(XmasSeason::MODE_COOKIE, $offCookie->getValue())
+            ->getJson('/audio/folder/action/random')
+            ->assertOk()
+            ->assertJsonPath('folderSlug', 'action');
+
+        $onResponse = $this->from('/')->post('/xmas-mode/toggle')->assertRedirect('/');
+        $onCookie = collect($onResponse->headers->getCookies())
+            ->first(fn ($cookie) => $cookie->getName() === XmasSeason::MODE_COOKIE);
+        $this->assertNotNull($onCookie);
+
+        $this->withUnencryptedCookie(XmasSeason::MODE_COOKIE, $onCookie->getValue())
+            ->getJson('/audio/folder/action-muted/random')
+            ->assertOk()
+            ->assertJsonPath('folderSlug', 'action-muted-xmas');
+    }
+
     private function seedActionFolders(): void
     {
         foreach (['action', 'action-muted', 'action-xmas', 'action-muted-xmas'] as $slug) {

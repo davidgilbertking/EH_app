@@ -13,6 +13,7 @@ use Carbon\CarbonInterface;
 final class XmasSeason
 {
     public const DAYS_AROUND_NEW_YEAR = 14;
+    public const MODE_COOKIE = 'eh_xmas_mode';
 
     /** Regular slug => Christmas replacement folder. */
     public const FOLDERS = [
@@ -22,6 +23,13 @@ final class XmasSeason
 
     public static function isActive(?CarbonInterface $now = null): bool
     {
+        // A manual choice on this device takes precedence over the calendar
+        // and the deployment-wide demo setting.
+        $manual = request()->cookie(self::MODE_COOKIE);
+        if ($manual === 'on' || $manual === 'off') {
+            return $manual === 'on';
+        }
+
         // EH_XMAS_SEASON=true/false forces the season on/off (demo, rollback).
         $forced = config('eh.xmas_season');
         if (is_bool($forced)) {
